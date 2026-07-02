@@ -6,6 +6,7 @@ import { apiClient } from './services/apiClient';
 import { initAuth, googleSignIn, logout, getAccessToken } from './services/firebaseAuth';
 import Markdown from 'react-markdown';
 import HijaiyahPanel from './components/HijaiyahPanel';
+import MakharijulHuruf from './components/MakharijulHuruf';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -1574,6 +1575,9 @@ function App() {
             </div>
             {isProcessing && <p className="text-center text-emerald-400 mt-6 animate-pulse text-sm font-mono">Memproses via Tabayyun Pipeline...</p>}
           </div>
+
+          {/* Makharijul Huruf Interaktif */}
+          <MakharijulHuruf />
 
           {/* Panel Hasil Evaluasi */}
           {evaluation && (
