@@ -1,5 +1,14 @@
 import React, { useState, useRef } from 'react';
 
+// Mapping huruf → VN
+const VN_MAP: Record<string, string> = {
+  'ا':'001','ب':'002','ت':'003','ث':'004','ج':'005','ح':'006','خ':'007',
+  'د':'008','ذ':'009','ر':'010','ز':'011','س':'012','ش':'013','ص':'014',
+  'ض':'015','ط':'016','ظ':'017','ع':'018','غ':'019','ف':'020','ق':'021',
+  'ك':'022','ل':'023','م':'024','ن':'025','و':'026','ه':'027','ي':'028',
+  'ء':'001', // Hamzah pakai Alif
+};
+
 interface MakhrajPoint {
   id: string;
   label: string;
@@ -66,6 +75,30 @@ export default function MakharijulHuruf() {
     utter.rate = 0.85;
     utter.onend = () => { speakingRef.current = false; };
     window.speechSynthesis.speak(utter);
+  };
+
+  const playVN = (huruf: string) => {
+    const vn = VN_MAP[huruf];
+    if (!vn) return;
+    const audio = new Audio(`/vn/vn_${vn}.mp3`);
+    audio.play();
+  };
+
+  const playAllVN = (hurufList: string[]) => {
+    let i = 0;
+    const playNext = () => {
+      if (i >= hurufList.length) return;
+      const vn = VN_MAP[hurufList[i]];
+      if (vn) {
+        const audio = new Audio(`/vn/vn_${vn}.mp3`);
+        audio.onended = () => { i++; playNext(); };
+        audio.play();
+      } else {
+        i++;
+        playNext();
+      }
+    };
+    playNext();
   };
 
   const active = MAKHARIJ_DATA.find(p => p.id === activePoint);
@@ -180,9 +213,15 @@ export default function MakharijulHuruf() {
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {active.huruf.map((h) => (
-                  <span key={h} className="text-2xl font-arabic px-2 py-0.5 bg-slate-700 rounded-lg" style={{ fontFamily: 'Traditional Arabic, serif' }}>
+                  <button
+                    key={h}
+                    onClick={() => playVN(h)}
+                    title={`Dengar VN ${h}`}
+                    className="text-2xl font-arabic px-2 py-0.5 bg-slate-700 hover:bg-slate-600 rounded-lg transition-all active:scale-90 cursor-pointer"
+                    style={{ fontFamily: 'Traditional Arabic, serif' }}
+                  >
                     {h}
-                  </span>
+                  </button>
                 ))}
               </div>
               <p className="text-slate-300 text-sm leading-relaxed mb-3">{active.penjelasan}</p>
@@ -194,13 +233,10 @@ export default function MakharijulHuruf() {
                   🔊 Dengar Penjelasan
                 </button>
                 <button
-                  onClick={() => {
-                    const hurufList = active.huruf.join(', ');
-                    speak(`Huruf pada makhraj ${active.label.replace('\n', ' ')} adalah: ${hurufList}`);
-                  }}
+                  onClick={() => playAllVN(active.huruf)}
                   className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition-all active:scale-95"
                 >
-                  🔤 Dengar Huruf
+                  🎵 Putar Semua VN
                 </button>
               </div>
             </div>
