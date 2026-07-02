@@ -1,0 +1,10 @@
+{
+  "name": "Quranica AI",
+  "description": "Ultimate Hybrid MCP Edition - Platform akademik tingkat tinggi untuk evaluasi tajwid dan tahsin Al-Qur\u0027an.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

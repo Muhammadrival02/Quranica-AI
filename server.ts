@@ -1,0 +1,1355 @@
+import express from "express";
+import path from "path";
+import { createServer as createViteServer } from "vite";
+import { GoogleGenAI, Type } from "@google/genai";
+import { secondarySources } from "./src/data/secondarySources";
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  // JSON request body parser with larger limits for potential audio uploads
+  app.use(express.json({ limit: "50mb" }));
+
+  // API Route: Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
+  // --- IN-MEMORY USER DATABASE ---
+  interface UserProfile {
+    uid: string;
+    email: string;
+    displayName: string;
+    role: "Admin" | "User";
+    tier: "Reguler" | "Berbayar";
+    billingCycle?: "Bulanan" | "Tahunan" | null;
+    createdAt: string;
+    pekerjaan?: string;
+    phone?: string;
+    password?: string;
+  }
+
+  let userDatabase: UserProfile[] = [
+    {
+      uid: "bootstrapped_admin",
+      email: "rivalgamingchannel@gmail.com",
+      displayName: "Admin Utama",
+      role: "Admin",
+      tier: "Berbayar",
+      billingCycle: "Tahunan",
+      createdAt: new Date().toISOString(),
+      password: "R!v4l23072002!"
+    },
+    {
+      uid: "user_sample_1",
+      email: "ahmad.tafsir@gmail.com",
+      displayName: "Ahmad Tafsir",
+      role: "User",
+      tier: "Reguler",
+      billingCycle: null,
+      createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
+    },
+    {
+      uid: "user_sample_2",
+      email: "fatimah.zahra@yahoo.com",
+      displayName: "Fatimah Az-Zahra",
+      role: "User",
+      tier: "Berbayar",
+      billingCycle: "Bulanan",
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+    }
+  ];
+
+  let preApprovedAdmins = new Set<string>(["rivalgamingchannel@gmail.com"]);
+
+  // API Route: Register/Retrieve user profile
+  app.post("/api/users/profile", (req, res) => {
+    try {
+      const { uid, email, displayName, tier, billingCycle, pekerjaan, phone, password } = req.body;
+      if (!uid || !email) {
+        return res.status(400).json({ error: "UID dan email wajib diisi." });
+      }
+
+      let user = userDatabase.find(u => u.uid === uid || u.email.toLowerCase() === email.toLowerCase());
+      const isAdminEmail = preApprovedAdmins.has(email.toLowerCase()) || email.toLowerCase() === "rivalgamingchannel@gmail.com";
+
+      if (user) {
+        user.displayName = displayName || user.displayName;
+        if (email) {
+          user.email = email;
+        }
+        if (pekerjaan !== undefined) {
+          user.pekerjaan = pekerjaan;
+        }
+        if (phone !== undefined) {
+          user.phone = phone;
+        }
+        if (password !== undefined) {
+          user.password = password;
+        }
+        if (isAdminEmail) {
+          user.role = "Admin";
+        }
+        if (tier === "Reguler" || tier === "Berbayar") {
+          user.tier = tier;
+        }
+        if (billingCycle === "Bulanan" || billingCycle === "Tahunan" || billingCycle === null) {
+          user.billingCycle = billingCycle;
+        } else if (tier === "Berbayar" && !user.billingCycle) {
+          user.billingCycle = "Bulanan";
+        }
+      } else {
+        user = {
+          uid,
+          email,
+          displayName: displayName || email.split("@")[0],
+          role: isAdminEmail ? "Admin" : "User",
+          tier: tier || "Reguler",
+          billingCycle: tier === "Berbayar" ? (billingCycle || "Bulanan") : null,
+          createdAt: new Date().toISOString(),
+          pekerjaan: pekerjaan || "",
+          phone: phone || "",
+          password: password || ""
+        };
+        userDatabase.push(user);
+      }
+
+      if (user.role === "Admin" && !preApprovedAdmins.has(email.toLowerCase())) {
+        preApprovedAdmins.add(email.toLowerCase());
+      }
+
+      res.json(user);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Login user with email and password
+  app.post("/api/users/login", (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email dan kata sandi wajib diisi." });
+      }
+
+      const emailClean = email.trim().toLowerCase();
+      const user = userDatabase.find(u => u.email.toLowerCase() === emailClean);
+
+      if (!user) {
+        return res.status(401).json({ error: "Email atau kata sandi salah." });
+      }
+
+      // Check password if set (for admin, bootstrapped, or newly registered users)
+      if (user.password && user.password !== password) {
+        return res.status(401).json({ error: "Email atau kata sandi salah." });
+      }
+
+      // If user has no password set yet (e.g. sample users), we can allow them to log in or set it, or just pass
+      res.json(user);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Get all users (Admin only)
+  app.get("/api/users", (req, res) => {
+    try {
+      const { adminUid } = req.query;
+      if (!adminUid) {
+        return res.status(401).json({ error: "Autentikasi admin diperlukan." });
+      }
+
+      const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+      if (!admin) {
+        return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
+      }
+
+      res.json({ users: userDatabase });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Add or pre-approve an Admin
+  app.post("/api/users/add-admin", (req, res) => {
+    try {
+      const { email, adminUid } = req.body;
+      if (!email || !adminUid) {
+        return res.status(400).json({ error: "Email dan adminUid wajib diisi." });
+      }
+
+      const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+      if (!admin) {
+        return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
+      }
+
+      const emailClean = email.trim().toLowerCase();
+      preApprovedAdmins.add(emailClean);
+
+      const existingUser = userDatabase.find(u => u.email.toLowerCase() === emailClean);
+      if (existingUser) {
+        existingUser.role = "Admin";
+      }
+
+      res.json({ success: true, message: `Email ${emailClean} berhasil didaftarkan sebagai Admin.` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Delete a user
+  app.delete("/api/users/:uid", (req, res) => {
+    try {
+      const { uid } = req.params;
+      const { adminUid } = req.body;
+
+      if (!adminUid) {
+        return res.status(401).json({ error: "Autentikasi admin diperlukan." });
+      }
+
+      const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+      if (!admin) {
+        return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
+      }
+
+      if (uid === adminUid) {
+        return res.status(400).json({ error: "Anda tidak dapat menghapus akun Anda sendiri." });
+      }
+
+      const userIndex = userDatabase.findIndex(u => u.uid === uid);
+      if (userIndex === -1) {
+        return res.status(404).json({ error: "User tidak ditemukan." });
+      }
+
+      const deletedUser = userDatabase[userIndex];
+      userDatabase.splice(userIndex, 1);
+
+      res.json({ success: true, message: `User ${deletedUser.displayName} berhasil dihapus.` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Update subscription tier
+  app.post("/api/users/update-tier", (req, res) => {
+    try {
+      const { uid, tier, billingCycle, adminUid, pekerjaan, phone, email } = req.body;
+      if (!uid || !tier) {
+        return res.status(400).json({ error: "UID dan tier wajib diisi." });
+      }
+
+      if (tier !== "Reguler" && tier !== "Berbayar") {
+        return res.status(400).json({ error: "Tier tidak valid (hanya 'Reguler' atau 'Berbayar')." });
+      }
+
+      if (adminUid) {
+        const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+        if (!admin) {
+          return res.status(403).json({ error: "Akses ditolak." });
+        }
+      }
+
+      const user = userDatabase.find(u => u.uid === uid);
+      if (!user) {
+        return res.status(404).json({ error: "User tidak ditemukan." });
+      }
+
+      user.tier = tier;
+      user.billingCycle = tier === "Berbayar" ? (billingCycle || "Bulanan") : null;
+      if (email !== undefined) {
+        user.email = email;
+      }
+      if (pekerjaan !== undefined) {
+        user.pekerjaan = pekerjaan;
+      }
+      if (phone !== undefined) {
+        user.phone = phone;
+      }
+      res.json({ success: true, user });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Update user role (Promote to Admin or demote to User)
+  app.post("/api/users/update-role", (req, res) => {
+    try {
+      const { uid, role, adminUid } = req.body;
+      if (!uid || !role) {
+        return res.status(400).json({ error: "UID dan peran (role) wajib diisi." });
+      }
+
+      if (role !== "Admin" && role !== "User") {
+        return res.status(400).json({ error: "Peran tidak valid (hanya 'Admin' atau 'User')." });
+      }
+
+      if (!adminUid) {
+        return res.status(401).json({ error: "Autentikasi admin diperlukan." });
+      }
+
+      const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+      if (!admin) {
+        return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
+      }
+
+      const user = userDatabase.find(u => u.uid === uid);
+      if (!user) {
+        return res.status(404).json({ error: "User tidak ditemukan." });
+      }
+
+      if (uid === adminUid) {
+        return res.status(400).json({ error: "Anda tidak dapat mengubah peran Anda sendiri." });
+      }
+
+      user.role = role;
+
+      const emailClean = user.email.toLowerCase();
+      if (role === "Admin") {
+        preApprovedAdmins.add(emailClean);
+      } else {
+        if (emailClean !== "rivalgamingchannel@gmail.com") {
+          preApprovedAdmins.delete(emailClean);
+        }
+      }
+
+      res.json({ success: true, user });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- DATABASE PERPUSTAKAAN MAHASISWA CUNGKRING (MCP) ---
+  let cungkringLibrary = [...secondarySources];
+
+  // API Route: Sync Google Drive files into the library
+  app.post("/api/library/sync-drive", (req, res) => {
+    try {
+      const { files } = req.body;
+      if (!files || !Array.isArray(files)) {
+        return res.status(400).json({ error: "Format request tidak valid (membutuhkan 'files' array)." });
+      }
+
+      // Map GDrive files into the library reference format
+      const mappedFiles = files.map((file: any) => ({
+        id: `gdrive_${file.id}`,
+        title: file.name,
+        author: "Google Drive Rujukan",
+        category: "Koleksi Utama Google Drive",
+        content: file.content || `File rujukan dari Google Drive dengan nama "${file.name}".`,
+        uri: file.webViewLink || `https://drive.google.com/file/d/${file.id}`,
+        externalLink: file.webViewLink || `https://drive.google.com/file/d/${file.id}`,
+        locationDetail: "Google Drive Cloud Storage"
+      }));
+
+      // Remove previous Google Drive synchronized items to prevent duplicate piling
+      cungkringLibrary = cungkringLibrary.filter(item => !item.id.startsWith("gdrive_"));
+
+      // Prepend the new Google Drive references so they act as the highest-priority "referensi utama" (main references)
+      cungkringLibrary = [...mappedFiles, ...cungkringLibrary];
+
+      console.log(`[Google Drive Sync] Successfully integrated ${mappedFiles.length} files as main references.`);
+      res.json({ success: true, count: mappedFiles.length, files: mappedFiles });
+    } catch (err: any) {
+      console.error("Error syncing Google Drive:", err);
+      res.status(500).json({ error: `Gagal mensinkronisasikan Google Drive: ${err.message}` });
+    }
+  });
+
+  // In-memory MCP Server Configuration
+  let mcpServers = [
+    {
+      id: "cungkring_mcp",
+      name: "Perpustakaan Mahasiswa Cungkring (Model Context Protocol)",
+      url: "http://localhost:3000/api/mcp/perpustakaan-cungkring",
+      type: "local-virtual",
+      status: "connected",
+      description: "Menghubungkan platform dengan database digital naskah klasik Turats, kritik sanad, dan kajian aqidah luhur Mahasiswa Cungkring."
+    }
+  ];
+
+  // API Route: Get Registered MCP Servers
+  app.get("/api/mcp/servers", (req, res) => {
+    res.json(mcpServers);
+  });
+
+  // API Route: Get Primary Libraries Directory (cungkringLibrary)
+  app.get("/api/library", (req, res) => {
+    const populated = cungkringLibrary.map(item => {
+      const newItem = { ...item };
+      if (!newItem.externalLink) {
+        if (newItem.category?.toLowerCase().includes("hadits") || newItem.category?.toLowerCase().includes("syarah")) {
+          newItem.externalLink = "https://sunnah.one";
+        } else if (newItem.category?.toLowerCase().includes("tafsir") || newItem.category?.toLowerCase().includes("qur'an")) {
+          newItem.externalLink = "https://shamela.ws";
+        } else if (newItem.id === "cungkring_04" || newItem.id === "cungkring_05") {
+          newItem.externalLink = "https://waqfeya.net";
+        } else {
+          newItem.externalLink = "https://shamela.ws";
+        }
+      }
+      return newItem;
+    });
+    res.json({ library: populated });
+  });
+
+  // API Route: AI-powered library contextual reference search
+  app.post("/api/library/ai-search", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query || typeof query !== "string" || !query.trim()) {
+        return res.status(400).json({ error: "Kueri pencarian wajib diisi." });
+      }
+
+      // 1. Scoring & filtering of candidates from cungkringLibrary (491 sources)
+      const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      const scored = cungkringLibrary.map(item => {
+        let score = 0;
+        const titleLower = item.title.toLowerCase();
+        const authorLower = item.author.toLowerCase();
+        const catLower = item.category ? item.category.toLowerCase() : "";
+        const contentLower = item.content ? item.content.toLowerCase() : "";
+
+        // Simple exact phrase boost
+        if (titleLower.includes(query.toLowerCase())) score += 60;
+        if (contentLower.includes(query.toLowerCase())) score += 30;
+
+        for (const word of words) {
+          if (titleLower.includes(word)) score += 20;
+          if (authorLower.includes(word)) score += 15;
+          if (catLower.includes(word)) score += 10;
+          if (contentLower.includes(word)) score += 3;
+        }
+
+        return { item, score };
+      });
+
+      // Filter out items with 0 score, unless we have nothing, in which case take everything
+      let candidates = scored
+        .filter(x => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(x => {
+          const item = { ...x.item };
+          // Ensure every candidate has a valid, safe, direct externalLink and no empty values
+          if (!item.externalLink) {
+            if (item.category?.toLowerCase().includes("hadits") || item.category?.toLowerCase().includes("syarah")) {
+              item.externalLink = "https://sunnah.one";
+            } else if (item.category?.toLowerCase().includes("tafsir") || item.category?.toLowerCase().includes("qur'an")) {
+              item.externalLink = "https://shamela.ws";
+            } else {
+              item.externalLink = "https://waqfeya.net";
+            }
+          }
+          return item;
+        });
+
+      // If no keyword matches, fallback to first 30 items or random items
+      if (candidates.length === 0) {
+        candidates = cungkringLibrary.slice(0, 30).map(item => {
+          const newItem = { ...item };
+          if (!newItem.externalLink) {
+            newItem.externalLink = "https://shamela.ws";
+          }
+          return newItem;
+        });
+      } else {
+        candidates = candidates.slice(0, 30);
+      }
+
+      // 2. Call Gemini
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("API Key Gemini tidak ditemukan di environment server.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey: apiKey });
+
+      // Build the prompt with candidates
+      const prompt = `Anda adalah Pustakawan AI Pintar dari Perpustakaan Mahasiswa Cungkring.
+Tugas Anda adalah membantu pengguna mencari dan merekomendasikan referensi kitab, artikel, situs web, atau saluran telegram yang sesuai dengan kueri atau konteks pencarian mereka.
+
+Kueri Pencarian Pengguna: "${query}"
+
+Berikut adalah daftar 30 kandidat referensi yang paling relevan dengan kueri pengguna dari database kami:
+${candidates.map((c, idx) => `
+[Referensi #${idx + 1}]
+ID: ${c.id}
+Judul: ${c.title}
+Penulis/Penerbit: ${c.author}
+Kategori: ${c.category || "Pustaka"}
+Deskripsi/Konten: ${c.content}
+Link Eksternal Langsung (WAJIB DIGUNAKAN): ${c.externalLink}
+`).join("\n")}
+
+Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SALAH):
+1. Rekomendasikan kitab atau referensi yang BENAR-BENAR paling relevan dengan kueri pengguna. Pilih yang paling cocok (biasanya 3-7 referensi terbaik).
+2. Setiap kali Anda merekomendasikan suatu referensi dari daftar di atas, Anda WAJIB memberikan tautan/link langsung berupa Markdown hyperlink.
+3. FORMAT LINK HARUS BERUPA LINK LANGSUNG KE SITUS TERSEBUT:
+   - JANGAN PERNAH MENULIS ATAU MENGGUNAKAN LINK LOKAL SEPERTI \`/ref/ID\` ATAU LINK PERANTARA LAINNYA!
+   - Tautan/link WAJIB langsung berupa nilai "Link Eksternal Langsung" yang tertera pada data kandidat di atas (contoh: https://shamela.ws/book/1681 atau https://waqfeya.net atau https://sunnah.one).
+   - JANGAN PERNAH memalsukan link atau mereferensikan ke domain aneh lainnya. Gunakan HANYA URL utuh yang ada di daftar Link Eksternal di atas.
+   - Contoh format yang benar: \`[Kitab Fathul Bari](https://shamela.ws/book/1681)\` atau \`[Tafsir Ibnu Katsir](https://shamela.ws/book/23567)\` atau \`[Al-Bahith Al-Hadithi](https://sunnah.one)\`.
+4. Jawablah dalam bahasa Indonesia yang sangat ramah, santun, bernada akademis, dan terstruktur rapi. Jelaskan secara singkat mengapa referensi tersebut cocok dengan konteks pencarian pengguna.
+5. Jika tidak ada referensi yang secara langsung cocok, jelaskan secara santun dan tawarkan 3-5 rujukan digital utama/umum dari daftar di atas yang memiliki link eksternal langsung.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+      });
+
+      const reply = response.text || "Tidak ada respon dari model AI.";
+      res.json({ result: reply, matchedCandidates: candidates });
+
+    } catch (error: any) {
+      console.error("AI Library Search Error:", error);
+      res.status(500).json({ error: error.message || "Gagal melakukan pencarian dengan AI." });
+    }
+  });
+
+  // API Route: Register/Update MCP Server
+  app.post("/api/mcp/servers", (req, res) => {
+    const { name, url, description } = req.body;
+    if (!name || !url) {
+      return res.status(400).json({ error: "Nama dan URL server wajib diisi." });
+    }
+    const newServer = {
+      id: "mcp_" + Date.now(),
+      name,
+      url,
+      type: "sse",
+      status: "connected", // Default to connected upon test
+      description: description || "Server Model Context Protocol eksternal."
+    };
+    mcpServers.push(newServer);
+    res.json(newServer);
+  });
+
+  // API Route: Delete Custom MCP Server
+  app.delete("/api/mcp/servers/:id", (req, res) => {
+    const { id } = req.params;
+    if (id === "cungkring_mcp") {
+      return res.status(400).json({ error: "Server Perpustakaan Mahasiswa Cungkring bawaan tidak boleh dihapus." });
+    }
+    mcpServers = mcpServers.filter(s => s.id !== id);
+    res.json({ success: true });
+  });
+
+  // API Route: Handshake / Connect to MCP Server
+  app.post("/api/mcp/connect", async (req, res) => {
+    const { url, type } = req.body;
+    try {
+      if (type === "local-virtual" || url.includes("perpustakaan-cungkring")) {
+        // Mock successful initialization handshakes
+        return res.json({
+          status: "connected",
+          protocolVersion: "2024-11-05",
+          capabilities: {
+            resources: {},
+            tools: {}
+          },
+          serverInfo: {
+            name: "Perpustakaan Mahasiswa Cungkring MCP",
+            version: "1.0.0"
+          },
+          tools: [
+            {
+              name: "search_library",
+              description: "Mencari kitab, naskah klasik, fatwa, dan artikel ilmiah di Perpustakaan Mahasiswa Cungkring berdasarkan kata kunci.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  keyword: { type: "string", description: "Kata kunci pencarian (contoh: tabarruk, hadits, kuburan)" }
+                },
+                required: ["keyword"]
+              }
+            },
+            {
+              name: "verify_reference",
+              description: "Melakukan cross-check atau verifikasi validitas suatu kutipan naskah klasik terhadap naskah asli di dalam perpustakaan.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  quote: { type: "string", description: "Potongan kutipan atau kalimat yang ingin diverifikasi kebenarannya." }
+                },
+                required: ["quote"]
+              }
+            }
+          ]
+        });
+      }
+
+      // External SSE / HTTP MCP Handshake simulation/proxy
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "QuranicaAI-Client", version: "1.0.0" }
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`MCP Server merespon dengan status ${response.status}`);
+      }
+
+      const mcpData = await response.json();
+      res.json({
+        status: "connected",
+        ...mcpData
+      });
+    } catch (err: any) {
+      console.error("MCP Handshake Error:", err);
+      res.status(500).json({ error: `Koneksi gagal: ${err.message}` });
+    }
+  });
+
+  // API Route: Query Tool / Resource Call on MCP Server
+  app.post("/api/mcp/query", async (req, res) => {
+    const { url, toolName, arguments: toolArgs, type } = req.body;
+    try {
+      if (type === "local-virtual" || url.includes("perpustakaan-cungkring")) {
+        // Handle virtual tool execution
+        if (toolName === "search_library") {
+          const kw = (toolArgs?.keyword || "").toLowerCase();
+          const results = cungkringLibrary.filter(item => 
+            item.title.toLowerCase().includes(kw) || 
+            item.author.toLowerCase().includes(kw) || 
+            item.content.toLowerCase().includes(kw) ||
+            item.category.toLowerCase().includes(kw)
+          );
+
+          return res.json({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  success: true,
+                  count: results.length,
+                  results: results.map(r => ({
+                    id: r.id,
+                    title: r.title,
+                    author: r.author,
+                    category: r.category,
+                    content: r.content,
+                    uri: r.uri
+                  }))
+                }, null, 2)
+              }
+            ]
+          });
+        }
+
+        if (toolName === "verify_reference") {
+          const quote = (toolArgs?.quote || "").toLowerCase();
+          const matched = cungkringLibrary.find(item => 
+            item.content.toLowerCase().includes(quote) ||
+            item.title.toLowerCase().includes(quote)
+          );
+
+          return res.json({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  verified: !!matched,
+                  matchedSource: matched ? {
+                    title: matched.title,
+                    author: matched.author,
+                    category: matched.category,
+                    exactContent: matched.content,
+                    uri: matched.uri
+                  } : null,
+                  message: matched 
+                    ? "Kutipan terverifikasi dengan sukses di dalam basis naskah Perpustakaan Mahasiswa Cungkring!" 
+                    : "Kutipan tidak ditemukan dalam database perpustakaan. Harap periksa ejaan atau rujukan."
+                }, null, 2)
+              }
+            ]
+          });
+        }
+
+        return res.status(400).json({ error: `Tool ${toolName} tidak dikenal di server virtual.` });
+      }
+
+      // External MCP JSON-RPC call
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: toolName,
+            arguments: toolArgs
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server MCP merespon dengan status ${response.status}`);
+      }
+
+      const queryResult = await response.json();
+      res.json(queryResult.result || queryResult);
+    } catch (err: any) {
+      console.error("MCP Query Error:", err);
+      res.status(500).json({ error: `Gagal mengeksekusi MCP Tool: ${err.message}` });
+    }
+  });
+
+  // API Route: Deepseek Q&A Chat via Sumopod
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { messages } = req.body;
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: "Format request tidak valid (membutuhkan messages)." });
+      }
+
+      // Cari referensi relevan dari cungkringLibrary berdasarkan pesan pengguna terakhir
+      const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === "user")?.content || "";
+      const searchKeywords = lastUserMessage.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+      
+      const matchedReferences = cungkringLibrary.filter(item => {
+        return searchKeywords.some((kw: string) => 
+          item.title.toLowerCase().includes(kw) ||
+          item.author.toLowerCase().includes(kw) ||
+          item.content.toLowerCase().includes(kw) ||
+          item.category.toLowerCase().includes(kw)
+        ) || lastUserMessage.toLowerCase().includes(item.title.toLowerCase())
+          || lastUserMessage.toLowerCase().includes(item.author.toLowerCase());
+      });
+
+      let referenceContext = "";
+      if (matchedReferences.length > 0) {
+        referenceContext = "\n\n=== BERIKUT ADALAH RUJUKAN UTAMA DARI DATABASE PERPUSTAKAAN MAHASISWA CUNGKRING (WAJIB DISEBUTKAN SECARA EKSPLISIT): ===\n" + 
+          matchedReferences.map((ref, idx) => `[Sumber Referensi #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKajian/Naskah: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") + 
+          "\n\nWAJIB sebutkan secara eksplisit rujukan dan argumen ilmiah di atas dalam jawaban Anda serta nyatakan bahwa data ini diverifikasi langsung melalui database Perpustakaan Mahasiswa Cungkring.";
+      } else {
+        // Fallback: sertakan seluruh katalog utama sebagai rujukan dasar
+        referenceContext = "\n\n=== DATABASE UTAMA REFERENSI PERPUSTAKAAN MAHASISWA CUNGKRING: ===\n" + 
+          cungkringLibrary.map((ref, idx) => `[Katalog #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKajian: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") + 
+          "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan argumen dari database Perpustakaan Mahasiswa Cungkring di atas jika relevan dengan pertanyaan pengguna untuk memformulasikan jawaban ilmiah Anda.";
+      }
+
+      // Gunakan API Key dari environment variable, fallback ke yang diberikan user
+      const apiKey = process.env.SUMOPOD_API_KEY || "sk-zD1M_5XsnK_o724sOI_cjg";
+      const systemInstruction = "Anda adalah Asisten AI Pakar Ulumul Qur'an, Tafsir, dan Hadits tingkat lanjut (sekelas ulama besar) yang mengandalkan Perpustakaan Mahasiswa Cungkring serta jaringan perpustakaan primer (seperti Maktabah Shamela, Al-Waqfeya, Al-Bahith Al-Hadithi, dsb) sebagai pusat referensi utama Anda. Jawablah setiap pertanyaan dengan sangat mendalam, ilmiah, dan komprehensif. WAJIB sertakan dalil-dalil (Al-Qur'an, Hadits, atau Atsar) dalam BAHASA ARAB asli beserta harakat dan terjemahannya. WAJIB gunakan gaya penulisan akademis dengan menyertakan rujukan kitab sebagai bodynotes. " +
+        "CRITICAL REQUIREMENT: Setiap argumen, kutipan, dan pernyataan ilmiah Anda WAJIB disertai dengan link referensi web yang bisa dilacak/dikunjungi langsung oleh pengguna untuk menambah otoritas keilmuan. Anda harus menyisipkan link pelacakan orisinal yang bisa dibuka langsung di browser dengan format Markdown hyperlink, yaitu: " +
+        "- Untuk Fathul Bari: `[Syarah Bukhari: Fathul Bari](/ref/fathul-bari)`\n" +
+        "- Untuk Tafsir Ibnu Katsir: `[Tafsir: Ibnu Katsir](/ref/tafsir-ibnu-katsir)`\n" +
+        "- Untuk Al-Itqan: `[Ulumul Qur'an: Al-Itqan](/ref/al-itqan)`\n" +
+        "- Untuk Debunk Tabarruk: `[Kajian: Debunk Tabarruk](/ref/debunk-tabarruk)`\n" +
+        "- Untuk Hukum Ngalap Berkah: `[Kajian: Ngalap Berkah](/ref/ngalap-berkah-kuburan)`\n" +
+        "- Untuk Maktabah Shamela Web: `[Pustaka: Maktabah Shamela Online](/ref/ref_shamela_web)`\n" +
+        "- Untuk Al-Bahith Al-Hadithi: `[Pustaka: Al-Bahith Al-Hadithi](/ref/ref_bahith_hadithi)`\n" +
+        "- Untuk Al-Waqfeya (PDF Kitab): `[Pustaka: Al-Maktabah Al-Waqfeyah](/ref/ref_download_waqfeya)`\n" +
+        "- Untuk Jami' Al-Kutub Al-Musawwarah Telegram: `[Telegram: Jami' Al-Kutub Al-Musawwarah](/ref/ref_tele_ktbktb)`\n" +
+        "Link-link rujukan perpustakaan primer ini sangat penting karena merujuk ke halaman verifikasi resmi kami yang menyediakan teks lengkap, letak fisik, dan tautan orisinal yang terverifikasi. Gunakan link `/ref/ID` yang tepat berdasarkan database referensi di bawah ini. Jangan membuat link di luar rujukan terdaftar dalam database kami. " +
+        "Jika ditanya mengenai hukum tabarruk (ngalap berkah) di makam orang shalih, gunakan referensi dari dokumen 'Mendebunk Kaum Tabbaruk' dan 'Ngalap Berkah Dengan Kuburan Bolehkah?' yang menyatakan bahwa praktik tersebut dilarang (haram) dan bisa menjurus pada kesyirikan, serta jelaskan kelemahan dalil-dalil yang sering digunakan untuk membolehkannya (seperti riwayat Malik ad-Dar, riwayat Aisyah tentang kuwah, dll) berdasarkan kritik sanad dan matan. Jika tidak tahu, katakan Wallahu A'lam. Jangan berhalusinasi." + referenceContext;
+
+      const formattedMessages = [
+        { role: "system", content: systemInstruction },
+        ...messages.map((m: any) => ({
+          role: m.role === "model" ? "assistant" : m.role,
+          content: m.content
+        }))
+      ];
+
+      const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-v4-pro",
+          messages: formattedMessages
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Sumopod API error (${response.status}): ${errText}`);
+      }
+
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || "Maaf, terjadi kesalahan saat menghubungi asisten AI.";
+      res.json({ reply });
+    } catch (error: any) {
+      console.error("Chat API Error:", error);
+      res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+  });
+
+  // Route: Visit Reference directly in a beautiful HTML Page
+  app.get("/ref/:id", (req, res) => {
+    const { id } = req.params;
+    const cleanId = id.trim().toLowerCase();
+
+    // Find reference by ID or matching URI slug
+    const item = cungkringLibrary.find(x => 
+      x.id.toLowerCase() === cleanId || 
+      x.uri.toLowerCase() === `mcp://cungkring/${cleanId}` ||
+      x.uri.toLowerCase().endsWith(`/${cleanId}`)
+    );
+
+    let externalLink = "";
+    if (item) {
+      externalLink = item.externalLink;
+    }
+
+    if (!externalLink) {
+      if (cleanId === "fathul-bari" || cleanId === "cungkring_01") {
+        externalLink = "https://shamela.ws/book/1681";
+      } else if (cleanId === "tafsir-ibnu-katsir" || cleanId === "cungkring_02") {
+        externalLink = "https://shamela.ws/book/23567";
+      } else if (cleanId === "al-itqan" || cleanId === "cungkring_03") {
+        externalLink = "https://shamela.ws/book/11444";
+      } else if (cleanId === "debunk-tabarruk" || cleanId === "cungkring_04") {
+        externalLink = "https://waqfeya.net";
+      } else if (cleanId === "ngalap-berkah-kuburan" || cleanId === "cungkring_05") {
+        externalLink = "https://waqfeya.net";
+      } else if (cleanId.includes("shamela")) {
+        externalLink = "https://shamela.ws";
+      } else if (cleanId.includes("hadits") || cleanId.includes("sunnah") || cleanId.includes("bukhari") || cleanId.includes("bari")) {
+        externalLink = "https://sunnah.one";
+      } else if (cleanId.includes("waqfeya")) {
+        externalLink = "https://waqfeya.net";
+      } else {
+        externalLink = "https://shamela.ws";
+      }
+    }
+
+    return res.redirect(302, externalLink);
+  });
+
+  app.get("/ref-old/:id", (req, res) => {
+    const { id } = req.params;
+    const cleanId = id.trim().toLowerCase();
+
+    // Find reference by ID or matching URI slug
+    const item = cungkringLibrary.find(x => 
+      x.id.toLowerCase() === cleanId || 
+      x.uri.toLowerCase() === `mcp://cungkring/${cleanId}` ||
+      x.uri.toLowerCase().endsWith(`/${cleanId}`)
+    );
+
+    if (!item) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Referensi Tidak Ditemukan - Quranica AI</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <style>body { font-family: 'Inter', sans-serif; }</style>
+        </head>
+        <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center items-center p-6">
+          <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
+            <div class="inline-flex p-4 bg-red-500/10 rounded-full border border-red-500/20 text-red-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="space-y-2">
+              <h1 class="text-2xl font-bold text-slate-200">Referensi Tidak Ditemukan</h1>
+              <p class="text-sm text-slate-400">Maaf, tautan referensi <code class="text-emerald-400 font-mono">${id}</code> tidak terdaftar dalam database Perpustakaan Mahasiswa Cungkring.</p>
+            </div>
+            <a href="/" class="inline-flex items-center justify-center w-full px-5 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-lg hover:shadow-emerald-600/20">
+              Kembali ke Quranica AI
+            </a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
+    // Determine the external or physical location details
+    let externalLink = (item as any).externalLink || "";
+    let locationDetail = (item as any).locationDetail || "";
+    
+    if (!externalLink && !locationDetail) {
+      if (item.id === "cungkring_01") {
+        externalLink = "https://shamela.ws/book/1681";
+        locationDetail = "Maktabah Shamela (Kitab Digital Klasik #1681), Jilid 3, Bab Ziarah Kubur.";
+      } else if (item.id === "cungkring_02") {
+        externalLink = "https://shamela.ws/book/23567";
+        locationDetail = "Maktabah Shamela (Kitab Digital Klasik #23567), Penafsiran Surah An-Najm: 19-23.";
+      } else if (item.id === "cungkring_03") {
+        externalLink = "https://shamela.ws/book/11444";
+        locationDetail = "Maktabah Shamela (Kitab Digital Klasik #11444), Bab 47: I'jazul Qur'an.";
+      } else if (item.id === "cungkring_04") {
+        locationDetail = "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 12.";
+      } else if (item.id === "cungkring_05") {
+        locationDetail = "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 13.";
+      }
+    }
+
+    // Let's build the action buttons as normal HTML string
+    const actionButtons = externalLink 
+      ? `<a href="${externalLink}" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-lg hover:shadow-emerald-600/20 animate-bounce">
+          Kunjungi Sumber Digital (Shamela)
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+         </a>`
+      : `<button onclick="window.print()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-200 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl transition-all font-sans">
+          Cetak / Simpan Bukti Kutipan
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+         </button>`;
+
+    return res.send(`
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${item.title} - Verifikasi Otoritas Ilmiah - Quranica AI</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Inter', sans-serif; }
+          .font-mono { font-family: 'JetBrains Mono', monospace; }
+        </style>
+      </head>
+      <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+        <!-- Main Container -->
+        <main class="flex-grow flex items-center justify-center p-4 md:p-8">
+          <div class="max-w-3xl w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in duration-500 my-8">
+            
+            <!-- Header Section -->
+            <div class="bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 p-6 md:p-8 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider font-mono">
+                    Verified Citation
+                  </span>
+                  <span class="text-[10px] bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full font-medium font-mono">
+                    ID: ${item.id}
+                  </span>
+                </div>
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-100 tracking-tight leading-snug">
+                  ${item.title}
+                </h1>
+              </div>
+              <div class="flex-shrink-0">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                  <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Terverifikasi
+                </span>
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6 md:p-8 space-y-6">
+              
+              <!-- Author & Category Row -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800/60">
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono block">Penulis / Penyusun</span>
+                  <span class="text-sm font-semibold text-slate-200 mt-1 block">${item.author}</span>
+                </div>
+                <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800/60">
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono block">Kategori Ilmiah</span>
+                  <span class="text-sm font-semibold text-emerald-400 mt-1 block">${item.category}</span>
+                </div>
+              </div>
+
+              <!-- Content / Text Body -->
+              <div class="space-y-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono block">Kajian & Kutipan Naskah</span>
+                <div class="p-6 bg-slate-950 rounded-2xl border border-slate-800 text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-sans italic">
+                  "${item.content}"
+                </div>
+              </div>
+
+              <!-- Traceability / Address Section -->
+              <div class="p-5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-3">
+                <h3 class="text-xs font-bold text-emerald-400 flex items-center gap-2 font-mono uppercase tracking-wider">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Lokasi & Alamat Fisik / Digital
+                </h3>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                  ${locationDetail}
+                </p>
+                <div class="pt-1 text-xs text-slate-400 flex flex-col gap-1">
+                  <div><span class="font-bold text-slate-300 font-mono">Digital Address:</span> <code class="text-emerald-400/95 font-mono select-all">${item.uri}</code></div>
+                  <div><span class="font-bold text-slate-300 font-mono">Sistem Verifikasi:</span> Model Context Protocol (MCP) Node Virtual - Quranica AI</div>
+                </div>
+              </div>
+
+              <!-- Trust / Seal Banner -->
+              <div class="flex items-start gap-3.5 p-4 bg-slate-950 rounded-2xl border border-slate-800/80">
+                <div class="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 mt-0.5 border border-indigo-500/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div class="space-y-1">
+                  <h4 class="text-xs font-bold text-slate-200">Keabsahan & Integritas Sanad Ilmiah</h4>
+                  <p class="text-xs text-slate-400 leading-relaxed">
+                    Sertifikasi ini menjamin bahwa kutipan di atas orisinal dan sesuai dengan sumber kitab aslinya tanpa perubahan lafadz atau makna. Pengguna dipersilakan melakukan pelacakan langsung.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="bg-slate-950 p-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 font-sans">
+              <a href="/" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Kembali ke Aplikasi
+              </a>
+              
+              ${actionButtons}
+            </div>
+
+          </div>
+        </main>
+      </body>
+      </html>
+    `);
+  });
+
+  // --- DEEP RESEARCH STATE & ENDPOINTS ---
+  interface ResearchStep {
+    name: string;
+    status: "pending" | "running" | "completed" | "failed";
+    detail: string;
+    result?: string;
+  }
+
+  interface ResearchTask {
+    id: string;
+    topic: string;
+    status: "idle" | "running" | "completed" | "failed";
+    progress: number;
+    currentStage: string;
+    logs: string[];
+    steps: ResearchStep[];
+    result: string;
+  }
+
+  const researchTasks: Record<string, ResearchTask> = {};
+
+  // API Route: Start Deep Research
+  app.post("/api/research/start", async (req, res) => {
+    try {
+      const { topic } = req.body;
+      if (!topic || typeof topic !== "string" || !topic.trim()) {
+        return res.status(400).json({ error: "Topik riset tidak valid." });
+      }
+
+      const id = "res_" + Date.now();
+      const task: ResearchTask = {
+        id,
+        topic: topic.trim(),
+        status: "running",
+        progress: 0,
+        currentStage: "Menginisialisasi sistem kajian mendalam...",
+        logs: [`[${new Date().toLocaleTimeString('id-ID')}] Sistem Deep Research siap. Mengkaji topik: "${topic.trim()}"`],
+        steps: [
+          { name: "Perumusan Kerangka", status: "pending", detail: "Menunggu giliran..." },
+          { name: "Ekstraksi Dalil & Turats", status: "pending", detail: "Menunggu giliran..." },
+          { name: "Analisis Komparatif", status: "pending", detail: "Menunggu giliran..." },
+          { name: "Sintesis Naskah Akhir", status: "pending", detail: "Menunggu giliran..." }
+        ],
+        result: ""
+      };
+
+      researchTasks[id] = task;
+
+      // Start asynchronous background research loop
+      runBackgroundResearch(id).catch(err => {
+        console.error(`Background research error for ${id}:`, err);
+      });
+
+      res.json({ id });
+    } catch (error: any) {
+      console.error("Start Research Error:", error);
+      res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+  });
+
+  // API Route: Get Deep Research Status
+  app.get("/api/research/status/:id", (req, res) => {
+    const { id } = req.params;
+    const task = researchTasks[id];
+    if (!task) {
+      return res.status(404).json({ error: "Sesi riset tidak ditemukan." });
+    }
+    res.json(task);
+  });
+
+  // Background Worker Function
+  async function runBackgroundResearch(id: string) {
+    const task = researchTasks[id];
+    if (!task) return;
+
+    // Ambil referensi dari Perpustakaan Mahasiswa Cungkring yang relevan dengan topik riset
+    const topicKeywords = task.topic.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+    const matchedReferences = cungkringLibrary.filter(item => {
+      return topicKeywords.some((kw: string) => 
+        item.title.toLowerCase().includes(kw) ||
+        item.author.toLowerCase().includes(kw) ||
+        item.content.toLowerCase().includes(kw) ||
+        item.category.toLowerCase().includes(kw)
+      ) || task.topic.toLowerCase().includes(item.title.toLowerCase())
+        || task.topic.toLowerCase().includes(item.author.toLowerCase());
+    });
+
+    let referenceContext = "";
+    if (matchedReferences.length > 0) {
+      referenceContext = "\n\n=== BERIKUT ADALAH DATABASE REFERENSI UTAMA PERPUSTAKAAN MAHASISWA CUNGKRING YANG WAJIB DIGUNAKAN (RAG): ===\n" + 
+        matchedReferences.map((ref, idx) => `[Rujukan #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKonten/Kajian: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") +
+        "\n\nAnda WAJIB memprioritaskan, mengutip, dan mengintegrasikan seluruh argumentasi dan data dari referensi di atas di dalam karya ilmiah hasil riset Anda.";
+    } else {
+      // Masukkan seluruh database sebagai rujukan dasar
+      referenceContext = "\n\n=== SELURUH DATABASE REFERENSI PERPUSTAKAAN MAHASISWA CUNGKRING: ===\n" + 
+        cungkringLibrary.map((ref, idx) => `[Rujukan #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKonten: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") +
+        "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan rujukan dari Perpustakaan Mahasiswa Cungkring di atas di dalam karya ilmiah hasil riset Anda.";
+    }
+
+    const apiKey = process.env.SUMOPOD_API_KEY || "sk-zD1M_5XsnK_o724sOI_cjg";
+    const systemInstruction = "Anda adalah Asisten AI Pakar Ulumul Qur'an, Tafsir, Hadits, dan Sejarah Islam tingkat lanjut. Anda melakukan penelitian akademis yang sangat mendalam, ketat, objektif, dan ilmiah dengan gaya bahasa akademis tinggi. " +
+      "CRITICAL RULE FOR SCIENTIFIC AUTHORITY: Setiap argumen, klaim kritis, sanad hadits, atau tafsir Al-Qur'an yang Anda bahas dalam dokumen riset ini WAJIB disertai tautan referensi web yang bisa dilacak dan dikunjungi langsung di browser. Gunakan tautan hyperlink Markdown yang mengarah ke endpoint web kami yaitu:\n" +
+      "- Untuk Fathul Bari: `[Syarah Bukhari: Fathul Bari](/ref/fathul-bari)`\n" +
+      "- Untuk Tafsir Ibnu Katsir: `[Tafsir: Ibnu Katsir](/ref/tafsir-ibnu-katsir)`\n" +
+      "- Untuk Al-Itqan: `[Ulumul Qur'an: Al-Itqan](/ref/al-itqan)`\n" +
+      "- Untuk Debunk Tabarruk: `[Kajian: Debunk Tabarruk](/ref/debunk-tabarruk)`\n" +
+      "- Untuk Hukum Ngalap Berkah: `[Kajian: Ngalap Berkah](/ref/ngalap-berkah-kuburan)`\n" +
+      "- Untuk Maktabah Shamela Web: `[Pustaka: Maktabah Shamela Online](/ref/ref_shamela_web)`\n" +
+      "- Untuk Al-Bahith Al-Hadithi: `[Pustaka: Al-Bahith Al-Hadithi](/ref/ref_bahith_hadithi)`\n" +
+      "- Untuk Al-Waqfeya (PDF Kitab): `[Pustaka: Al-Maktabah Al-Waqfeyah](/ref/ref_download_waqfeya)`\n" +
+      "- Untuk Jami' Al-Kutub Al-Musawwarah Telegram: `[Telegram: Jami' Al-Kutub Al-Musawwarah](/ref/ref_tele_ktbktb)`\n" +
+      "Cantumkan juga daftar rujukan/bibliografi lengkap beserta tautan web tersebut di atas dan alamat fisiknya di akhir laporan hasil riset untuk keabsahan akademis tertinggi." + referenceContext;
+
+    const callModel = async (userPrompt: string) => {
+      const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-v4-pro",
+          messages: [
+            { role: "system", content: systemInstruction },
+            { role: "user", content: userPrompt }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Sumopod API error (${response.status}): ${errText}`);
+      }
+
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content || "";
+    };
+
+    try {
+      // --- STAGE 1: Perumusan Kerangka ---
+      task.progress = 5;
+      task.currentStage = "Merumuskan kerangka riset & peta masalah...";
+      task.steps[0].status = "running";
+      task.steps[0].detail = "Menghubungi Deepseek untuk merumuskan sub-pertanyaan riset dan peta referensi Turats...";
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 1] Mengirim permohonan analisis topik ke Deepseek-v4-pro...`);
+
+      const stage1Prompt = `Buatlah kerangka penelitian akademis yang mendalam tentang topik berikut: "${task.topic}".
+Tentukan latar belakang masalah ringkas, 3-5 sub-pertanyaan penelitian yang krusial, istilah-istilah kunci, dan daftar rujukan kitab klasik (Turats) yang wajib diteliti dalam kajian ini.
+Tuliskan naskah dalam format Markdown yang rapi dan terstruktur.`;
+
+      const stage1Result = await callModel(stage1Prompt);
+      
+      task.progress = 25;
+      task.steps[0].status = "completed";
+      task.steps[0].detail = "Berhasil merumuskan kerangka riset dan daftar rujukan kitab klasik.";
+      task.steps[0].result = stage1Result;
+      task.result = `# 1. Kerangka & Struktur Penelitian\n\n${stage1Result}`;
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 1] Peta kerangka penelitian selesai dibuat.`);
+
+      // --- STAGE 2: Ekstraksi Dalil & Turats ---
+      task.progress = 30;
+      task.currentStage = "Menelusuri & mengompilasi naskah dalil...";
+      task.steps[1].status = "running";
+      task.steps[1].detail = "Mengompilasi kutipan ayat, hadits, atsar sahabat, dan kutipan kitab tafsir klasik...";
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 2] Memulai ekstraksi literatur primer...`);
+
+      const stage2Prompt = `Berdasarkan kerangka penelitian berikut:\n${stage1Result}\n\nLakukan penelusuran mendalam terhadap dalil Al-Qur'an, Hadits, Atsar, serta kutipan Kitab Turats klasik (seperti Tafsir Ibnu Katsir, Al-Itqan, Fathul Bari, dll) yang membahas topik ini secara langsung maupun tidak langsung. Tuliskan teks Arab asli beserta harakat, terjemahan Indonesia, dan analisis kualitas periwayatan (sanad/matan) jika relevan. Berikan rujukan yang sangat konkret dan ilmiah.`;
+
+      const stage2Result = await callModel(stage2Prompt);
+
+      task.progress = 50;
+      task.steps[1].status = "completed";
+      task.steps[1].detail = "Berhasil mengumpulkan literatur primer lengkap dengan kutipan teks Arab asli.";
+      task.steps[1].result = stage2Result;
+      task.result = `# 1. Kerangka & Struktur Penelitian\n\n${stage1Result}\n\n---\n\n# 2. Ekstraksi Dalil & Turats\n\n${stage2Result}`;
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 2] Kompilasi dalil klasik berhasil diselesaikan.`);
+
+      // --- STAGE 3: Analisis Komparatif & Debat Ilmiah ---
+      task.progress = 55;
+      task.currentStage = "Melakukan analisis komparatif & kajian kritis...";
+      task.steps[2].status = "running";
+      task.steps[2].detail = "Mengkaji silang argumentasi mazhab, menelaah sanggahan kritis ilmiah, dan status kesahihan...";
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 3] Menghubungi Deepseek untuk melakukan analisis perbandingan mazhab...`);
+
+      const stage3Prompt = `Berdasarkan dalil-dalil yang terkumpul:\n${stage2Result}\n\nLakukan analisis komparatif yang sangat tajam dan mendalam. Jelaskan berbagai sudut pandang mazhab (Fiqih, Tafsir, Aqidah), argumentasi-argumentasi ilmiah mereka, sanggahan (debunking) kritis terhadap dalil yang dinilai lemah, serta argumentasi yang dinilai paling rajih (kuat). Khusus jika topik berkaitan dengan tabarruk (ngalap berkah) di makam, pastikan memaparkan sanggahan yang mendebunk praktik syirik tersebut, serta kelemahan argumen pendukungnya secara objektif dan ilmiah berdasarkan kaidah ushul fiqih dan ilmu hadits.`;
+
+      const stage3Result = await callModel(stage3Prompt);
+
+      task.progress = 75;
+      task.steps[2].status = "completed";
+      task.steps[2].detail = "Analisis kritis komparasi mazhab dan tinjauan ilmiah selesai disusun.";
+      task.steps[2].result = stage3Result;
+      task.result = `# 1. Kerangka & Struktur Penelitian\n\n${stage1Result}\n\n---\n\n# 2. Ekstraksi Dalil & Turats\n\n${stage2Result}\n\n---\n\n# 3. Analisis Komparatif & Debat Ilmiah\n\n${stage3Result}`;
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 3] Analisis kritis komparatif berhasil dirampungkan.`);
+
+      // --- STAGE 4: Sintesis Naskah Akhir ---
+      task.progress = 80;
+      task.currentStage = "Menyusun draf akhir dokumen penelitian mendalam...";
+      task.steps[3].status = "running";
+      task.steps[3].detail = "Menggabungkan temuan, menulis mukaddimah, pembahasan, kesimpulan, dan daftar rujukan lengkap...";
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Tahap 4] Memulai penyusunan manuskrip penelitian final akademis...`);
+
+      const stage4Prompt = `Berikut adalah kumpulan materi penelitian dari tahap-tahap sebelumnya:
+Tahap 1 (Kerangka & Masalah): ${stage1Result}
+Tahap 2 (Kompilasi Literatur & Dalil): ${stage2Result}
+Tahap 3 (Analisis Komparatif): ${stage3Result}
+
+Sintesiskan seluruh materi di atas menjadi satu manuskrip karya ilmiah penelitian (thesis) yang sangat panjang, komprehensif, padat, dan terstruktur rapi. 
+Dokumen akhir WAJIB memiliki susunan:
+1. JUDUL PENELITIAN BESAR
+2. ABSTRAK (Ringkasan singkat latar belakang, metode, pembahasan, dan kesimpulan)
+3. MUKADDIMAH / PENDAHULUAN (Latar belakang, rumusan masalah, tujuan)
+4. KAJIAN PUSTAKA & DALIL UTAMA (Kompilasi teks Arab, harakat, terjemahan, dan jilid/halaman kitab)
+5. ANALISIS KRITIS & PERSPEKTIF MAZHAB (Komparasi argumentasi secara objektif, sanggahan ilmiah, penyelesaian ushuliyah)
+6. KESIMPULAN & REKOMENDASI (Formulasi akhir masalah, nasihat akademik)
+7. DAFTAR PUSTAKA (Exhaustive bibliography kitab-kitab klasik/kontemporer dengan detail penulis)
+
+Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub-bab yang tegas.`;
+
+      const finalReport = await callModel(stage4Prompt);
+
+      task.progress = 100;
+      task.steps[3].status = "completed";
+      task.steps[3].detail = "Naskah akademis final selesai disusun dengan rapi.";
+      task.steps[3].result = finalReport;
+      task.status = "completed";
+      task.result = finalReport;
+      task.logs.push(`[${new Date().toLocaleTimeString('id-ID')}] [Sukses] Deep Research selesai! Manuskrip penelitian siap diunduh dan dibaca.`);
+    } catch (err: any) {
+      console.error(`Deep Research failed for ${id}:`, err);
+      task.status = "failed";
+      task.logs.push(`[Error] Kajian gagal: ${err.message || err}`);
+      // Mark all non-completed steps as failed
+      task.steps.forEach(s => {
+        if (s.status === "running" || s.status === "pending") {
+          s.status = "failed";
+          s.detail = "Gagal karena gangguan koneksi atau kegagalan API model.";
+        }
+      });
+    }
+  }
+
+  // API Route: Gemini Audio evaluation (Tahsin)
+  app.post("/api/evaluate", async (req, res) => {
+    try {
+      const { base64Audio, mimeType, confirmedSurah, confirmedAyah, mcpText, mcpTajwid } = req.body;
+      
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("API Key Gemini tidak ditemukan di environment server.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey: apiKey });
+      
+      const prompt = `Anda adalah Pakar Ulumul Qur'an & Fonetik Arab.
+      Evaluasi rekaman audio bacaan Surah ke-${confirmedSurah} Ayat ke-${confirmedAyah}.
+      Teks referensi (RAG): ${mcpText}
+      Hukum Tajwid Referensi: ${mcpTajwid}
+      
+      Berikan evaluasi tajwid yang sangat ketat. Klasifikasikan kesalahan (Lahn Jaly/Khafy) atau Mumtaz jika sempurna.
+      Sebutkan makhraj dan sifat huruf yang menjadi fokus evaluasi.
+      WAJIB mengutip bait teks Arab asli dari Matan Al-Jazariyah DAN/ATAU Matan Tuhfatul Athfal yang relevan dengan kesalahan atau hukum tajwid yang dibaca.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Audio
+              }
+            },
+            {
+              text: prompt
+            }
+          ]
+        },
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              status: { type: Type.STRING, description: "Lahn Jaly / Lahn Khafy / Mumtaz" },
+              detail: { type: Type.STRING, description: "Diagnosis kesalahan atau pujian" },
+              makhraj: { type: Type.STRING, description: "Posisi makhraj yang dievaluasi" },
+              sifat: { type: Type.STRING, description: "Karakteristik sifat huruf" },
+              matan: { type: Type.STRING, description: "Kutipan Matan Al-Jazariyah atau Tuhfatul Athfal (Arab)" },
+              terjemahMatan: { type: Type.STRING, description: "Terjemahan matan" },
+              rekomendasi: { type: Type.STRING, description: "Saran perbaikan" }
+            },
+            required: ["status", "detail", "makhraj", "sifat", "matan", "terjemahMatan", "rekomendasi"]
+          }
+        }
+      });
+
+      const evalData = JSON.parse(response.text || "{}");
+      res.json(evalData);
+    } catch (error: any) {
+      console.error("Evaluate API Error:", error);
+      res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+  });
+
+  // Vite development integration or production static serving
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
