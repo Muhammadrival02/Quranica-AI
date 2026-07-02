@@ -128,7 +128,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== EVALUATE (TAHSIN) =====
+// ===== EVALUATE (TAHSIN) — DETEKSI HURUF + KOREKSI VN =====
 app.post("/api/evaluate", async (req, res) => {
   try {
     const { base64Audio, mimeType, confirmedSurah, confirmedAyah, mcpText, mcpTajwid } = req.body;
@@ -136,12 +136,35 @@ app.post("/api/evaluate", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "Gemini API key tidak dikonfigurasi" });
     const { GoogleGenAI } = require("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
-    const prompt = `Evaluasi rekaman Surah ${confirmedSurah}:${confirmedAyah}. Teks: ${mcpText}. Tajwid: ${mcpTajwid}. Berikan evaluasi ketat.`;
+    
+    // 28 huruf Hijaiyah mapping
+    const HIJAIYAH = {
+      "ا":{n:"Alif",v:"001"},"ب":{n:"Ba",v:"002"},"ت":{n:"Ta",v:"003"},"ث":{n:"Tsa",v:"004"},
+      "ج":{n:"Jim",v:"005"},"ح":{n:"Ha",v:"006"},"خ":{n:"Kha",v:"007"},"د":{n:"Dal",v:"008"},
+      "ذ":{n:"Dzal",v:"009"},"ر":{n:"Ra",v:"010"},"ز":{n:"Za",v:"011"},"س":{n:"Sin",v:"012"},
+      "ش":{n:"Syin",v:"013"},"ص":{n:"Shad",v:"014"},"ض":{n:"Dhad",v:"015"},"ط":{n:"Tha",v:"016"},
+      "ظ":{n:"Zha",v:"017"},"ع":{n:"Ain",v:"018"},"غ":{n:"Ghain",v:"019"},"ف":{n:"Fa",v:"020"},
+      "ق":{n:"Qaf",v:"021"},"ك":{n:"Kaf",v:"022"},"ل":{n:"Lam",v:"023"},"م":{n:"Mim",v:"024"},
+      "ن":{n:"Nun",v:"025"},"و":{n:"Waw",v:"026"},"ه":{n:"Ha",v:"027"},"ي":{n:"Ya",v:"028"},
+    };
+    
+    const prompt = `Evaluasi rekaman Surah ${confirmedSurah}:${confirmedAyah}. Teks: ${mcpText}. Tajwid: ${mcpTajwid}.
+    Deteksi huruf Hijaiyah yang salah lafal. Sebutkan dalam array hurufSalah, contoh: ["ت","ذ"].
+    Klasifikasi: Lahn Jaly/Lahn Khafy/Mumtaz. Jelaskan makhraj & sifat yang benar.`;
+    
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType, data: base64Audio } }, { text: prompt }] }
     });
-    res.json({ result: result.text });
+    
+    const evalData = JSON.parse(result.text || "{}");
+    const koreksiVn = [];
+    if (evalData.hurufSalah && Array.isArray(evalData.hurufSalah)) {
+      for (const h of evalData.hurufSalah) {
+        if (HIJAIYAH[h]) koreksiVn.push({ huruf: h, nama: HIJAIYAH[h].n, vn: HIJAIYAH[h].v });
+      }
+    }
+    res.json({ ...evalData, koreksiVn });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }

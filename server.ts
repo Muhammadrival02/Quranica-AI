@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { secondarySources } from "./src/data/secondarySources";
+import { HIJAIYAH_MAP, getKoreksiVn } from "./src/data/hijaiyahMap";
 
 async function startServer() {
   const app = express();
@@ -1270,7 +1271,7 @@ Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub
     }
   }
 
-  // API Route: Gemini Audio evaluation (Tahsin)
+  // API Route: Gemini Audio evaluation (Tahsin) — DETEKSI HURUF + KOREKSI VN
   app.post("/api/evaluate", async (req, res) => {
     try {
       const { base64Audio, mimeType, confirmedSurah, confirmedAyah, mcpText, mcpTajwid } = req.body;
@@ -1281,15 +1282,30 @@ Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub
       }
 
       const ai = new GoogleGenAI({ apiKey: apiKey });
+
+      // Build daftar huruf hijaiyah untuk prompt
+      const hijaiyahList = Object.entries(HIJAIYAH_MAP)
+        .map(([h, d]) => `${h} (${d.nama}, VN-${d.vn})`)
+        .join(", ");
       
-      const prompt = `Anda adalah Pakar Ulumul Qur'an & Fonetik Arab.
+      const prompt = `Anda adalah Pakar Ulumul Qur'an & Fonetik Arab untuk sistem E-Tahsin.
       Evaluasi rekaman audio bacaan Surah ke-${confirmedSurah} Ayat ke-${confirmedAyah}.
       Teks referensi (RAG): ${mcpText}
       Hukum Tajwid Referensi: ${mcpTajwid}
       
-      Berikan evaluasi tajwid yang sangat ketat. Klasifikasikan kesalahan (Lahn Jaly/Khafy) atau Mumtaz jika sempurna.
-      Sebutkan makhraj dan sifat huruf yang menjadi fokus evaluasi.
-      WAJIB mengutip bait teks Arab asli dari Matan Al-Jazariyah DAN/ATAU Matan Tuhfatul Athfal yang relevan dengan kesalahan atau hukum tajwid yang dibaca.`;
+      TUGAS UTAMA: Deteksi kesalahan pelafalan HURUF PER HURUF.
+      Jika user salah melafalkan satu atau lebih huruf Hijaiyah, SEBUTKAN huruf spesifik yang salah.
+      Fokus pada MAKHRAJ dan SIFAT huruf yang dilanggar.
+      
+      Daftar 28 huruf Hijaiyah & kode VN:
+      ${hijaiyahList}
+      
+      ATURAN PENTING:
+      1. Klasifikasikan keseluruhan: Lahn Jaly (fatal, mengubah makna) / Lahn Khafy (ringan) / Mumtaz (sempurna).
+      2. SEBUTKAN huruf-huruf spesifik yang salah lafal (array hurufSalah). Contoh: ["ت", "ذ"].
+      3. Untuk setiap huruf yang salah, berikan kode VN koreksinya.
+      4. WAJIB mengutip bait Matan Al-Jazariyah dan/atau Tuhfatul Athfal yang relevan.
+      5. Jelaskan posisi makhraj dan sifat huruf yang benar.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -1301,9 +1317,7 @@ Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub
                 data: base64Audio
               }
             },
-            {
-              text: prompt
-            }
+            { text: prompt }
           ]
         },
         config: {
@@ -1317,7 +1331,8 @@ Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub
               sifat: { type: Type.STRING, description: "Karakteristik sifat huruf" },
               matan: { type: Type.STRING, description: "Kutipan Matan Al-Jazariyah atau Tuhfatul Athfal (Arab)" },
               terjemahMatan: { type: Type.STRING, description: "Terjemahan matan" },
-              rekomendasi: { type: Type.STRING, description: "Saran perbaikan" }
+              rekomendasi: { type: Type.STRING, description: "Saran perbaikan" },
+              hurufSalah: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Array huruf Hijaiyah yang salah lafal, contoh: ['ت', 'ذ']" },
             },
             required: ["status", "detail", "makhraj", "sifat", "matan", "terjemahMatan", "rekomendasi"]
           }
@@ -1325,10 +1340,33 @@ Gunakan format Markdown yang sangat elegan, bersih, dan indah dengan pemisah sub
       });
 
       const evalData = JSON.parse(response.text || "{}");
-      res.json(evalData);
+      
+      // Map huruf salah ke VN koreksi
+      const koreksiVn: { huruf: string; nama: string; vn: string }[] = [];
+      if (evalData.hurufSalah && Array.isArray(evalData.hurufSalah)) {
+        for (const h of evalData.hurufSalah) {
+          const data = HIJAIYAH_MAP[h];
+          if (data) {
+            koreksiVn.push({ huruf: h, nama: data.nama, vn: data.vn });
+          }
+        }
+      }
+      
+      res.json({ ...evalData, koreksiVn });
     } catch (error: any) {
       console.error("Evaluate API Error:", error);
       res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+  });
+
+  // API Route: Serve VN (Voice Note) koreksi Hijaiyah
+  app.get("/api/vn/:nomor", (req, res) => {
+    const { nomor } = req.params;
+    const vnPath = path.join(process.cwd(), "public", "vn", `vn_${nomor.padStart(3, '0')}.mp3`);
+    if (require("fs").existsSync(vnPath)) {
+      res.sendFile(vnPath);
+    } else {
+      res.status(404).json({ error: `VN ${nomor} belum tersedia. Upload file vn_${nomor.padStart(3, '0')}.mp3 ke folder /public/vn/` });
     }
   });
 

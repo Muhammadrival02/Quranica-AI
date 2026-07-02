@@ -1602,13 +1602,42 @@ function App() {
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end">
+              <div className="mt-8 flex flex-col gap-4">
+                {/* KOREKSI VN — E-Tahsin Hijaiyah */}
+                {evaluation.koreksiVn && evaluation.koreksiVn.length > 0 && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl">
+                    <h4 className="text-amber-400 font-bold text-sm flex items-center gap-2 mb-3">
+                      <Play size={16} /> Koreksi Pelafalan Huruf (E-Tahsin)
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {evaluation.koreksiVn.map((kv: any, i: number) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            const audio = new Audio(`/api/vn/${kv.vn}`);
+                            audio.play();
+                            addLog(`[E-Tahsin] Memutar VN-${kv.vn}: Koreksi huruf ${kv.huruf} (${kv.nama})`);
+                          }}
+                          className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95"
+                        >
+                          <Play size={14} fill="currentColor" />
+                          VN-{kv.vn}: {kv.huruf} ({kv.nama})
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-amber-300/70 text-xs mt-2">
+                      Tekan tombol untuk mendengar pelafalan huruf yang benar
+                    </p>
+                  </div>
+                )}
+                <div className="flex justify-end">
                 <button 
                   onClick={speakResult}
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-emerald-500/25 active:scale-95"
                 >
                   <Play size={18} fill="currentColor" /> Dengarkan Edukasi Tajwid
                 </button>
+              </div>
               </div>
             </div>
           )}
