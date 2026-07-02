@@ -1614,6 +1614,7 @@ function App() {
               <div className="mt-8 flex flex-col gap-4">
                 {/* KOREKSI VN — E-Tahsin Hijaiyah */}
                 {evaluation.koreksiVn && evaluation.koreksiVn.length > 0 && (
+                  <>
                   <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl">
                     <h4 className="text-amber-400 font-bold text-sm flex items-center gap-2 mb-3">
                       <Play size={16} /> Koreksi Pelafalan Huruf (E-Tahsin)
@@ -1623,7 +1624,7 @@ function App() {
                         <button
                           key={i}
                           onClick={() => {
-                            const audio = new Audio(`/api/vn/${kv.vn}`);
+                            const audio = new Audio(`/vn/vn_${kv.vn}.mp3`);
                             audio.play();
                             addLog(`[E-Tahsin] Memutar VN-${kv.vn}: Koreksi huruf ${kv.huruf} (${kv.nama})`);
                           }}
@@ -1638,6 +1639,48 @@ function App() {
                       Tekan tombol untuk mendengar pelafalan huruf yang benar
                     </p>
                   </div>
+
+                  {/* GRID 28 HURUF HIJAIYAH — Highlight huruf salah */}
+                  <div className="bg-slate-900/80 border border-slate-700 p-4 rounded-xl">
+                    <h4 className="text-slate-300 font-bold text-xs uppercase tracking-wider mb-3">Referensi 28 Huruf Hijaiyah</h4>
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {(() => {
+                        const HIJAIYAH_GRID = [
+                          {h:"ا",n:"Alif",v:"001"},{h:"ب",n:"Ba",v:"002"},{h:"ت",n:"Ta",v:"003"},{h:"ث",n:"Tsa",v:"004"},{h:"ج",n:"Jim",v:"005"},{h:"ح",n:"Ha",v:"006"},{h:"خ",n:"Kha",v:"007"},
+                          {h:"د",n:"Dal",v:"008"},{h:"ذ",n:"Dzal",v:"009"},{h:"ر",n:"Ra",v:"010"},{h:"ز",n:"Za",v:"011"},{h:"س",n:"Sin",v:"012"},{h:"ش",n:"Syin",v:"013"},{h:"ص",n:"Shad",v:"014"},
+                          {h:"ض",n:"Dhad",v:"015"},{h:"ط",n:"Tha",v:"016"},{h:"ظ",n:"Zha",v:"017"},{h:"ع",n:"Ain",v:"018"},{h:"غ",n:"Ghain",v:"019"},{h:"ف",n:"Fa",v:"020"},{h:"ق",n:"Qaf",v:"021"},
+                          {h:"ك",n:"Kaf",v:"022"},{h:"ل",n:"Lam",v:"023"},{h:"م",n:"Mim",v:"024"},{h:"ن",n:"Nun",v:"025"},{h:"و",n:"Waw",v:"026"},{h:"ه",n:"Ha",v:"027"},{h:"ي",n:"Ya",v:"028"}
+                        ];
+                        const salahSet = new Set(evaluation.koreksiVn.map((k:any) => k.huruf));
+                        return HIJAIYAH_GRID.map((item) => {
+                          const isSalah = salahSet.has(item.h);
+                          return (
+                            <button
+                              key={item.v}
+                              onClick={() => {
+                                const a = new Audio(`/vn/vn_${item.v}.mp3`);
+                                a.play();
+                                addLog(`[Ref] Memutar ${item.h} (${item.nama})`);
+                              }}
+                              title={`${item.nama}${isSalah ? ' — PERLU KOREKSI' : ''}`}
+                              className={`flex flex-col items-center justify-center p-1.5 rounded-lg text-xs transition-all ${
+                                isSalah
+                                  ? 'bg-rose-600/30 border border-rose-500/60 scale-110 shadow-lg shadow-rose-500/20'
+                                  : 'bg-slate-800 border border-slate-700 hover:border-emerald-500/30 hover:bg-slate-700'
+                              }`}
+                            >
+                              <span className="text-lg font-arabic" style={{fontFamily:"Traditional Arabic,serif"}}>{item.h}</span>
+                              {isSalah && <span className="text-[8px] text-rose-300 mt-0.5">⚠️</span>}
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                    <p className="text-[10px] text-slate-600 mt-2 text-center">
+                      Huruf merah = perlu koreksi. Klik untuk dengar pelafalan benar.
+                    </p>
+                  </div>
+                  </>
                 )}
                 <div className="flex justify-end">
                 <button 
