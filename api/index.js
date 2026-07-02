@@ -1,5 +1,11 @@
-const express = require("express");
-const path = require("path");
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -15,15 +21,10 @@ let preApprovedAdmins = new Set(["rivalgamingchannel@gmail.com"]);
 // Load library data
 let cungkringLibrary = [];
 try {
-  const { secondarySources } = require("../dist/server.cjs");
-  if (secondarySources) cungkringLibrary = [...secondarySources];
-} catch(e) {
-  try {
-    const data = require("../src/data/secondarySources");
-    cungkringLibrary = [...data.secondarySources];
-  } catch(e2) {
-    cungkringLibrary = [];
-  }
+  const data = require("../src/data/secondarySources");
+  cungkringLibrary = [...data.secondarySources];
+} catch(e2) {
+  cungkringLibrary = [];
 }
 
 // ===== HEALTH =====
@@ -87,10 +88,10 @@ app.post("/api/library/ai-search", async (req, res) => {
 
     if (!candidates.length) candidates = cungkringLibrary.slice(0, 15).map(c => ({ ...c, externalLink: c.externalLink || "https://shamela.ws" }));
 
-    const { GoogleGenAI } = require("@google/genai");
+    const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `Anda Pustakawan AI. Rekomendasikan 3-7 referensi paling relevan dari database untuk query: "${query}". Data: ${JSON.stringify(candidates)}. Jawab dalam Bahasa Indonesia. Gunakan link eksternal langsung.`;
-    const response = await ai.models.generateContent({ model: 'gemini-3.5-flash', contents: prompt });
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
     res.json({ result: response.text, matchedCandidates: candidates });
   } catch(e) {
     res.status(500).json({ error: e.message });
@@ -139,10 +140,9 @@ app.post("/api/evaluate", async (req, res) => {
     const { base64Audio, mimeType, confirmedSurah, confirmedAyah, mcpText, mcpTajwid } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Gemini API key tidak dikonfigurasi" });
-    const { GoogleGenAI } = require("@google/genai");
+    const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     
-    // 28 huruf Hijaiyah mapping
     const HIJAIYAH = {
       "ا":{n:"Alif",v:"001"},"ب":{n:"Ba",v:"002"},"ت":{n:"Ta",v:"003"},"ث":{n:"Tsa",v:"004"},
       "ج":{n:"Jim",v:"005"},"ح":{n:"Ha",v:"006"},"خ":{n:"Kha",v:"007"},"د":{n:"Dal",v:"008"},
@@ -182,4 +182,4 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });
 
-module.exports = app;
+export default app;
