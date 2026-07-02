@@ -5,6 +5,7 @@ import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
 import { initAuth, googleSignIn, logout, getAccessToken } from './services/firebaseAuth';
 import Markdown from 'react-markdown';
+import HijaiyahPanel from './components/HijaiyahPanel';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -26,7 +27,7 @@ function App() {
   const [micError, setMicError] = useState<string | null>(null);
   
   // Q&A, Research, & MCP Client State
-  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register'>('tahsin');
+  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -1421,6 +1422,12 @@ function App() {
             className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'qa' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
           >
             <MessageSquare size={18} /> Tanya Jawab Tafsir
+          </button>
+          <button 
+            onClick={() => setActiveTab('hijaiyah')} 
+            className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'hijaiyah' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <span className="text-lg">ا</span> Huruf Hijaiyah
           </button>
           <button 
             onClick={() => setActiveTab('research')} 
@@ -4253,6 +4260,7 @@ function App() {
           </div>
         </div>
       )}
+      {activeTab === 'hijaiyah' && <HijaiyahPanel />}
     </div>
   );
 }
