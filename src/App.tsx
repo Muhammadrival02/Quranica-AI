@@ -1166,8 +1166,9 @@ function App() {
           });
 
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Server error (${response.status})`);
+            const ct = response.headers.get("content-type") || "";
+            const errorText = ct.includes("json") ? (await response.json()).error : await response.text().then(t => t.slice(0, 200));
+            throw new Error(errorText || `Server error (${response.status})`);
           }
 
           const evalData = await response.json();
@@ -1176,9 +1177,10 @@ function App() {
           
           // Automatically speak the result
           setTimeout(() => {
-            window.speechSynthesis.cancel(); // Clear any stuck speech
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance();
-            msg.text = `Hasil evaluasi Tabayyun. Terdeteksi ${evalData.status}. ${evalData.detail}. Posisi makhraj seharusnya di ${evalData.makhraj}. Perhatikan sifat huruf yaitu ${evalData.sifat}. Sebagaimana disebutkan dalam Matan: ${evalData.terjemahMatan}.`;
+            msg.text = `Hasil evaluasi: ${evalData.status || 'selesai'}. ${evalData.detail || evalData.summary || ''}`;
             msg.lang = 'id-ID';
             msg.rate = 0.9;
             window.speechSynthesis.speak(msg);
