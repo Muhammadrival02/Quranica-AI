@@ -1,11 +1,5 @@
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { createRequire } from "module";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
+const express = require("express");
+const path = require("path");
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -88,7 +82,7 @@ app.post("/api/library/ai-search", async (req, res) => {
 
     if (!candidates.length) candidates = cungkringLibrary.slice(0, 15).map(c => ({ ...c, externalLink: c.externalLink || "https://shamela.ws" }));
 
-    const { GoogleGenAI } = await import("@google/genai");
+    const { GoogleGenAI } = require("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `Anda Pustakawan AI. Rekomendasikan 3-7 referensi paling relevan dari database untuk query: "${query}". Data: ${JSON.stringify(candidates)}. Jawab dalam Bahasa Indonesia. Gunakan link eksternal langsung.`;
     const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
@@ -140,9 +134,10 @@ app.post("/api/evaluate", async (req, res) => {
     const { base64Audio, mimeType, confirmedSurah, confirmedAyah, mcpText, mcpTajwid } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Gemini API key tidak dikonfigurasi" });
-    const { GoogleGenAI } = await import("@google/genai");
+    const { GoogleGenAI } = require("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     
+    // 28 huruf Hijaiyah mapping
     const HIJAIYAH = {
       "ا":{n:"Alif",v:"001"},"ب":{n:"Ba",v:"002"},"ت":{n:"Ta",v:"003"},"ث":{n:"Tsa",v:"004"},
       "ج":{n:"Jim",v:"005"},"ح":{n:"Ha",v:"006"},"خ":{n:"Kha",v:"007"},"د":{n:"Dal",v:"008"},
@@ -182,4 +177,4 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });
 
-export default app;
+module.exports = app;
