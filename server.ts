@@ -6,7 +6,7 @@ import { secondarySources } from "./src/data/secondarySources";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || "3000", 10);
 
   // JSON request body parser with larger limits for potential audio uploads
   app.use(express.json({ limit: "50mb" }));
@@ -39,7 +39,7 @@ async function startServer() {
       tier: "Berbayar",
       billingCycle: "Tahunan",
       createdAt: new Date().toISOString(),
-      password: "R!v4l23072002!"
+      password: process.env.ADMIN_PASSWORD || ""
     },
     {
       uid: "user_sample_1",
@@ -739,7 +739,7 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
       }
 
       // Gunakan API Key dari environment variable, fallback ke yang diberikan user
-      const apiKey = process.env.SUMOPOD_API_KEY || "sk-zD1M_5XsnK_o724sOI_cjg";
+      const apiKey = process.env.SUMOPOD_API_KEY || "";
       const systemInstruction = "Anda adalah Asisten AI Pakar Ulumul Qur'an, Tafsir, dan Hadits tingkat lanjut (sekelas ulama besar) yang mengandalkan Perpustakaan Mahasiswa Cungkring serta jaringan perpustakaan primer (seperti Maktabah Shamela, Al-Waqfeya, Al-Bahith Al-Hadithi, dsb) sebagai pusat referensi utama Anda. Jawablah setiap pertanyaan dengan sangat mendalam, ilmiah, dan komprehensif. WAJIB sertakan dalil-dalil (Al-Qur'an, Hadits, atau Atsar) dalam BAHASA ARAB asli beserta harakat dan terjemahannya. WAJIB gunakan gaya penulisan akademis dengan menyertakan rujukan kitab sebagai bodynotes. " +
         "CRITICAL REQUIREMENT: Setiap argumen, kutipan, dan pernyataan ilmiah Anda WAJIB disertai dengan link referensi web yang bisa dilacak/dikunjungi langsung oleh pengguna untuk menambah otoritas keilmuan. Anda harus menyisipkan link pelacakan orisinal yang bisa dibuka langsung di browser dengan format Markdown hyperlink, yaitu: " +
         "- Untuk Fathul Bari: `[Syarah Bukhari: Fathul Bari](/ref/fathul-bari)`\n" +
@@ -1127,7 +1127,7 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
         "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan rujukan dari Perpustakaan Mahasiswa Cungkring di atas di dalam karya ilmiah hasil riset Anda.";
     }
 
-    const apiKey = process.env.SUMOPOD_API_KEY || "sk-zD1M_5XsnK_o724sOI_cjg";
+    const apiKey = process.env.SUMOPOD_API_KEY || "";
     const systemInstruction = "Anda adalah Asisten AI Pakar Ulumul Qur'an, Tafsir, Hadits, dan Sejarah Islam tingkat lanjut. Anda melakukan penelitian akademis yang sangat mendalam, ketat, objektif, dan ilmiah dengan gaya bahasa akademis tinggi. " +
       "CRITICAL RULE FOR SCIENTIFIC AUTHORITY: Setiap argumen, klaim kritis, sanad hadits, atau tafsir Al-Qur'an yang Anda bahas dalam dokumen riset ini WAJIB disertai tautan referensi web yang bisa dilacak dan dikunjungi langsung di browser. Gunakan tautan hyperlink Markdown yang mengarah ke endpoint web kami yaitu:\n" +
       "- Untuk Fathul Bari: `[Syarah Bukhari: Fathul Bari](/ref/fathul-bari)`\n" +
