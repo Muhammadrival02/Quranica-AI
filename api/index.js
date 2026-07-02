@@ -121,6 +121,11 @@ app.post("/api/chat", async (req, res) => {
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "system", content: sysMsg }, ...messages.map(m => ({ role: m.role === "model" ? "assistant" : m.role, content: m.content }))] })
     });
+    if (!response.ok) {
+      const ct = response.headers.get("content-type") || "";
+      const errText = ct.includes("json") ? (await response.json()).error : await response.text().then(t => t.slice(0, 200));
+      return res.status(502).json({ error: `Sumopod error (${response.status}): ${errText}` });
+    }
     const data = await response.json();
     res.json({ reply: data.choices?.[0]?.message?.content || "Tidak ada respon" });
   } catch(e) {

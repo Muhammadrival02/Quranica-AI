@@ -161,8 +161,9 @@ export class QuranicaApiClient {
       body: JSON.stringify({ messages })
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Gagal mengirim pesan chat.");
+      const ct = res.headers.get("content-type") || "";
+      const errText = ct.includes("json") ? (await res.json()).error : await res.text().then(t => t.slice(0, 200));
+      throw new Error(errText || "Gagal mengirim pesan chat.");
     }
     return res.json();
   }
