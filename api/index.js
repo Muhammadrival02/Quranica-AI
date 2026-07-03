@@ -532,16 +532,36 @@ app.post("/api/research/start", async (req, res) => {
     }
     
     const id = "res_" + Date.now();
-    const task = { id, topic, status: "running", progress: 0, currentStage: "Memulai riset...", logs: [], steps: [], result: "" };
+    const now = () => new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const task = {
+      id, topic, status: "running", progress: 0, currentStage: "Menginisialisasi agen riset...",
+      logs: [`[${now()}] 🚀 Agen Deep Research diaktifkan`],
+      steps: [
+        { name: "Analisis Topik", status: "pending", detail: "Menunggu..." },
+        { name: "Pencarian Referensi", status: "pending", detail: "Menunggu..." },
+        { name: "Penyusunan Prompt", status: "pending", detail: "Menunggu..." },
+        { name: "Koneksi ke Sumopod AI", status: "pending", detail: "Menunggu..." },
+        { name: "Generasi Konten", status: "pending", detail: "Menunggu..." }
+      ],
+      result: ""
+    };
     researchTasks[id] = task;
     
     // Run async
     (async () => {
       try {
-        task.currentStage = "Menyusun ringkasan..."; task.progress = 25;
-        
-        // Cari referensi relevan dari perpustakaan
+        // STEP 1: Analisis topik
+        task.steps[0].status = "running"; task.steps[0].detail = "Memecah kata kunci...";
+        task.currentStage = "Menganalisis topik..."; task.progress = 5;
+        task.logs.push(`[${now()}] 📝 Topik: "${topic}"`);
         const keywords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+        await new Promise(r => setTimeout(r, 400));
+        task.steps[0].status = "completed"; task.steps[0].detail = `${keywords.length} kata kunci teridentifikasi`;
+        task.logs.push(`[${now()}] ✅ Analisis topik selesai — ${keywords.length} kata kunci`);
+
+        // STEP 2: Cari referensi
+        task.steps[1].status = "running"; task.steps[1].detail = "Mencocokkan dengan database...";
+        task.currentStage = "Mencari referensi..."; task.progress = 15;
         const kitabRefs = cungkringLibrary.filter(item => {
           const t = (item.title || "").toLowerCase();
           const c = (item.content || "").toLowerCase();
@@ -553,58 +573,55 @@ app.post("/api/research/start", async (req, res) => {
           const cat = (r.category || "").toLowerCase();
           return keywords.some(kw => t.includes(kw) || d.includes(kw) || cat.includes(kw));
         }).slice(0, 5);
+        await new Promise(r => setTimeout(r, 300));
+        task.steps[1].status = "completed";
+        task.steps[1].detail = `${kitabRefs.length} kitab + ${portalRefs.length} portal ditemukan`;
+        task.logs.push(`[${now()}] 📚 ${kitabRefs.length} kitab relevan ditemukan`);
+        if (portalRefs.length > 0) task.logs.push(`[${now()}] 🌐 ${portalRefs.length} portal/jurnal relevan ditemukan`);
         
+        // STEP 3: Susun prompt
+        task.steps[2].status = "running"; task.steps[2].detail = "Merangkai prompt akademik...";
+        task.currentStage = "Menyusun prompt..."; task.progress = 25;
         let refContext = "";
         if (kitabRefs.length > 0) {
-          refContext += "\nREFERENSI KITAB DARI PERPUSTAKAAN:\n" + kitabRefs.map(r => `- ${r.title} (${r.author}) — ${r.content?.slice(0,150)}... [Sumber: ${r.externalLink || r.uri}]`).join("\n");
+          refContext += "\nREFERENSI KITAB DARI PERPUSTAKAAN:\n" + kitabRefs.map(r => `- ${r.title} (${r.author}) [Sumber: ${r.externalLink || r.uri}]`).join("\n");
         }
         if (portalRefs.length > 0) {
-          refContext += "\nREFERENSI PORTAL/JURNAL:\n" + portalRefs.map(r => `- ${r.title} — ${r.description} [Akses: ${r.url || r.uri}]`).join("\n");
+          refContext += "\nREFERENSI PORTAL/JURNAL:\n" + portalRefs.map(r => `- ${r.title} [Akses: ${r.url || r.uri}]`).join("\n");
         }
-        
-        const prompt = `Riset singkat tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir.
-${refContext}
+        const prompt = `Riset singkat tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir.\n${refContext}\n\nTULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):\n\n## Ringkasan\n- Inti permasalahan (2-3 kalimat)\n\n## Dalil & Landasan\n- 1-2 ayat Al-Quran relevan (teks Arab + terjemah)\n- 1-2 hadits shahih (teks + perawi)\n- Ringkasan pendapat ulama (cukup 2 mazhab)\n${kitabRefs.length > 0 ? '- GUNAKAN referensi kitab di atas sebagai sumber.\n' : ''}\n## Analisis\n- Poin kunci (3-5 bullet points)\n- Relevansi kontemporer (1 paragraf)\n\n## Kesimpulan\n- Jawaban ringkas (2-3 kalimat)\n\n## Referensi\n- 3 sumber utama dari perpustakaan Quranica AI\n${portalRefs.length > 0 ? '- Cantumkan minimal 1 portal/jurnal dari daftar.\n' : ''}\nFORMAT: Markdown, Bahasa Indonesia ringkas. Langsung ke inti.`;
+        await new Promise(r => setTimeout(r, 200));
+        task.steps[2].status = "completed"; task.steps[2].detail = `Prompt ${prompt.length} karakter`;
+        task.logs.push(`[${now()}] ✍️ Prompt tersusun — ${prompt.length} karakter`);
 
-TULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):
-
-## Ringkasan
-- Inti permasalahan (2-3 kalimat)
-
-## Dalil & Landasan
-- 1-2 ayat Al-Quran relevan (teks Arab + terjemah)
-- 1-2 hadits shahih (teks + perawi)
-- Ringkasan pendapat ulama (cukup 2 mazhab)
-${kitabRefs.length > 0 ? '- GUNAKAN referensi kitab di atas sebagai sumber primer.\n' : ''}
-## Analisis
-- Poin kunci (3-5 bullet points)
-- Relevansi kontemporer (1 paragraf)
-
-## Kesimpulan
-- Jawaban ringkas (2-3 kalimat)
-
-## Referensi
-- 3 sumber utama — SERTAKAN referensi dari perpustakaan digital Quranica AI yang sudah disediakan di atas
-${portalRefs.length > 0 ? '- Cantumkan minimal 1 portal/jurnal dari daftar yang tersedia.\n' : ''}
-FORMAT: Markdown, Bahasa Indonesia ringkas. JANGAN panjang lebar. Hindari BAB I-V skripsi. Hindari metodologi. Langsung ke inti.`;
-        
-        let result = "";
-        task.currentStage = "Menulis..."; task.progress = 60;
-        
+        // STEP 4: Koneksi Sumopod
+        task.steps[3].status = "running"; task.steps[3].detail = "Menghubungi server AI...";
+        task.currentStage = "Mengirim ke Sumopod..."; task.progress = 40;
         const sumopodKey = process.env.SUMOPOD_API_KEY;
         if (!sumopodKey) throw new Error("SUMOPOD_API_KEY tidak dikonfigurasi");
-        
+        const t0 = Date.now();
         const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
           method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sumopodKey}` },
           body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
         });
+        if (!resp.ok) throw new Error(`Sumopod HTTP ${resp.status}`);
+        task.steps[3].status = "completed";
+        task.steps[3].detail = `Terhubung (${Date.now() - t0}ms)`;
+        task.logs.push(`[${now()}] 🔗 Terhubung ke Sumopod Deepseek — ${Date.now() - t0}ms`);
+
+        // STEP 5: Generasi konten
+        task.steps[4].status = "running"; task.steps[4].detail = "AI sedang menulis...";
+        task.currentStage = "AI menulis..."; task.progress = 55;
         const data = await resp.json();
-        result = data.choices?.[0]?.message?.content || "";
+        const result = data.choices?.[0]?.message?.content || "";
         if (!result) throw new Error("Sumopod mengembalikan respons kosong");
+        task.steps[4].status = "completed";
+        task.steps[4].detail = `${result.length} karakter dihasilkan`;
+        task.logs.push(`[${now()}] 🎯 Konten dihasilkan — ${result.length} karakter`);
         
         task.result = result; task.status = "completed"; task.progress = 100;
-        task.currentStage = "Ringkasan selesai";
-        task.logs = task.logs || [];
-        task.logs.push("[System] Deep Research selesai — ringkasan padat siap dibaca.");
+        task.currentStage = "✅ Riset selesai";
+        task.logs.push(`[${now()}] 🏁 Deep Research selesai dalam ${Date.now() - parseInt(id.replace('res_',''))}ms`);
       } catch(e) {
         task.status = "error"; task.result = e.message;
       }

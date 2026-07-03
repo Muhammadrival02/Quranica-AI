@@ -1138,12 +1138,13 @@ function App() {
     setIsResearchRunning(true);
     setResearchProgress(5);
     setResearchCurrentStage("Menghubungi server untuk inisialisasi...");
-    setResearchLogs(["[System] Memulai sambungan ke layanan Sumopod Deepseek..."]);
+    setResearchLogs(["Menginisialisasi agen riset..."]);
     setResearchSteps([
-      { name: "Ringkasan & Latar", status: "pending", detail: "Mengantre..." },
-      { name: "Dalil & Landasan", status: "pending", detail: "Mengantre..." },
-      { name: "Analisis", status: "pending", detail: "Mengantre..." },
-      { name: "Kesimpulan", status: "pending", detail: "Mengantre..." }
+      { name: "Analisis Topik", status: "pending", detail: "Menunggu..." },
+      { name: "Pencarian Referensi", status: "pending", detail: "Menunggu..." },
+      { name: "Penyusunan Prompt", status: "pending", detail: "Menunggu..." },
+      { name: "Koneksi ke Sumopod AI", status: "pending", detail: "Menunggu..." },
+      { name: "Generasi Konten", status: "pending", detail: "Menunggu..." }
     ]);
     setResearchResult("");
     setResearchError(null);
