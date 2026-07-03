@@ -1091,6 +1091,108 @@ function App() {
     }
   };
 
+  // Download AI response as PDF via browser print
+  const downloadChatAsPDF = (content: string, index: number) => {
+    // Convert markdown to basic HTML
+    let html = content
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/^\- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+
+    html = '<p>' + html + '</p>';
+
+    const title = content.slice(0, 60).replace(/\n/g, ' ').replace(/[#*]/g, '') + '...';
+    const now = new Date().toLocaleString('id-ID');
+
+    const printWin = window.open('', '_blank', 'width=900,height=700');
+    if (!printWin) {
+      alert('Mohon izinkan pop-up untuk mendownload PDF.');
+      return;
+    }
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl">
+      <head>
+        <meta charset="utf-8">
+        <title>Quranica AI - Hasil Tanya Jawab</title>
+        <style>
+          @page { margin: 2cm; size: A4; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            font-size: 12pt; line-height: 1.8; color: #1a1a2e; 
+            padding: 2rem; max-width: 800px; margin: 0 auto;
+          }
+          .header { 
+            text-align: center; border-bottom: 3px double #0d9488; 
+            padding-bottom: 1.5rem; margin-bottom: 2rem; 
+          }
+          .header h1 { font-size: 18pt; color: #0d9488; margin-bottom: 0.3rem; }
+          .header .meta { font-size: 9pt; color: #64748b; }
+          h1 { font-size: 16pt; color: #0f172a; margin: 1.5rem 0 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3rem; }
+          h2 { font-size: 14pt; color: #1e293b; margin: 1.2rem 0 0.6rem; }
+          h3 { font-size: 12pt; color: #0d9488; margin: 1rem 0 0.5rem; }
+          p { margin: 0.5rem 0; }
+          ul, ol { margin: 0.5rem 0; padding-left: 2rem; }
+          li { margin: 0.2rem 0; }
+          strong { color: #0d9488; }
+          code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 10pt; font-family: 'Courier New', monospace; }
+          .footer { 
+            margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; 
+            text-align: center; font-size: 9pt; color: #94a3b8; 
+          }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header no-print">
+          <button onclick="window.print()" style="
+            padding: 10px 24px; font-size: 14px; background: #0d9488; color: white; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
+            margin-bottom: 1rem;
+          ">🖨️ Cetak / Save as PDF</button>
+          <p style="font-size:10pt;color:#64748b;">Klik tombol di atas, lalu pilih <strong>"Save as PDF"</strong> sebagai printer tujuan.</p>
+        </div>
+
+        <div class="header">
+          <h1>📘 Quranica AI</h1>
+          <p style="font-size:11pt;font-weight:600;">Hasil Tanya Jawab Ilmiah</p>
+          <p class="meta">Dicetak: ${now} | Sumber: Quranica AI + Perpustakaan Mahasiswa Cungkring</p>
+        </div>
+
+        <div style="text-align:left;direction:ltr;">
+          ${html}
+        </div>
+
+        <div class="footer">
+          <p><strong>Quranica AI</strong> — Platform E-Tahsin & Tafsir Al-Quran Berbasis AI</p>
+          <p>Diberdayakan oleh Perpustakaan Mahasiswa Cungkring & Jaringan Referensi Islam Global</p>
+          <p>github.com/Muhammadrival02/Quranica-AI</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+
+    // Auto-trigger print after a short delay
+    setTimeout(() => {
+      printWin.print();
+    }, 600);
+  };
+
   const handleMcpLinkClick = (href: string) => {
     try {
       const slug = href.replace("mcp://cungkring/", "");
@@ -2140,13 +2242,22 @@ function App() {
 
                     {msg.role !== 'user' && (
                       <div className="mt-4 pt-3 border-t border-slate-700/50 flex flex-col gap-3">
-                        <button 
-                          type="button"
-                          onClick={() => handleCrossCheckMcp(msg.content)}
-                          className="self-start text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 transition-all active:scale-95"
-                        >
-                          <Database size={12} className="animate-pulse" /> Verifikasi Sumber (Cross-Check via MCP Cungkring)
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => handleCrossCheckMcp(msg.content)}
+                            className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 transition-all active:scale-95"
+                          >
+                            <Database size={12} className="animate-pulse" /> Verifikasi Sumber (Cross-Check via MCP Cungkring)
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => downloadChatAsPDF(msg.content, i)}
+                            className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 transition-all active:scale-95"
+                          >
+                            <FileDown size={12} /> Download PDF
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
