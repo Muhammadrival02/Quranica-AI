@@ -586,50 +586,19 @@ ${portalRefs.length > 0 ? '- Cantumkan minimal 1 portal/jurnal dari daftar yang 
 FORMAT: Markdown, Bahasa Indonesia ringkas. JANGAN panjang lebar. Hindari BAB I-V skripsi. Hindari metodologi. Langsung ke inti.`;
         
         let result = "";
+        task.currentStage = "Menulis..."; task.progress = 60;
         if (provider === "gemini") {
           const { GoogleGenAI } = require("@google/genai");
           const ai = new GoogleGenAI({ apiKey });
-          const stream = await ai.models.generateContentStream({ model: 'gemini-2.5-flash', contents: prompt });
-          task.currentStage = "Menulis..."; task.progress = 60;
-          for await (const chunk of stream) {
-            const text = chunk.text || "";
-            result += text;
-            task.result = result;
-            task.progress = Math.min(60 + Math.floor(result.length / 50), 95);
-          }
+          const resp = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+          result = resp.text;
         } else {
           const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }], stream: true })
+            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
           });
-          const reader = resp.body?.getReader?.();
-          if (reader) {
-            const decoder = new TextDecoder();
-            task.currentStage = "Menulis..."; task.progress = 60;
-            let buffer = "";
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() || "";
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const d = line.slice(6).trim();
-                  if (d === "[DONE]") continue;
-                  try {
-                    const json = JSON.parse(d);
-                    result += json.choices?.[0]?.delta?.content || "";
-                    task.result = result;
-                    task.progress = Math.min(60 + Math.floor(result.length / 50), 95);
-                  } catch {}
-                }
-              }
-            }
-          } else {
-            const data = await resp.json();
-            result = data.choices?.[0]?.message?.content || "";
-          }
+          const data = await resp.json();
+          result = data.choices?.[0]?.message?.content || "";
         }
         
         task.result = result; task.status = "completed"; task.progress = 100;
