@@ -196,7 +196,7 @@ function App() {
       if (res.ok) {
         const profile: UserProfile = await res.json();
         setUserProfile(profile);
-        localStorage.setItem("quranica_current_user", JSON.stringify(profile));
+        saveUserWithExpiry(profile);
         localStorage.setItem(`quranica_tier_${user.uid}`, profile.tier);
         if (profile.billingCycle) {
           localStorage.setItem(`quranica_cycle_${user.uid}`, profile.billingCycle);
@@ -387,7 +387,7 @@ function App() {
           const storedUser = JSON.parse(storedUserStr);
           storedUser.tier = newTier;
           storedUser.billingCycle = finalCycle;
-          localStorage.setItem("quranica_current_user", JSON.stringify(storedUser));
+          saveUserWithExpiry(storedUser);
         }
         addLog(`[Profile] Berhasil beralih ke Akun ${newTier === "Berbayar" ? `Berbayar (${finalCycle})` : "Reguler"}`);
       }
@@ -452,8 +452,28 @@ function App() {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
 
-  // 1. Inisialisasi: Autentikasi Quran Foundation, Load Data, & MCP Servers
+  // Helper: simpan user dengan expiry 30 hari
+  const saveUserWithExpiry = (user: UserProfile) => {
+    localStorage.setItem("quranica_current_user", JSON.stringify(user));
+    localStorage.setItem("quranica_login_expiry", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+  };
+  const clearUserLogin = () => {
+    localStorage.removeItem("quranica_current_user");
+    localStorage.removeItem("quranica_login_expiry");
+  };
+
+  // 1. Inisialisasi: Auto-login (30 hari), Autentikasi Quran Foundation, Load Data, & MCP Servers
   useEffect(() => {
+    // Auto-login: cek expiry 30 hari
+    const storedUser = localStorage.getItem("quranica_current_user");
+    const expiry = localStorage.getItem("quranica_login_expiry");
+    if (storedUser && expiry && Number(expiry) > Date.now()) {
+      try {
+        setUserProfile(JSON.parse(storedUser));
+        addLog("[Auth] Login otomatis — sesi masih aktif (30 hari).");
+      } catch {}
+    }
+
     const initApp = async () => {
       addLog("[Auth] Memulai handshake OAuth2 ke Quran Foundation...");
       try {
@@ -1387,7 +1407,7 @@ function App() {
                     setGoogleUser(null);
                     setGoogleToken(null);
                     setUserProfile(null);
-                    localStorage.removeItem("quranica_current_user");
+                    clearUserLogin();
                     setActiveTab('tahsin');
                     addLog("[Auth] Pengguna keluar (logged out).");
                   }}
@@ -2956,7 +2976,7 @@ function App() {
                             if (res.ok) {
                               const profile = await res.json();
                               setUserProfile(profile);
-                              localStorage.setItem("quranica_current_user", JSON.stringify(profile));
+                              saveUserWithExpiry(profile);
                               localStorage.setItem(`quranica_tier_${mockUserUid}`, "Berbayar");
                               localStorage.setItem(`quranica_cycle_${mockUserUid}`, regSelectedPlan);
                               addLog(`[Profile] Registrasi Mandiri Berhasil: Akun Premium ${regSelectedPlan}`);
@@ -2992,7 +3012,7 @@ function App() {
                                   password: regManualPassword
                                 } : null;
                                 if (updated) {
-                                  localStorage.setItem("quranica_current_user", JSON.stringify(updated));
+                                  saveUserWithExpiry(updated);
                                 }
                                 return updated;
                               });
@@ -4038,7 +4058,7 @@ function App() {
                     const data = await res.json();
                     if (res.ok) {
                       setUserProfile(data);
-                      localStorage.setItem("quranica_current_user", JSON.stringify(data));
+                      saveUserWithExpiry(data);
                       addLog(`[Auth] Berhasil login sebagai: ${data.displayName} (${data.role})`);
                       setShowLoginModal(false);
                       setLoginEmail("");
@@ -4162,7 +4182,7 @@ function App() {
                     const data = await res.json();
                     if (res.ok) {
                       setUserProfile(data);
-                      localStorage.setItem("quranica_current_user", JSON.stringify(data));
+                      saveUserWithExpiry(data);
                       addLog(`[Auth] Registrasi berhasil: ${data.displayName} (${data.tier})`);
                       setShowLoginModal(false);
                       
