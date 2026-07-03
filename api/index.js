@@ -29,11 +29,18 @@ async function tgSend(chatId, text) {
 
 // Load library data
 let cungkringLibrary = [];
+let rujukanLibrary = [];
 try {
   const data = require("../src/data/secondarySources");
   cungkringLibrary = [...data.secondarySources];
 } catch(e2) {
   cungkringLibrary = [];
+}
+try {
+  const rdata = require("../src/data/rujukanLinks");
+  rujukanLibrary = [...(rdata.rujukanLinks || []), ...(rdata.portalJurnalLinks || [])];
+} catch(e3) {
+  rujukanLibrary = [];
 }
 
 // ===== HEALTH =====
@@ -361,7 +368,17 @@ app.post("/api/telegram-webhook", async (req, res) => {
 // ===== LIBRARY =====
 app.get("/api/library", (req, res) => {
   const populated = cungkringLibrary.map(item => ({ ...item, externalLink: item.externalLink || "https://shamela.ws" }));
-  res.json({ library: populated });
+  const rujukanAsLibrary = rujukanLibrary.map(r => ({
+    id: r.id,
+    title: r.title,
+    author: r.category,
+    category: "DIR_" + r.category,
+    content: r.description,
+    uri: r.url,
+    externalLink: r.url,
+    locationDetail: `${r.category} — ${r.description}`
+  }));
+  res.json({ library: [...populated, ...rujukanAsLibrary] });
 });
 
 app.post("/api/library/ai-search", async (req, res) => {

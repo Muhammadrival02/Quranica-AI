@@ -1288,6 +1288,7 @@ function App() {
     if (selectedLibCat === "Akademik" && (cat === "Perpustakaan Akademik" || cat === "Akademik" || cat === "Hadits & Syarah" || cat === "Tafsir" || cat === "Ulumul Qur'an" || cat === "Kajian Aqidah")) return matchesSearch;
     if (selectedLibCat === "Unduh PDF" && (cat === "Situs Unduh PDF" || cat === "Unduh PDF")) return matchesSearch;
     if (selectedLibCat === "Telegram" && cat.includes("Telegram")) return matchesSearch;
+    if (selectedLibCat === "Portal & Jurnal" && cat.startsWith("DIR_")) return matchesSearch;
     return false;
   });
 
@@ -3499,7 +3500,7 @@ function App() {
 
                     {/* Filter Kategori */}
                     <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                      {['Semua', 'Situs & Program', 'Akademik', 'Unduh PDF', 'Telegram'].map((cat) => (
+                      {['Semua', 'Situs & Program', 'Akademik', 'Unduh PDF', 'Telegram', 'Portal & Jurnal'].map((cat) => (
                         <button
                           key={cat}
                           type="button"
