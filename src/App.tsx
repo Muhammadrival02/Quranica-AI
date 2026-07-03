@@ -1138,7 +1138,7 @@ function App() {
     setIsResearchRunning(true);
     setResearchProgress(5);
     setResearchCurrentStage("Menghubungi server untuk inisialisasi...");
-    setResearchLogs(["[System] Memulai sambungan ke layanan Sumopod AI Deepseek..."]);
+    setResearchLogs(["[System] Memulai sambungan ke layanan Sumopod Deepseek..."]);
     setResearchSteps([
       { name: "Ringkasan & Latar", status: "pending", detail: "Mengantre..." },
       { name: "Dalil & Landasan", status: "pending", detail: "Mengantre..." },
