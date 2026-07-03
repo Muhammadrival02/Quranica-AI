@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer } from 'lucide-react';
+import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer, Pencil, Check } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
@@ -293,6 +293,36 @@ function App() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [adminPanelFeedback, setAdminPanelFeedback] = useState<string | null>(null);
   const [adminPanelLoading, setAdminPanelLoading] = useState(false);
+
+  // Edit nama di profil
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState("");
+
+  const handleSaveName = async () => {
+    if (!userProfile || !editNameValue.trim()) return;
+    try {
+      const res = await fetch("/api/users/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: userProfile.uid,
+          email: userProfile.email,
+          displayName: editNameValue.trim(),
+          tier: userProfile.tier,
+          billingCycle: userProfile.billingCycle,
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUserProfile(updated);
+        saveUserWithExpiry(updated);
+        setIsEditingName(false);
+        addLog(`[Profile] Nama berhasil diubah menjadi "${editNameValue.trim()}"`);
+      }
+    } catch (e: any) {
+      addLog(`[Error] Gagal mengubah nama: ${e.message}`);
+    }
+  };
 
   // States for Registrasi & Berlangganan Menu Tab
   const [regSelectedPlan, setRegSelectedPlan] = useState<"Bulanan" | "Tahunan">("Bulanan");
@@ -5140,7 +5170,33 @@ function App() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between py-2 border-b border-slate-800/50">
                   <span className="text-slate-400">Nama</span>
-                  <span className="text-slate-200 font-medium">{userProfile.displayName}</span>
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        value={editNameValue}
+                        onChange={(e) => setEditNameValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                        className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs w-32 outline-none focus:border-emerald-500"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveName} className="p-1 text-emerald-400 hover:text-emerald-300">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => setIsEditingName(false)} className="p-1 text-slate-500 hover:text-slate-300">
+                        <span className="text-xs">✕</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-200 font-medium">{userProfile.displayName}</span>
+                      <button
+                        onClick={() => { setEditNameValue(userProfile.displayName); setIsEditingName(true); }}
+                        className="p-0.5 text-slate-600 hover:text-emerald-400 transition-colors"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between py-2 border-b border-slate-800/50">
                   <span className="text-slate-400">Email</span>
