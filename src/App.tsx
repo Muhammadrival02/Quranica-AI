@@ -34,6 +34,81 @@ function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Riwayat Chat
+  interface ChatHistory { id: string; title: string; messages: {role:string;content:string}[]; createdAt: string; }
+  const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const getHistoryKey = () => userProfile?.uid ? `quranica_chats_${userProfile.uid}` : null;
+
+  // Load chat history dari localStorage
+  const loadChatHistories = () => {
+    const key = getHistoryKey();
+    if (!key) return;
+    try {
+      const data = localStorage.getItem(key);
+      setChatHistories(data ? JSON.parse(data) : []);
+    } catch { setChatHistories([]); }
+  };
+
+  // Save chat histories ke localStorage
+  const saveChatHistories = (histories: ChatHistory[]) => {
+    const key = getHistoryKey();
+    if (!key) return;
+    localStorage.setItem(key, JSON.stringify(histories));
+    setChatHistories(histories);
+  };
+
+  // Simpan chat saat ini ke riwayat
+  const saveCurrentChat = () => {
+    if (chatMessages.length === 0) return;
+    const key = getHistoryKey();
+    if (!key) return;
+    const firstUserMsg = chatMessages.find(m => m.role === 'user')?.content || "Percakapan";
+    const title = firstUserMsg.slice(0, 50) + (firstUserMsg.length > 50 ? "..." : "");
+    const now = new Date().toISOString();
+    let histories = chatHistories;
+
+    if (activeHistoryId) {
+      // Update history yang sedang aktif
+      histories = histories.map(h => h.id === activeHistoryId ? { ...h, title, messages: [...chatMessages], createdAt: now } : h);
+    } else {
+      // Buat history baru
+      const newId = `ch_${Date.now()}`;
+      histories = [{ id: newId, title, messages: [...chatMessages], createdAt: now }, ...histories].slice(0, 50);
+      setActiveHistoryId(newId);
+    }
+    saveChatHistories(histories);
+  };
+
+  // Hapus history
+  const deleteHistory = (id: string) => {
+    const filtered = chatHistories.filter(h => h.id !== id);
+    saveChatHistories(filtered);
+    if (activeHistoryId === id) { setActiveHistoryId(null); setChatMessages([]); }
+    setConfirmDeleteId(null);
+  };
+
+  // Muat history
+  const loadHistory = (history: ChatHistory) => {
+    setChatMessages(history.messages);
+    setActiveHistoryId(history.id);
+    setShowHistoryPanel(false);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
+  // Chat baru
+  const newChat = () => {
+    if (chatMessages.length > 0 && userProfile) {
+      saveCurrentChat();
+    }
+    setChatMessages([]);
+    setActiveHistoryId(null);
+    setShowHistoryPanel(false);
+  };
+
   // MCP Client State
   const [mcpServers, setMcpServers] = useState<any[]>([]);
   const [mcpServerNameInput, setMcpServerNameInput] = useState("");
@@ -956,6 +1031,18 @@ function App() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isChatLoading]);
 
+  // Auto-save chat ke riwayat setiap kali ada pesan baru (debounce)
+  useEffect(() => {
+    if (chatMessages.length === 0 || !userProfile) return;
+    const timer = setTimeout(() => saveCurrentChat(), 2000);
+    return () => clearTimeout(timer);
+  }, [chatMessages]);
+
+  // Load riwayat chat saat login
+  useEffect(() => {
+    loadChatHistories();
+  }, [userProfile?.uid]);
+
   // Setup Speech Recognition
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1825,7 +1912,62 @@ function App() {
           <div key="qa" className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl h-[700px] flex flex-col overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-teal-400 opacity-50"></div>
             
-            {/* Chat History */}
+            {/* Chat Header — Riwayat */}
+            {userProfile && (
+              <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-950/50 z-10">
+                <div className="flex items-center gap-2">
+                  <button onClick={newChat} className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 transition-all flex items-center gap-1">
+                    <Plus size={12} /> Chat Baru
+                  </button>
+                  <button
+                    onClick={() => { setShowHistoryPanel(!showHistoryPanel); loadChatHistories(); }}
+                    className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 ${
+                      showHistoryPanel ? 'bg-amber-600/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-700'
+                    }`}
+                  >
+                    <BookOpen size={12} /> Riwayat {chatHistories.length > 0 && `(${chatHistories.length})`}
+                  </button>
+                </div>
+                {activeHistoryId && (
+                  <span className="text-[9px] text-slate-500 font-mono truncate max-w-[200px]">
+                    💾 Tersimpan otomatis
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* History Panel */}
+            {showHistoryPanel && userProfile && (
+              <div className="border-b border-slate-800 bg-slate-950/80 max-h-[200px] overflow-y-auto custom-scrollbar">
+                {chatHistories.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500">Belum ada riwayat chat. Mulai percakapan baru!</div>
+                ) : (
+                  chatHistories.map(h => (
+                    <div key={h.id} className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/50 hover:bg-slate-900/50 transition-all group">
+                      <button onClick={() => loadHistory(h)} className="flex-1 text-left flex flex-col gap-0.5 min-w-0">
+                        <span className="text-xs font-bold text-slate-300 truncate">{h.title}</span>
+                        <span className="text-[9px] text-slate-500 font-mono">{new Date(h.createdAt).toLocaleString('id-ID')} · {h.messages.length} pesan</span>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(confirmDeleteId === h.id ? null : h.id); }}
+                        className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      {confirmDeleteId === h.id && (
+                        <div className="absolute right-12 bg-slate-800 border border-red-500/30 rounded-lg p-2 text-[10px] flex gap-2 z-20 shadow-xl">
+                          <span className="text-red-400">Hapus?</span>
+                          <button onClick={() => deleteHistory(h.id)} className="text-red-400 font-bold hover:text-red-300">Ya</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-slate-400">Batal</button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            
+            {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
               {chatMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
