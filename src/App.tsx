@@ -3141,7 +3141,7 @@ function App() {
                     </button>
                   )}
                   <p className="text-[10px] text-slate-500 text-center mt-3 leading-relaxed max-w-md">
-                    *Ini adalah transaksi simulasi sandbox terintegrasi. Dengan menekan tombol, status akun Anda akan langsung diangkat menjadi Premium secara instan di database server.
+                    *Setelah menekan tombol, Anda akan diminta mengunggah bukti transfer. AI kami akan memverifikasi pembayaran. Akun Premium hanya aktif setelah verifikasi berhasil.
                   </p>
                 </div>
 
@@ -3348,7 +3348,7 @@ function App() {
               </div>
             ) : (
               /* Success Animated screen */
-              <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 md:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 md:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
                 
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400 shadow animate-bounce">
@@ -3356,46 +3356,56 @@ function App() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-100">Selamat! Akun Premium Anda Telah Aktif 🎉</h3>
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-100">✅ Pembayaran Terverifikasi — Akun Premium Aktif</h3>
                   <p className="text-xs md:text-sm text-slate-400 leading-relaxed max-w-xl mx-auto">
-                    Terima kasih telah melakukan registrasi keanggotaan premium di Quranica AI. Pembayaran simulasi Anda melalui <span className="font-extrabold text-amber-400">{regPaymentMethod.replace("VA_", "Virtual Account ")}</span> telah berhasil diterima secara instan.
+                    Bukti transfer Anda telah diverifikasi oleh AI. Pembayaran melalui <span className="font-extrabold text-amber-400">{regPaymentMethod}</span> telah dikonfirmasi.
                   </p>
+                  {regAiResult?.analysis && (
+                    <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
+                      <CheckCircle size={12} className="text-emerald-400" />
+                      <span className="text-[10px] font-mono text-emerald-400">AI Confidence: {regAiResult.analysis.confidence}%</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="bg-slate-950 max-w-md mx-auto p-5 rounded-2xl border border-slate-850/80 text-xs text-left space-y-3 font-sans text-slate-300 shadow-inner">
+                <div className="bg-slate-950 max-w-md mx-auto p-5 rounded-2xl border border-slate-800 text-xs text-left space-y-3 font-sans text-slate-300 shadow-inner">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Nomor Transaksi</span>
-                    <span className="font-mono text-slate-300">QRN-{Math.floor(100000 + Math.random() * 900000)}</span>
+                    <span className="text-slate-500">ID Transaksi</span>
+                    <span className="font-mono text-amber-400">{regPaymentData?.id || "—"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Pelanggan</span>
-                    <span className="font-semibold text-slate-200">{userProfile?.displayName}</span>
+                    <span className="font-semibold text-slate-200">{regManualName || userProfile?.displayName || "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Email Utama</span>
-                    <span className="font-mono text-slate-400">{userProfile?.email}</span>
+                    <span className="text-slate-500">Email</span>
+                    <span className="font-mono text-slate-400">{regManualEmail || userProfile?.email || "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Jenis Keanggotaan</span>
-                    <span className="font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                      ⭐ PREMIUM {userProfile?.billingCycle}
+                    <span className="text-slate-500">Paket</span>
+                    <span className="font-extrabold text-amber-400 uppercase tracking-wider">
+                      ⭐ PREMIUM {regPaymentData?.billingCycle || "—"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Siklus Pembayaran</span>
-                    <span className="font-semibold text-slate-300">Berulang {userProfile?.billingCycle === "Tahunan" ? "Rp 300.000 / Tahun" : "Rp 30.000 / Bulan"}</span>
+                    <span className="text-slate-500">Jumlah</span>
+                    <span className="font-semibold text-slate-300">Rp {regPaymentData?.amount?.toLocaleString("id-ID") || "—"}</span>
                   </div>
-                  <div className="border-t border-slate-800/80 pt-2 flex justify-between text-slate-200 font-extrabold">
-                    <span>Status Transaksi</span>
-                    <span className="text-emerald-400 uppercase tracking-widest font-mono text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">LUNAS / BERHASIL</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Metode</span>
+                    <span className="font-semibold text-slate-300">{regPaymentMethod}</span>
+                  </div>
+                  <div className="border-t border-slate-800 pt-2 flex justify-between text-slate-200 font-extrabold">
+                    <span>Status</span>
+                    <span className="text-emerald-400 uppercase tracking-widest font-mono text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">TERVERIFIKASI</span>
                   </div>
                 </div>
 
-                <div className="pt-2 flex flex-col md:flex-row justify-center gap-3">
+                  <div className="pt-2 flex flex-col md:flex-row justify-center gap-3">
                   <button
-                    onClick={() => {
-                      setActiveTab("tahsin");
-                    }}
+                  onClick={() => {
+                    setActiveTab("tahsin");
+                  }}
                     className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-xs transition-all shadow-md"
                   >
                     Mulai Belajar E-Tahsin 🎙️
