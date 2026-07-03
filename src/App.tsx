@@ -1433,7 +1433,7 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto">
+      <main className="max-w-6xl mx-auto relative" style={{ isolation: 'isolate' }}>
         
         {/* Navigation Tabs */}
         <div className="flex gap-6 mb-8 border-b border-emerald-900/50 px-2">
@@ -2187,9 +2187,9 @@ function App() {
             )}
           </div>
         ) : activeTab === 'admin' ? (
-          <div key="admin" className="space-y-6 text-slate-200 relative bg-slate-950/60 rounded-2xl p-1">
+          <div key="admin" className="space-y-6 text-slate-200 relative z-10" style={{ isolation: 'isolate' }}>
             {/* Panel Admin Utama */}
-            <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
+            <div className="bg-slate-950 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-70"></div>
               
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
