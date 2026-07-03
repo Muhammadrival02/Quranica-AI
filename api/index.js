@@ -523,8 +523,14 @@ Hanya return JSON, tanpa teks lain.`;
 const researchTasks = {};
 app.post("/api/research/start", async (req, res) => {
   try {
-    const { topic } = req.body;
+    const { topic, userEmail, userTier } = req.body;
     if (!topic) return res.status(400).json({ error: "Topik wajib" });
+    
+    // Premium only
+    if (userTier !== "Berbayar") {
+      return res.status(403).json({ error: "Deep Research hanya untuk pengguna Premium" });
+    }
+    
     const id = "res_" + Date.now();
     const task = { id, topic, status: "running", progress: 0, currentStage: "Memulai riset...", logs: [], steps: [], result: "" };
     researchTasks[id] = task;

@@ -125,11 +125,11 @@ export class QuranicaApiClient {
   /**
    * Memulai riset atau kajian mendalam akademis baru berdasarkan topik.
    */
-  async startDeepResearch(topic: string): Promise<{ id: string }> {
+  async startDeepResearch(topic: string, userEmail?: string, userTier?: string): Promise<{ id: string }> {
     const res = await fetch(`${this.baseUrl}/api/research/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic })
+      body: JSON.stringify({ topic, userEmail, userTier })
     });
     if (!res.ok) {
       const ct = res.headers.get("content-type") || "";

@@ -1149,7 +1149,7 @@ function App() {
     setResearchError(null);
 
     try {
-      const data = await apiClient.startDeepResearch(researchTopic);
+      const data = await apiClient.startDeepResearch(researchTopic, userProfile?.email, userProfile?.tier);
       setResearchTaskId(data.id);
     } catch (err: any) {
       console.error("Start research error:", err);
