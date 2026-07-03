@@ -438,21 +438,21 @@ FORMAT WAJIB:
 [Teks Arab berharakat + nama surah:ayat + terjemahan]
 
 ### Hadits
-[WAJIB: nama perawi, nama mukharrij, nama kitab lengkap, nomor bab + nama bab, nomor halaman (cetakan standar + penerbit), nomor hadits, derajat keshahihan, teks Arab berharakat, terjemahan]
+[SETIAP hadits WAJIB dual-layer criticism: KRITIK SANAD (metodologi Imam Al-Bukhari: rantai sanad lengkap, status tiap perawi — tsiqah/shaduq/dha'if/majhul/matruk/kadzdzab berdasarkan at-Tarikh al-Kabir, analisis ittishal, syarat Al-Bukhari) + KRITIK MATAN (metodologi Mahmud Abu Rayya — Adhwa' 'ala as-Sunnah: bertentangan dgn Al-Qur'an? hadits lebih kuat? akal? sejarah? isra'iliyyat? ghuluw? → maqbul/mardud). HASIL AKHIR: derajat hadits berdasarkan sintesis sanad+matan. Nama kitab + bab + halaman + penerbit + nomor hadits + teks Arab berharakat + terjemahan.]
 
 ## Studi Komparatif
-[Minimal 3 mazhab jika ada khilaf. SETIAP pendapat WAJIB: nama imam, nama kitab rujukan lengkap, letak bab & nomor bab, halaman spesifik, dalil yang digunakan, analisis perbandingan kekuatan dalil]
+[WAJIB 12 mazhab: 1) Hanafi (Al-Mabsuth), 2) Maliki (Al-Mudawwanah), 3) Syafi'i (Al-Umm), 4) Hanbali (Al-Mughni), 5) Zhahiri (Al-Muhalla), 6) Ja'fari (Al-Kafi), 7) Zaidiyyah, 8) Ibadiyyah, 9) Al-Auza'i, 10) Ats-Tsauri, 11) Al-Laits, 12) Ath-Thabari. SETIAP mazhab: nama imam+wafat, kitab rujukan+bab+halaman+penerbit, pendapat+dalil, analisis kekuatan dalil. AKHIRI dengan TABEL ringkasan (Mazhab | Pendapat | Dalil | Kekuatan Dalil).]
 
 ## Tahqiqul Manat
-[Maqashid syariah + kitab ushul fiqh rujukan (nama kitab, bab, halaman), kaidah fiqhiyyah + kitab qawa'id rujukan, 'illat hukum, konteks sosio-historis]
+[Maqashid syariah (kitab ushul+bab+halaman+penerbit), kaidah fiqhiyyah (kitab qawa'id+bab+halaman), 'illat hukum, konteks sosio-historis]
 
 ## Kesimpulan
-[Tarjih + alasan berdasarkan kekuatan dalil]
+[Tarjih + alasan berdasarkan sintesis sanad+matan+maqashid]
 
 ## Referensi
-[SETIAP referensi: nama kitab lengkap, penulis + tahun wafat, penerbit + kota + tahun, jilid + halaman, LINK DOWNLOAD PDF LANGSUNG (waqfeya.net/shamela.ws/archive.org), Shamela ID jika ada]
+[SETIAP referensi: nama kitab, penulis+tahun wafat, penerbit+kota+tahun, jilid+halaman, LINK DOWNLOAD PDF LANGSUNG, Shamela ID]
 
-ATURAN: WAJIB format. SETIAP argumen = nama kitab + bab + halaman + penerbit. Dalil WAJIB Arab berharakat + terjemahan. Studi komparatif minimal 3 mazhab. Referensi WAJIB link download langsung. Jika tidak tahu: "Wallahu A'lam bish-shawab". JANGAN berhalusinasi.` + refCtx;
+ATURAN: WAJIB format. Argumen = kitab+bab+halaman+penerbit. Hadits WAJIB kritik sanad (Al-Bukhari) + kritik matan (Abu Rayya). Studi komparatif WAJIB 12 mazhab + tabel. JANGAN terima hadits hanya karena Shahih — kritik matan tetap WAJIB. Jika tidak tahu: "Wallahu A'lam bish-shawab". JANGAN berhalusinasi.` + refCtx;
 
     const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
       method: "POST",
