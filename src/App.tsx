@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard } from 'lucide-react';
+import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
@@ -142,6 +142,44 @@ function App() {
   const [researchSteps, setResearchSteps] = useState<any[]>([]);
   const [researchResult, setResearchResult] = useState("");
   const [researchError, setResearchError] = useState<string | null>(null);
+
+  // Riwayat Deep Research
+  interface ResearchHistory { id: string; topic: string; result: string; createdAt: string; }
+  const [researchHistories, setResearchHistories] = useState<ResearchHistory[]>([]);
+  const [showResearchHistory, setShowResearchHistory] = useState(false);
+
+  const getResearchHistoryKey = () => userProfile?.uid ? `quranica_research_${userProfile.uid}` : null;
+
+  const loadResearchHistories = () => {
+    const key = getResearchHistoryKey();
+    if (!key) return;
+    try { const d = localStorage.getItem(key); setResearchHistories(d ? JSON.parse(d) : []); } catch { setResearchHistories([]); }
+  };
+
+  const saveResearchToHistory = () => {
+    if (!researchResult || !researchTopic) return;
+    const key = getResearchHistoryKey();
+    if (!key) return;
+    const h: ResearchHistory = { id: `rh_${Date.now()}`, topic: researchTopic, result: researchResult, createdAt: new Date().toISOString() };
+    const updated = [h, ...researchHistories].slice(0, 30);
+    localStorage.setItem(key, JSON.stringify(updated));
+    setResearchHistories(updated);
+  };
+
+  const loadResearchFromHistory = (h: ResearchHistory) => {
+    setResearchTopic(h.topic);
+    setResearchResult(h.result);
+    setResearchProgress(100);
+    setResearchCurrentStage("Loaded from history");
+    setShowResearchHistory(false);
+  };
+
+  const deleteResearchHistory = (id: string) => {
+    const filtered = researchHistories.filter(h => h.id !== id);
+    const key = getResearchHistoryKey();
+    if (key) localStorage.setItem(key, JSON.stringify(filtered));
+    setResearchHistories(filtered);
+  };
 
   // Jaringan Perpustakaan & Sumber Rujukan State
   const [primaryLibraries, setPrimaryLibraries] = useState<any[]>([]);
@@ -1038,9 +1076,10 @@ function App() {
     return () => clearTimeout(timer);
   }, [chatMessages]);
 
-  // Load riwayat chat saat login
+  // Load riwayat chat & research saat login
   useEffect(() => {
     loadChatHistories();
+    loadResearchHistories();
   }, [userProfile?.uid]);
 
   // Setup Speech Recognition
@@ -1114,9 +1153,11 @@ function App() {
         if (data.status === "completed") {
           setIsResearchRunning(false);
           clearInterval(intervalId);
+          // Auto-save ke riwayat
+          setTimeout(() => saveResearchToHistory(), 500);
         } else if (data.status === "failed") {
           setIsResearchRunning(false);
-          setResearchError("Penyusunan naskah penelitian terhenti karena kegagalan pemanggilan model.");
+          setResearchError("Deep Research failed — model unavailable or timeout. Please try again.");
           clearInterval(intervalId);
         }
       } catch (err: any) {
@@ -1362,7 +1403,7 @@ function App() {
     addLog("[Tier 4] Mensintesis suara evaluasi secara lokal...");
   };
 
-  // Filter Jaringan Rujukan Primer
+  // Filter Reference Network
   const filteredLibraries = primaryLibraries.filter((lib) => {
     const matchesSearch = 
       lib.title?.toLowerCase().includes(librarySearchQuery.toLowerCase()) ||
@@ -1560,7 +1601,7 @@ function App() {
             onClick={() => setActiveTab('research')} 
             className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'research' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            <BookText size={18} /> Kajian Mendalam
+            <BookText size={18} /> Deep Research
             {userProfile && userProfile.tier !== "Berbayar" && (
               <span className="text-[8px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">PREMIUM</span>
             )}
@@ -1569,7 +1610,7 @@ function App() {
             onClick={() => setActiveTab('mcp')} 
             className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'mcp' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            <BookOpen size={18} /> Perpustakaan & Rujukan Digital
+            <BookOpen size={18} /> Digital Library & References
           </button>
           <button 
             onClick={() => setActiveTab('register')} 
@@ -2137,7 +2178,7 @@ function App() {
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-indigo-500 opacity-50"></div>
               
               <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
-                <Search className="text-emerald-400" size={20} /> Mulai Kajian Akademis Mendalam (Deep Research)
+                <Search className="text-emerald-400" size={20} /> Start Deep Research
               </h2>
               <p className="text-slate-400 text-sm mb-6">
                 Masukkan topik keilmuan Al-Qur'an, Fiqih, Aqidah, atau Tafsir. Sistem akan meluncurkan agen riset multi-tahap secara otonom untuk menggali dalil, literatur Turats klasik, dan analisis komparasi mazhab secara sangat mendalam.
@@ -2162,7 +2203,7 @@ function App() {
                     </>
                   ) : (
                     <>
-                      <BookText size={18} /> Mulai Kajian
+                      <BookText size={18} /> Start Research
                     </>
                   )}
                 </button>
@@ -2174,6 +2215,39 @@ function App() {
                 </div>
               )}
             </div>
+
+            {/* Riwayat Deep Research */}
+            {userProfile && (
+              <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                <button
+                  onClick={() => { setShowResearchHistory(!showResearchHistory); if (!showResearchHistory) loadResearchHistories(); }}
+                  className="w-full flex items-center justify-between px-6 py-3 text-xs font-bold text-slate-400 hover:text-slate-200 transition-all"
+                >
+                  <span className="flex items-center gap-2"><Clock size={14} className="text-amber-400" /> Research History {researchHistories.length > 0 && `(${researchHistories.length})`}</span>
+                  <span className="text-[10px]">{showResearchHistory ? '▲' : '▼'}</span>
+                </button>
+                {showResearchHistory && (
+                  <div className="border-t border-slate-800 max-h-[250px] overflow-y-auto custom-scrollbar">
+                    {researchHistories.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-500">No research history yet. Your completed research will appear here.</div>
+                    ) : (
+                      researchHistories.map(h => (
+                        <div key={h.id} className="flex items-center justify-between px-6 py-3 border-b border-slate-800/50 hover:bg-slate-950/50 transition-all group">
+                          <button onClick={() => loadResearchFromHistory(h)} className="flex-1 text-left min-w-0">
+                            <span className="text-xs font-bold text-slate-300 truncate block">{h.topic}</span>
+                            <span className="text-[9px] text-slate-500 font-mono">{new Date(h.createdAt).toLocaleString('id-ID')} — {h.result.length} chars</span>
+                          </button>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onClick={() => { navigator.clipboard.writeText(h.result); }} className="text-slate-600 hover:text-emerald-400 p-1" title="Copy"><CheckCircle size={12} /></button>
+                            <button onClick={() => deleteResearchHistory(h.id)} className="text-slate-600 hover:text-red-400 p-1" title="Delete"><Trash2 size={12} /></button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Dashboard Perkembangan Penelitian */}
             {(isResearchRunning || researchTaskId) && (
@@ -2309,7 +2383,7 @@ function App() {
                       )}
                     </span>
                     <h2 className="text-xl md:text-2xl font-bold text-slate-100 mt-1">
-                      Hasil Kajian Mendalam {isResearchRunning ? "(Draf Live)" : ""}
+                      Research Results {isResearchRunning ? "(Live Draft)" : ""}
                     </h2>
                   </div>
                   <button
@@ -2317,7 +2391,7 @@ function App() {
                     disabled={isResearchRunning}
                     className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-emerald-500/20 active:scale-95"
                   >
-                    <FileDown size={16} /> Unduh Naskah (.md)
+                    <FileDown size={16} /> Download Research (.md)
                   </button>
                 </div>
 
@@ -2603,7 +2677,7 @@ function App() {
                       <span className="text-emerald-400 font-bold">✓</span> Konsultasi Tafsir Standard
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Melihat Katalog Perpustakaan Cungkring
+                      <span className="text-emerald-400 font-bold">✓</span> View Cungkring Library Catalog
                     </div>
                     <div className="flex items-center gap-2 text-slate-500 line-through">
                       <span>✗</span> Kajian Deep Research Tanpa Batas
@@ -2806,7 +2880,7 @@ function App() {
                       { fitur: "Evaluasi E-Tahsin", reguler: "✅ Dasar (5x/hari)", premium: "✅ Tanpa Batas", note: "Kuota rekaman" },
                       { fitur: "Huruf Hijaiyah & Makhraj", reguler: "✅ Akses Penuh", premium: "✅ Akses Penuh", note: "Gratis untuk semua" },
                       { fitur: "Tanya Jawab Tafsir", reguler: "✅ Standard", premium: "✅ Premium (RAG AI)", note: "Kualitas AI" },
-                      { fitur: "Perpustakaan Cungkring", reguler: "✅ Lihat Katalog", premium: "✅ Baca & Rujuk", note: "Akses bacaan" },
+                      { fitur: "Cungkring Library", reguler: "✅ View Catalog", premium: "✅ Full Access", note: "Reference access" },
                       { fitur: "Deep Research", reguler: "🔒 Tidak Tersedia", premium: "✅ Tanpa Batas", note: "Riset mendalam" },
                       { fitur: "Sinkronisasi Google Drive", reguler: "🔒 Tidak Tersedia", premium: "✅ Lintas Sesi", note: "Cloud storage" },
                       { fitur: "RAG AI Rujukan Cepat", reguler: "🔒 Tidak Tersedia", premium: "✅ Kecepatan Tinggi", note: "AI retrieval" },
@@ -3573,20 +3647,20 @@ function App() {
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Header Deskripsi Jaringan Rujukan */}
+            {/* Header Deskripsi Reference Network */}
             <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-50"></div>
               
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
-                    <Globe size={11} className="animate-pulse" /> DIREKTORI SUMBER PRIMER & REFERENSI DIKTI
+                    <Globe size={11} className="animate-pulse" /> REFERENCE NETWORK & DIGITAL LIBRARY
                   </span>
                   <h2 className="text-xl md:text-2xl font-bold text-slate-100 flex items-center gap-2 font-sans">
-                    <BookOpen className="text-emerald-400" size={24} /> Jaringan Rujukan & Perpustakaan Digital
+                    <BookOpen className="text-emerald-400" size={24} /> Reference Network & Digital Library
                   </h2>
                   <p className="text-slate-400 text-xs md:text-sm leading-relaxed max-w-3xl">
-                    Akses instan ke puluhan portal ilmiah resmi, program pencari hadits, repositori naskah manuskrip Turats kuno, dan perpustakaan digital terkemuka dunia. Direktori ini terintegrasi langsung dengan asisten kecerdasan buatan Quranica AI sebagai basis data rujukan primer.
+                    Akses instan ke 160+ portal ilmiah resmi, repositori PTKIN, jurnal terindeks Scopus, dan perpustakaan digital terkemuka. Terintegrasi dengan AI Quranica sebagai basis data rujukan primer.
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800 self-start md:self-auto shadow-inner">
@@ -3595,7 +3669,7 @@ function App() {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </div>
                   <span className="text-xs font-mono font-bold text-slate-200">
-                    {filteredLibraries.length} / {primaryLibraries.length} RUJUKAN AKTIF
+                    {filteredLibraries.length} / {primaryLibraries.length} ACTIVE REFERENCES
                   </span>
                 </div>
               </div>
@@ -3726,7 +3800,7 @@ function App() {
                           {/* Info Lokasi Rujukan */}
                           {lib.locationDetail && (
                             <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-900/60 text-[10px] text-slate-500 flex items-center gap-1.5 leading-snug">
-                              <Globe size={11} className="text-emerald-500 shrink-0" />
+                              <Globe size={11} className="text-emerald-500 shrink-0" /> Download Research (.md)
                               <span className="truncate">{lib.locationDetail}</span>
                             </div>
                           )}
