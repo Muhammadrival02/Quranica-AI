@@ -1712,9 +1712,9 @@ function App() {
                               onClick={() => {
                                 const a = new Audio(`/vn/vn_${item.v}.mp3`);
                                 a.play();
-                                addLog(`[Ref] Memutar ${item.h} (${item.nama})`);
+                                addLog(`[Ref] Memutar ${item.h} (${item.n})`);
                               }}
-                              title={`${item.nama}${isSalah ? ' — PERLU KOREKSI' : ''}`}
+                              title={`${item.n}${isSalah ? ' — PERLU KOREKSI' : ''}`}
                               className={`flex flex-col items-center justify-center p-1.5 rounded-lg text-xs transition-all ${
                                 isSalah
                                   ? 'bg-rose-600/30 border border-rose-500/60 scale-110 shadow-lg shadow-rose-500/20'
@@ -2515,6 +2515,8 @@ function App() {
                         if (!userProfile) {
                           setLoginTierSelection("Berbayar_Bulanan");
                           setShowLoginModal(true);
+                        } else {
+                          document.getElementById('payment-form')?.scrollIntoView({ behavior: 'smooth' });
                         }
                       }}
                       className={`w-full py-2 font-bold rounded-xl text-xs transition-all ${
@@ -2583,6 +2585,8 @@ function App() {
                         if (!userProfile) {
                           setLoginTierSelection("Berbayar_Tahunan");
                           setShowLoginModal(true);
+                        } else {
+                          document.getElementById('payment-form')?.scrollIntoView({ behavior: 'smooth' });
                         }
                       }}
                       className={`w-full py-2 font-bold rounded-xl text-xs transition-all ${
@@ -2601,7 +2605,7 @@ function App() {
 
             {/* Panel Checkout Registrasi & Pembayaran Interaktif */}
             {regPaymentStep !== "success" ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+              <div id="payment-form" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-emerald-400 opacity-60"></div>
                 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
