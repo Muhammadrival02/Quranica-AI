@@ -144,7 +144,7 @@ function App() {
   const [regPromoCode, setRegPromoCode] = useState("");
   const [regAppliedDiscount, setRegAppliedDiscount] = useState(0); // 10 means 10%
   const [regPromoFeedback, setRegPromoFeedback] = useState<string | null>(null);
-  const [regPaymentMethod, setRegPaymentMethod] = useState<"QRIS" | "VA_BCA" | "VA_MANDIRI" | "GOPAY">("QRIS");
+  const [regPaymentMethod, setRegPaymentMethod] = useState<"QRIS" | "BCA" | "DANA">("QRIS");
   const [regPaymentStep, setRegPaymentStep] = useState<"select" | "processing" | "success">("select");
   const [regManualName, setRegManualName] = useState("");
   const [regManualEmail, setRegManualEmail] = useState("");
@@ -2884,51 +2884,35 @@ function App() {
                         </div>
                       </div>
 
-                      {/* Opsi BCA VA */}
+                      {/* Opsi BCA Transfer */}
                       <div 
-                        onClick={() => setRegPaymentMethod("VA_BCA")}
+                        onClick={() => setRegPaymentMethod("BCA")}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
-                          regPaymentMethod === "VA_BCA"
+                          regPaymentMethod === "BCA"
                             ? "bg-slate-950 border-amber-500 text-slate-100"
                             : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-750"
                         }`}
                       >
                         <CreditCard size={16} className="text-blue-400" />
                         <div className="text-left">
-                          <div className="text-xs font-bold font-sans">BCA VA</div>
-                          <div className="text-[9px] text-slate-500">Virtual Account</div>
+                          <div className="text-xs font-bold font-sans">BCA Transfer</div>
+                          <div className="text-[9px] text-slate-500">Transfer Bank</div>
                         </div>
                       </div>
 
-                      {/* Opsi Mandiri VA */}
+                      {/* Opsi DANA Transfer */}
                       <div 
-                        onClick={() => setRegPaymentMethod("VA_MANDIRI")}
+                        onClick={() => setRegPaymentMethod("DANA")}
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
-                          regPaymentMethod === "VA_MANDIRI"
-                            ? "bg-slate-950 border-amber-500 text-slate-100"
-                            : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-750"
-                        }`}
-                      >
-                        <CreditCard size={16} className="text-yellow-500" />
-                        <div className="text-left">
-                          <div className="text-xs font-bold font-sans">Mandiri VA</div>
-                          <div className="text-[9px] text-slate-500">Virtual Account</div>
-                        </div>
-                      </div>
-
-                      {/* Opsi GoPay */}
-                      <div 
-                        onClick={() => setRegPaymentMethod("GOPAY")}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
-                          regPaymentMethod === "GOPAY"
+                          regPaymentMethod === "DANA"
                             ? "bg-slate-950 border-amber-500 text-slate-100"
                             : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-750"
                         }`}
                       >
                         <Globe size={16} className="text-teal-400" />
                         <div className="text-left">
-                          <div className="text-xs font-bold font-sans">GoPay / E-Wallet</div>
-                          <div className="text-[9px] text-slate-500">Dompet Digital</div>
+                          <div className="text-xs font-bold font-sans">DANA</div>
+                          <div className="text-[9px] text-slate-500">E-Wallet Transfer</div>
                         </div>
                       </div>
                     </div>
@@ -2968,7 +2952,7 @@ function App() {
                 </div>
 
                 {/* QRIS Payment Display */}
-                {regPaymentStep === "select" && regSelectedPlan !== "Reguler" && (
+                {regPaymentMethod === "QRIS" && regPaymentStep === "select" && regSelectedPlan !== "Reguler" && (
                   <div className="bg-slate-950 border border-amber-500/20 rounded-xl p-6 space-y-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <QrCode size={20} className="text-amber-400" />
@@ -2986,6 +2970,63 @@ function App() {
                           ? (300000 - (300000 * regAppliedDiscount / 100)).toLocaleString("id-ID")
                           : (30000 - (30000 * regAppliedDiscount / 100)).toLocaleString("id-ID")}
                       </span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Transfer Bank/E-Wallet Display */}
+                {(regPaymentMethod === "BCA" || regPaymentMethod === "DANA") && regPaymentStep === "select" && regSelectedPlan !== "Reguler" && (
+                  <div className="bg-slate-950 border border-blue-500/20 rounded-xl p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <CreditCard size={18} className={regPaymentMethod === "BCA" ? "text-blue-400" : "text-teal-400"} />
+                      <span className="text-sm font-bold text-slate-200">
+                        Transfer ke {regPaymentMethod === "BCA" ? "BCA" : "DANA"}
+                      </span>
+                    </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                      {regPaymentMethod === "BCA" ? (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">Bank</span>
+                            <span className="text-sm font-bold text-blue-400">BCA</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">No. Rekening</span>
+                            <span className="text-base font-mono font-bold text-slate-100 tracking-wider">7753050282</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">Pemilik</span>
+                            <span className="text-sm font-bold text-slate-200">Rinal Zamzam Elhasbi</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">E-Wallet</span>
+                            <span className="text-sm font-bold text-teal-400">DANA</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">No. HP</span>
+                            <span className="text-base font-mono font-bold text-slate-100 tracking-wider">085159552762</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-slate-400">Pemilik</span>
+                            <span className="text-sm font-bold text-slate-200">Rinal Zamzam Elhasbi</span>
+                          </div>
+                        </>
+                      )}
+                      <div className="border-t border-slate-700 pt-2">
+                        <p className="text-[11px] font-bold text-slate-300">
+                          Total Transfer: <span className="text-amber-400 font-mono text-base">
+                            Rp {regSelectedPlan === "Tahunan" 
+                              ? (300000 - (300000 * regAppliedDiscount / 100)).toLocaleString("id-ID")
+                              : (30000 - (30000 * regAppliedDiscount / 100)).toLocaleString("id-ID")}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                      Setelah transfer, klik tombol di bawah. Tim kami akan verifikasi dan mengaktifkan akun Premium Anda.
                     </p>
                   </div>
                 )}
