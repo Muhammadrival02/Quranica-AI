@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor } from 'lucide-react';
+import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
@@ -49,7 +49,7 @@ function App() {
   }, [isDark]);
 
   // Q&A, Research, & MCP Client State
-  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
+  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah' | 'profile'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -63,6 +63,7 @@ function App() {
     { id: 'research', icon: BookText, label: 'Riset' },
     { id: 'mcp', icon: Database, label: 'Pustaka' },
     { id: 'register', icon: Crown, label: 'Pro' },
+    { id: 'profile', icon: User, label: 'Profil' },
   ] as const;
 
   // Helper: tampilkan nama tier yang user-friendly
@@ -1637,6 +1638,12 @@ function App() {
             className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'register' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-slate-500 hover:text-amber-400/80 hover:text-slate-300'}`}
           >
             <Crown size={16} className="text-amber-400 fill-amber-400/10" /> Registrasi & Berlangganan ⭐
+          </button>
+          <button 
+            onClick={() => setActiveTab('profile')} 
+            className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'profile' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <User size={18} /> Profil
           </button>
           {userProfile && userProfile.role === "Admin" && (
             <button 
@@ -4922,6 +4929,137 @@ function App() {
         </div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          {/* Sertifikat Tahsin */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 bg-emerald-500/10 rounded-xl">
+                <Award size={22} className="text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-200">Sertifikat Tahsin</h3>
+                <p className="text-xs text-slate-500">Bukti pencapaian evaluasi tilawah Anda</p>
+              </div>
+            </div>
+
+            {userProfile ? (
+              <>
+                {/* Preview Certificate */}
+                <div className="bg-gradient-to-br from-emerald-950/40 via-slate-950 to-teal-950/40 border-2 border-emerald-500/20 rounded-xl p-6 mb-4 text-center">
+                  <div className="text-amber-400 text-4xl mb-3">📜</div>
+                  <h4 className="text-lg font-serif font-bold text-emerald-300 mb-1">Syahadah Tahsin Al-Quran</h4>
+                  <p className="text-[10px] text-emerald-500/60 uppercase tracking-widest mb-4">Certificate of Quranic Recitation Excellence</p>
+                  
+                  <div className="border-t border-emerald-500/10 pt-4 space-y-2 text-sm">
+                    <p className="text-slate-300">Diberikan kepada:</p>
+                    <p className="text-xl font-bold text-white font-serif">{userProfile.displayName}</p>
+                    <p className="text-xs text-slate-400">{userProfile.email}</p>
+                    <div className="flex justify-center gap-6 mt-3 text-[10px] text-slate-500">
+                      <span>Tier: <b className="text-emerald-400">{getTierDisplay(userProfile.tier, userProfile.billingCycle)}</b></span>
+                      <span>Terbit: <b className="text-slate-400">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-emerald-500/10 mt-4 pt-3">
+                    <p className="text-[11px] text-slate-400 italic leading-relaxed">
+                      "Sertifikat ini menandakan bahwa pemilik telah menyelesaikan evaluasi tahsin dan berkomitmen 
+                      untuk terus memperbaiki bacaan Al-Quran sesuai kaidah tajwid yang benar."
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const certHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sertifikat Tahsin - ${userProfile.displayName}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .cert { width: 800px; padding: 60px 50px; border: 8px double #059669; border-radius: 20px; text-align: center; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #ecfdf5 100%); position: relative; }
+  .cert::before { content: ''; position: absolute; inset: 12px; border: 2px solid #a7f3d0; border-radius: 12px; pointer-events: none; }
+  .logo { font-size: 28px; font-weight: 700; color: #059669; margin-bottom: 10px; }
+  .subtitle { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 30px; }
+  .title { font-size: 26px; font-family: 'Amiri', serif; color: #047857; margin-bottom: 8px; font-weight: 700; }
+  .title-en { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
+  .to { font-size: 14px; color: #6b7280; margin-bottom: 5px; }
+  .name { font-size: 32px; font-weight: 700; color: #064e3b; font-family: 'Amiri', serif; margin-bottom: 5px; }
+  .email { font-size: 12px; color: #9ca3af; margin-bottom: 25px; }
+  .info { display: flex; justify-content: center; gap: 40px; font-size: 11px; color: #6b7280; margin-bottom: 25px; }
+  .info b { color: #059669; }
+  .desc { font-size: 12px; color: #6b7280; font-style: italic; line-height: 1.7; max-width: 500px; margin: 0 auto 30px; }
+  .footer { font-size: 10px; color: #9ca3af; }
+  .stamp { font-size: 60px; opacity: 0.1; position: absolute; bottom: 30px; right: 60px; }
+  @media print { body { background: #fff; } .cert { box-shadow: none; border-color: #059669; } }
+</style></head><body>
+<div class="cert">
+  <div class="stamp">📜</div>
+  <div class="logo">🏛️ Quranica AI</div>
+  <div class="subtitle">E-Tahsin Certification Authority</div>
+  <div class="title">شهادة تحسين القرآن</div>
+  <div class="title-en">Certificate of Quranic Recitation Excellence</div>
+  <p class="to">Diberikan kepada:</p>
+  <p class="name">${userProfile.displayName}</p>
+  <p class="email">${userProfile.email}</p>
+  <div class="info">
+    <span>Tingkat: <b>${getTierDisplay(userProfile.tier, userProfile.billingCycle)}</b></span>
+    <span>Tanggal: <b>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span>
+  </div>
+  <p class="desc">Sertifikat ini menandakan bahwa pemilik telah menyelesaikan evaluasi tahsin dan berkomitmen untuk terus memperbaiki bacaan Al-Quran sesuai kaidah tajwid yang benar.</p>
+  <p class="footer">© ${new Date().getFullYear()} Quranica AI — Platform Evaluasi Tahsin Berbasis AI</p>
+</div>
+<script>window.onload = () => window.print();</script>
+</body></html>`;
+                    const w = window.open('', '_blank', 'width=900,height=700');
+                    if (w) { w.document.write(certHTML); w.document.close(); }
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Printer size={16} /> Cetak Sertifikat
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <User size={40} className="mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Silakan <button onClick={() => setShowLoginModal(true)} className="text-emerald-400 underline">masuk</button> terlebih dahulu untuk mencetak sertifikat.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Informasi Akun */}
+          {userProfile && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <h3 className="font-bold text-slate-200 mb-4 flex items-center gap-2">
+                <User size={18} className="text-emerald-400" /> Informasi Akun
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-slate-800/50">
+                  <span className="text-slate-400">Nama</span>
+                  <span className="text-slate-200 font-medium">{userProfile.displayName}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800/50">
+                  <span className="text-slate-400">Email</span>
+                  <span className="text-slate-200 font-medium text-xs">{userProfile.email}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800/50">
+                  <span className="text-slate-400">Tier</span>
+                  <span className={`font-bold ${userProfile.tier === 'Berbayar' ? (userProfile.billingCycle === 'Tahunan' ? 'text-purple-400' : 'text-amber-400') : 'text-slate-400'}`}>
+                    {getTierDisplay(userProfile.tier, userProfile.billingCycle)}
+                  </span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800/50">
+                  <span className="text-slate-400">Role</span>
+                  <span className="text-slate-200 font-medium">{userProfile.role}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-slate-400">Bergabung</span>
+                  <span className="text-slate-200 font-medium text-xs">{new Date(userProfile.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {/* Bottom Navigation Bar — klik saja, tanpa geser (Phone Only) */}
       {isPhonePreview && (
         <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-[90] safe-area-inset-bottom">
