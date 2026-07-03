@@ -536,50 +536,30 @@ app.post("/api/research/start", async (req, res) => {
         const apiKey = process.env.GEMINI_API_KEY || process.env.SUMOPOD_API_KEY;
         const provider = process.env.GEMINI_API_KEY ? "gemini" : "sumopod";
         
-        task.currentStage = "Menyusun BAB II: Kajian Pustaka..."; task.progress = 25;
-        const prompt = `Lakukan riset akademik mendalam (Deep Research) tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir.
+        task.currentStage = "Menyusun ringkasan..."; task.progress = 25;
+        const prompt = `Riset singkat tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir.
 
-TULISLAH DALAM FORMAT KARYA ILMIAH AKADEMIK (SKRIPSI/TESIS/DISERTASI) DENGAN STRUKTUR:
+TULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):
 
-## BAB I: PENDAHULUAN
-### A. Latar Belakang Masalah
-### B. Rumusan Masalah
-### C. Tujuan Penelitian
-### D. Manfaat Penelitian
+## Ringkasan
+- Inti permasalahan (2-3 kalimat)
 
-## BAB II: KAJIAN PUSTAKA / LANDASAN TEORI
-- Paparkan dalil-dalil dari Al-Quran dan Hadits yang relevan
-- Pendapat para ulama (minimal 3 mazhab/perspektif)
-- Penelitian terdahulu yang relevan
-- Kerangka berpikir
+## Dalil & Landasan
+- 1-2 ayat Al-Quran relevan (teks Arab + terjemah)
+- 1-2 hadits shahih (teks + perawi)
+- Ringkasan pendapat ulama (cukup 2 mazhab)
 
-## BAB III: METODOLOGI PENELITIAN
-- Jenis penelitian (kualitatif kepustakaan / library research)
-- Sumber data (primer: Al-Quran & Hadits; sekunder: kitab tafsir, jurnal)
-- Teknik pengumpulan data
-- Teknik analisis data (deskriptif-analitis, komparatif)
+## Analisis
+- Poin kunci (3-5 bullet points)
+- Relevansi kontemporer (1 paragraf)
 
-## BAB IV: HASIL DAN PEMBAHASAN
-- Paparkan temuan secara sistematis
-- Analisis kritis setiap temuan dengan dalil dan argumentasi
-- Perbandingan pendapat ulama
-- Implikasi dan relevansi kontemporer
+## Kesimpulan
+- Jawaban ringkas (2-3 kalimat)
 
-## BAB V: PENUTUP
-### A. Kesimpulan
-### B. Saran
+## Referensi
+- 3 sumber utama (nama kitab/jurnal)
 
-## DAFTAR PUSTAKA
-- Cantumkan minimal 5 referensi (kitab tafsir, kitab hadits, jurnal, buku)
-
-FORMAT:
-- Gunakan font akademik, bold untuk heading BAB
-- Bahasa Indonesia baku dan ilmiah (EYD)
-- Sitasi inline: (Nama Pengarang, Tahun: Halaman)
-- Catatan kaki (footnote) untuk penjelasan tambahan
-- Hindari kata ganti orang pertama (saya, kami) — gunakan "peneliti" atau "penulis"
-- Paragraf minimal 3 kalimat
-- Format Markdown`;
+FORMAT: Markdown, Bahasa Indonesia ringkas. JANGAN panjang lebar. Hindari BAB I-V skripsi. Hindari metodologi. Langsung ke inti.`;
         
         let result = "";
         if (provider === "gemini") {
@@ -597,9 +577,9 @@ FORMAT:
         }
         
         task.result = result; task.status = "completed"; task.progress = 100;
-        task.currentStage = "Naskah akademik selesai — siap diunduh";
+        task.currentStage = "Ringkasan selesai";
         task.logs = task.logs || [];
-        task.logs.push("[System] Deep Research selesai. Naskah telah disusun sesuai format skripsi/tesis/disertasi.");
+        task.logs.push("[System] Deep Research selesai — ringkasan padat siap dibaca.");
       } catch(e) {
         task.status = "error"; task.result = e.message;
       }
