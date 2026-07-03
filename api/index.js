@@ -202,6 +202,60 @@ Hanya return JSON, tanpa teks lain.`;
   }
 });
 
+// ===== DEEP RESEARCH =====
+const researchTasks = {};
+app.post("/api/research/start", async (req, res) => {
+  try {
+    const { topic } = req.body;
+    if (!topic) return res.status(400).json({ error: "Topik wajib" });
+    const id = "res_" + Date.now();
+    const task = { id, topic, status: "running", progress: 0, currentStage: "Memulai riset...", logs: [], steps: [], result: "" };
+    researchTasks[id] = task;
+    
+    // Run async
+    (async () => {
+      try {
+        task.currentStage = "Mengumpulkan referensi..."; task.progress = 20;
+        const apiKey = process.env.GEMINI_API_KEY || process.env.SUMOPOD_API_KEY;
+        const provider = process.env.GEMINI_API_KEY ? "gemini" : "sumopod";
+        
+        task.currentStage = "Menganalisis..."; task.progress = 50;
+        const prompt = `Lakukan riset mendalam tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir. 
+        Buatlah kajian komprehensif dengan: 1) Pendahuluan 2) Dalil Al-Quran & Hadits 3) Pendapat Ulama 4) Analisis 5) Kesimpulan.
+        Format dalam Markdown. Bahasa Indonesia.`;
+        
+        let result = "";
+        if (provider === "gemini") {
+          const { GoogleGenAI } = require("@google/genai");
+          const ai = new GoogleGenAI({ apiKey });
+          const resp = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+          result = resp.text;
+        } else {
+          const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
+            method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
+          });
+          const data = await resp.json();
+          result = data.choices?.[0]?.message?.content || "";
+        }
+        
+        task.result = result; task.status = "completed"; task.progress = 100;
+        task.currentStage = "Selesai";
+      } catch(e) {
+        task.status = "error"; task.result = e.message;
+      }
+    })();
+    
+    res.json({ id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/api/research/status/:id", (req, res) => {
+  const task = researchTasks[req.params.id];
+  if (!task) return res.status(404).json({ error: "Sesi tidak ditemukan" });
+  res.json(task);
+});
+
 // ===== SERVE STATIC FRONTEND =====
 app.use(express.static(path.join(__dirname, "..", "dist")));
 app.get("*", (req, res) => {

@@ -132,8 +132,9 @@ export class QuranicaApiClient {
       body: JSON.stringify({ topic })
     });
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Gagal memulai Deep Research.");
+      const ct = res.headers.get("content-type") || "";
+      const errText = ct.includes("json") ? (await res.json()).error : await res.text().then(t => t.slice(0, 200));
+      throw new Error(errText || "Gagal memulai Deep Research.");
     }
     return res.json();
   }
