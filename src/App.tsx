@@ -1581,36 +1581,62 @@ function App() {
 
           {/* Panel Hasil Evaluasi */}
           {evaluation && (
-            <div className="bg-emerald-950/30 p-6 md:p-8 rounded-2xl border border-emerald-500/20 animate-in fade-in slide-in-from-bottom-4">
-              <h3 className="text-emerald-400 font-bold text-lg mb-6 flex items-center gap-2 border-b border-emerald-900/50 pb-3">
-                <Activity size={20} /> Analisis Akustik (Tier 3)
-              </h3>
+            <div className="bg-gradient-to-b from-emerald-950/40 to-slate-900 p-6 md:p-8 rounded-2xl border border-emerald-500/30 animate-in fade-in slide-in-from-bottom-4 shadow-xl shadow-emerald-900/10">
+              <div className="flex items-center justify-between mb-6 border-b border-emerald-900/40 pb-4">
+                <h3 className="text-emerald-400 font-bold text-lg flex items-center gap-2">
+                  <Activity size={20} /> Hasil Koreksi Tahsin
+                </h3>
+                {/* TTS Button */}
+                <button
+                  onClick={() => {
+                    if (!('speechSynthesis' in window)) return;
+                    window.speechSynthesis.cancel();
+                    const text = `Hasil koreksi tahsin. Status: ${evaluation.status || 'tidak tersedia'}. ${evaluation.detail || ''}. ` +
+                      (evaluation.koreksiVn?.length ? `Huruf yang perlu dikoreksi: ${evaluation.koreksiVn.map((k:any) => k.nama).join(', ')}. ` : '') +
+                      `Makhraj: ${evaluation.makhraj || ''}. Sifat: ${evaluation.sifat || ''}.`;
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'id-ID'; utter.rate = 0.9;
+                    window.speechSynthesis.speak(utter);
+                  }}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95"
+                >
+                  🔊 Baca Hasil
+                </button>
+              </div>
+
+              {/* Status Badge */}
+              <div className="mb-6">
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${
+                  evaluation.status === 'Mumtaz' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                  evaluation.status === 'Lahn Khafy' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                  'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                }`}>
+                  {evaluation.status === 'Mumtaz' ? '✅' : evaluation.status === 'Lahn Khafy' ? '⚠️' : '❌'}
+                  {evaluation.status || 'Tidak Terklasifikasi'}
+                </span>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div className="space-y-4">
                   <div>
-                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Klasifikasi</span>
-                    <span className="bg-rose-500/10 text-rose-400 px-3 py-1 rounded-md font-semibold border border-rose-500/20">{evaluation.status}</span>
+                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Diagnosis Kesalahan</span>
+                    <p className="text-slate-200 leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800">{evaluation.detail || 'Tidak ada diagnosis'}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Diagnosis Lahn</span>
-                    <p className="text-slate-200 leading-relaxed">{evaluation.detail}</p>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Posisi Makhraj</span>
-                    <p className="text-emerald-200 font-medium">{evaluation.makhraj}</p>
+                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Posisi Makhraj yang Benar</span>
+                    <p className="text-emerald-200 font-medium bg-slate-900/50 p-3 rounded-lg border border-slate-800">{evaluation.makhraj || '-'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
                   <div>
-                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Karakteristik Sifat</span>
-                    <p className="text-slate-300">{evaluation.sifat}</p>
+                    <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Sifat Huruf</span>
+                    <p className="text-slate-300">{evaluation.sifat || '-'}</p>
                   </div>
                   <div className="pt-2 border-t border-slate-800">
                     <span className="text-emerald-600 block text-xs uppercase tracking-wider mb-2 font-bold">Rujukan Matan Al-Jazariyah</span>
-                    <p className="font-serif text-2xl text-emerald-100 text-right leading-relaxed mb-2" style={{ fontFamily: "'Amiri', serif" }}>{evaluation.matan}</p>
-                    <p className="text-slate-400 italic text-xs">"{evaluation.terjemahMatan}"</p>
+                    <p className="font-serif text-2xl text-emerald-100 text-right leading-relaxed mb-2" style={{ fontFamily: "'Amiri', serif" }}>{evaluation.matan || '-'}</p>
+                    <p className="text-slate-400 italic text-xs">"{evaluation.terjemahMatan || ''}"</p>
                   </div>
                 </div>
               </div>
@@ -1621,7 +1647,7 @@ function App() {
                   <>
                   <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl">
                     <h4 className="text-amber-400 font-bold text-sm flex items-center gap-2 mb-3">
-                      <Play size={16} /> Koreksi Pelafalan Huruf (E-Tahsin)
+                      <Play size={16} /> Huruf Perlu Koreksi — Dengarkan Pelafalan Benar
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {evaluation.koreksiVn.map((kv: any, i: number) => (
@@ -1630,7 +1656,6 @@ function App() {
                           onClick={() => {
                             const audio = new Audio(`/vn/vn_${kv.vn}.mp3`);
                             audio.play();
-                            addLog(`[E-Tahsin] Memutar VN-${kv.vn}: Koreksi huruf ${kv.huruf} (${kv.nama})`);
                           }}
                           className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all active:scale-95"
                         >
