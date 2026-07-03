@@ -38,6 +38,16 @@ function App() {
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
+  // Dark/Light Theme
+  const [isDark, setIsDark] = useState(() => {
+    try { return localStorage.getItem('quranica_theme') !== 'light'; } catch { return true; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('quranica_theme', isDark ? 'dark' : 'light');
+    document.documentElement.classList.toggle('light', !isDark);
+  }, [isDark]);
+
   // Q&A, Research, & MCP Client State
   const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
@@ -1533,6 +1543,16 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+              isDark ? 'bg-slate-800 text-amber-400 hover:bg-slate-700' : 'bg-amber-100 text-slate-700 hover:bg-amber-200'
+            }`}
+            title={isDark ? "Mode Terang" : "Mode Gelap"}
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
           {userProfile ? (
             <div className="flex items-center gap-2">
               {/* Streak / Badge */}
