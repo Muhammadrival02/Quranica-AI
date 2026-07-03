@@ -149,15 +149,47 @@ app.post("/api/evaluate", async (req, res) => {
     };
     
     const prompt = `Evaluasi rekaman Surah ${confirmedSurah}:${confirmedAyah}. Teks: ${mcpText}. Tajwid: ${mcpTajwid}.
-    Deteksi huruf Hijaiyah yang salah lafal. Sebutkan dalam array hurufSalah, contoh: ["ت","ذ"].
-    Klasifikasi: Lahn Jaly/Lahn Khafy/Mumtaz. Jelaskan makhraj & sifat yang benar.`;
     
+OUTPUT WAJIB dalam JSON format ini:
+{
+  "status": "Mumtaz/Lahn Khafy/Lahn Jaly",
+  "detail": "penjelasan detail kesalahan",
+  "makhraj": "posisi makhraj yang benar",
+  "sifat": "sifat huruf yang benar",
+  "hurufSalah": ["ت","ذ"],
+  "matan": "teks Arab Matan Jazariyah",
+  "terjemahMatan": "terjemahan matan"
+}
+
+Hanya return JSON, tanpa teks lain.`;
+
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: { parts: [{ inlineData: { mimeType, data: base64Audio } }, { text: prompt }] }
     });
+
+    // Parse response — handle non-JSON gracefully
+    let rawText = (result.text || "").trim();
+    // Remove markdown code blocks if present
+    rawText = rawText.replace(/^```(?:json)?\s*|\s*```$/g, '');
     
-    const evalData = JSON.parse(result.text || "{}");
+    let evalData = {};
+    try {
+      evalData = JSON.parse(rawText);
+    } catch {
+      // Fallback: extract from text
+      const hurufMatch = rawText.match(/hurufSalah["\s:\[\]]*\[(.*?)\]/);
+      const statusMatch = rawText.match(/(Mumtaz|Lahn\s*(Jaly|Khafy))/i);
+      evalData = {
+        status: statusMatch?.[0] || 'Lahn Khafy',
+        detail: rawText.slice(0, 500),
+        makhraj: '',
+        sifat: '',
+        hurufSalah: hurufMatch ? hurufMatch[1].replace(/["']/g, '').split(/[,\s]+/).filter(Boolean) : [],
+        matan: '',
+        terjemahMatan: '',
+      };
+    }
     const koreksiVn = [];
     if (evalData.hurufSalah && Array.isArray(evalData.hurufSalah)) {
       for (const h of evalData.hurufSalah) {
