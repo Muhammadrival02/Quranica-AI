@@ -58,6 +58,73 @@ app.get("/api/users", (req, res) => {
   res.json({ users: userDatabase });
 });
 
+// ===== ADMIN: ADD ADMIN =====
+app.post("/api/users/add-admin", (req, res) => {
+  try {
+    const { email, adminUid } = req.body;
+    if (!email || !adminUid) return res.status(400).json({ error: "Email dan adminUid wajib diisi." });
+    const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+    if (!admin) return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
+    const emailClean = email.trim().toLowerCase();
+    preApprovedAdmins.add(emailClean);
+    const existingUser = userDatabase.find(u => u.email.toLowerCase() === emailClean);
+    if (existingUser) existingUser.role = "Admin";
+    res.json({ success: true, message: `Email ${emailClean} berhasil didaftarkan sebagai Admin.` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== ADMIN: DELETE USER =====
+app.delete("/api/users/:uid", (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { adminUid } = req.body;
+    if (!adminUid) return res.status(401).json({ error: "Autentikasi admin diperlukan." });
+    const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+    if (!admin) return res.status(403).json({ error: "Akses ditolak." });
+    if (uid === adminUid) return res.status(400).json({ error: "Tidak dapat menghapus akun sendiri." });
+    const idx = userDatabase.findIndex(u => u.uid === uid);
+    if (idx === -1) return res.status(404).json({ error: "User tidak ditemukan." });
+    const deleted = userDatabase[idx];
+    userDatabase.splice(idx, 1);
+    res.json({ success: true, message: `User ${deleted.displayName} berhasil dihapus.` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== ADMIN: UPDATE TIER =====
+app.post("/api/users/update-tier", (req, res) => {
+  try {
+    const { uid, tier, billingCycle, adminUid } = req.body;
+    if (!uid || !tier) return res.status(400).json({ error: "UID dan tier wajib diisi." });
+    if (tier !== "Reguler" && tier !== "Berbayar") return res.status(400).json({ error: "Tier tidak valid." });
+    if (adminUid) {
+      const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+      if (!admin) return res.status(403).json({ error: "Akses ditolak." });
+    }
+    const user = userDatabase.find(u => u.uid === uid);
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+    user.tier = tier;
+    user.billingCycle = tier === "Berbayar" ? (billingCycle || "Bulanan") : null;
+    res.json({ success: true, user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== ADMIN: UPDATE ROLE =====
+app.post("/api/users/update-role", (req, res) => {
+  try {
+    const { uid, role, adminUid } = req.body;
+    if (!uid || !role) return res.status(400).json({ error: "UID dan peran wajib diisi." });
+    if (role !== "Admin" && role !== "User") return res.status(400).json({ error: "Peran tidak valid." });
+    if (!adminUid) return res.status(401).json({ error: "Autentikasi admin diperlukan." });
+    const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
+    if (!admin) return res.status(403).json({ error: "Akses ditolak." });
+    const user = userDatabase.find(u => u.uid === uid);
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+    if (uid === adminUid) return res.status(400).json({ error: "Tidak dapat mengubah peran sendiri." });
+    user.role = role;
+    res.json({ success: true, user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ===== LIBRARY =====
 app.get("/api/library", (req, res) => {
   const populated = cungkringLibrary.map(item => ({ ...item, externalLink: item.externalLink || "https://shamela.ws" }));
