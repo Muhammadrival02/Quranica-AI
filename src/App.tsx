@@ -30,7 +30,14 @@ function App() {
   // Smartphone Preview Mode
   const [isPhonePreview, setIsPhonePreview] = useState(true);
 
-  // Bottom bar swipe state  
+  // Q&A, Research, & MCP Client State
+  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
+  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Bottom bar swipe state (after activeTab)
   const [swipeActive, setSwipeActive] = useState(false);
   const [swipeStartX, setSwipeStartX] = useState(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -68,13 +75,6 @@ function App() {
     }
     setSwipeOffset(0);
   };
-
-  // Q&A, Research, & MCP Client State
-  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
-  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Riwayat Chat
   interface ChatHistory { id: string; title: string; messages: {role:string;content:string}[]; createdAt: string; }
