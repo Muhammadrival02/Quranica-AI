@@ -45,12 +45,7 @@ function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Bottom bar swipe state (after activeTab)
-  const [swipeActive, setSwipeActive] = useState(false);
-  const [swipeStartX, setSwipeStartX] = useState(0);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const barRef = useRef<HTMLDivElement>(null);
-
+  // Bottom bar constants (klik saja, tanpa swipe)
   const phoneTabs = [
     { id: 'tahsin', icon: Mic, label: 'Tahsin' },
     { id: 'qa', icon: MessageSquare, label: 'Tafsir' },
@@ -59,30 +54,6 @@ function App() {
     { id: 'mcp', icon: Database, label: 'Pustaka' },
     { id: 'register', icon: Crown, label: 'Pro' },
   ] as const;
-
-  const currentTabIndex = phoneTabs.findIndex(t => t.id === activeTab);
-
-  const handleSwipeStart = (e: React.TouchEvent) => {
-    setSwipeActive(true);
-    setSwipeStartX(e.touches[0].clientX);
-  };
-
-  const handleSwipeMove = (e: React.TouchEvent) => {
-    if (!swipeActive) return;
-    const dx = e.touches[0].clientX - swipeStartX;
-    setSwipeOffset(dx);
-  };
-
-  const handleSwipeEnd = () => {
-    setSwipeActive(false);
-    const threshold = 60;
-    if (swipeOffset > threshold && currentTabIndex > 0) {
-      setActiveTab(phoneTabs[currentTabIndex - 1].id as any);
-    } else if (swipeOffset < -threshold && currentTabIndex < phoneTabs.length - 1) {
-      setActiveTab(phoneTabs[currentTabIndex + 1].id as any);
-    }
-    setSwipeOffset(0);
-  };
 
   // Helper: tampilkan nama tier yang user-friendly
   const getTierDisplay = (tier: string, cycle?: string | null) => {
@@ -1488,11 +1459,6 @@ function App() {
         ? 'max-w-[420px] mx-auto my-4 rounded-[44px] border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.5),0_0_0_2px_rgba(16,185,129,0.15)] overflow-hidden relative p-2.5 pt-9 pb-8'
         : 'p-4 md:p-8'
     }`}
-      {...(isPhonePreview ? {
-        onTouchStart: handleSwipeStart,
-        onTouchMove: handleSwipeMove,
-        onTouchEnd: handleSwipeEnd,
-      } : {})}
     >
       {/* Phone Notch & Status Bar */}
       {isPhonePreview && (
@@ -4936,24 +4902,9 @@ function App() {
         </div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
-      {/* Bottom Navigation Bar — Tarteel Style (Phone Only) */}
+      {/* Bottom Navigation Bar — klik saja, tanpa geser (Phone Only) */}
       {isPhonePreview && (
-        <div 
-          ref={barRef}
-          className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-[90] safe-area-inset-bottom"
-          onTouchStart={handleSwipeStart}
-          onTouchMove={handleSwipeMove}
-          onTouchEnd={handleSwipeEnd}
-        >
-          {/* Sliding active indicator — top bar */}
-          <div 
-            className="absolute top-0 h-[2px] bg-emerald-400 rounded-full transition-all duration-300 ease-out"
-            style={{
-              left: `calc(${(currentTabIndex / phoneTabs.length) * 100}% + ${(swipeOffset / (barRef.current?.offsetWidth || 400)) * 100}% + ${(100 / phoneTabs.length / 2)}% - 16px)`,
-              width: '32px',
-              opacity: swipeActive ? 0.7 : 1,
-            }}
-          />
+        <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-[90] safe-area-inset-bottom">
           <div className="flex items-center justify-around py-2 px-1">
             {phoneTabs.map((tab) => {
               const Icon = tab.icon;
@@ -4976,7 +4927,6 @@ function App() {
               );
             })}
           </div>
-          {/* Safe area spacer for notched phones */}
           <div className="h-5" />
         </div>
       )}
