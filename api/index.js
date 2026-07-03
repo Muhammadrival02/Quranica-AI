@@ -532,10 +532,6 @@ app.post("/api/research/start", async (req, res) => {
     // Run async
     (async () => {
       try {
-        task.currentStage = "Menyusun BAB I: Pendahuluan..."; task.progress = 10;
-        const apiKey = process.env.GEMINI_API_KEY || process.env.SUMOPOD_API_KEY;
-        const provider = process.env.GEMINI_API_KEY ? "gemini" : "sumopod";
-        
         task.currentStage = "Menyusun ringkasan..."; task.progress = 25;
         
         // Cari referensi relevan dari perpustakaan
@@ -587,19 +583,35 @@ FORMAT: Markdown, Bahasa Indonesia ringkas. JANGAN panjang lebar. Hindari BAB I-
         
         let result = "";
         task.currentStage = "Menulis..."; task.progress = 60;
-        if (provider === "gemini") {
-          const { GoogleGenAI } = require("@google/genai");
-          const ai = new GoogleGenAI({ apiKey });
-          const resp = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-          result = resp.text;
-        } else {
-          const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
-            method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
-          });
-          const data = await resp.json();
-          result = data.choices?.[0]?.message?.content || "";
+        
+        const geminiKey = process.env.GEMINI_API_KEY;
+        const sumopodKey = process.env.SUMOPOD_API_KEY;
+        
+        // Try Gemini dulu, fallback ke Sumopod
+        let lastError = "";
+        
+        if (geminiKey) {
+          try {
+            const { GoogleGenAI } = require("@google/genai");
+            const ai = new GoogleGenAI({ apiKey: geminiKey });
+            const resp = await ai.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt });
+            if (resp.text) { result = resp.text; task.logs.push("[System] Dihasilkan oleh Gemini 2.0 Flash."); }
+          } catch(e) { lastError = e.message; task.logs.push(`[Warning] Gemini gagal: ${e.message}`); }
         }
+        
+        if (!result && sumopodKey) {
+          try {
+            const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
+              method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sumopodKey}` },
+              body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
+            });
+            const data = await resp.json();
+            result = data.choices?.[0]?.message?.content || "";
+            if (result) task.logs.push("[System] Dihasilkan oleh Sumopod Deepseek.");
+          } catch(e) { lastError = e.message; task.logs.push(`[Warning] Sumopod gagal: ${e.message}`); }
+        }
+        
+        if (!result) throw new Error(lastError || "Semua provider gagal. Coba lagi nanti.");
         
         task.result = result; task.status = "completed"; task.progress = 100;
         task.currentStage = "Ringkasan selesai";
