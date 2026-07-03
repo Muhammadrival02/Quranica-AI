@@ -30,6 +30,45 @@ function App() {
   // Smartphone Preview Mode
   const [isPhonePreview, setIsPhonePreview] = useState(true);
 
+  // Bottom bar swipe state  
+  const [swipeActive, setSwipeActive] = useState(false);
+  const [swipeStartX, setSwipeStartX] = useState(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  const phoneTabs = [
+    { id: 'tahsin', icon: Mic, label: 'Tahsin' },
+    { id: 'qa', icon: MessageSquare, label: 'Tafsir' },
+    { id: 'hijaiyah', icon: BookOpen, label: 'Huruf' },
+    { id: 'research', icon: BookText, label: 'Riset' },
+    { id: 'mcp', icon: Database, label: 'Pustaka' },
+    { id: 'register', icon: Crown, label: 'Pro' },
+  ] as const;
+
+  const currentTabIndex = phoneTabs.findIndex(t => t.id === activeTab);
+
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    setSwipeActive(true);
+    setSwipeStartX(e.touches[0].clientX);
+  };
+
+  const handleSwipeMove = (e: React.TouchEvent) => {
+    if (!swipeActive) return;
+    const dx = e.touches[0].clientX - swipeStartX;
+    setSwipeOffset(dx);
+  };
+
+  const handleSwipeEnd = () => {
+    setSwipeActive(false);
+    const threshold = 60;
+    if (swipeOffset > threshold && currentTabIndex > 0) {
+      setActiveTab(phoneTabs[currentTabIndex - 1].id as any);
+    } else if (swipeOffset < -threshold && currentTabIndex < phoneTabs.length - 1) {
+      setActiveTab(phoneTabs[currentTabIndex + 1].id as any);
+    }
+    setSwipeOffset(0);
+  };
+
   // Q&A, Research, & MCP Client State
   const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
@@ -1425,11 +1464,18 @@ function App() {
   });
 
   return (
-    <div className={`min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 ${
+    <div 
+      className={`min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 ${
       isPhonePreview 
         ? 'max-w-[420px] mx-auto my-4 rounded-[44px] border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.5),0_0_0_2px_rgba(16,185,129,0.15)] overflow-hidden relative p-2.5 pt-9 pb-8'
         : 'p-4 md:p-8'
-    }`}>
+    }`}
+      {...(isPhonePreview ? {
+        onTouchStart: handleSwipeStart,
+        onTouchMove: handleSwipeMove,
+        onTouchEnd: handleSwipeEnd,
+      } : {})}
+    >
       {/* Phone Notch & Status Bar */}
       {isPhonePreview && (
         <>
@@ -4912,6 +4958,47 @@ function App() {
         </div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
+      {/* Swipeable Bottom Navigation Bar (Phone Only) */}
+      {isPhonePreview && (
+        <div 
+          ref={barRef}
+          className="fixed bottom-16 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-[380px] bg-slate-900/95 backdrop-blur-xl border border-slate-700/60 rounded-2xl shadow-2xl z-[90] overflow-hidden"
+          onTouchStart={handleSwipeStart}
+          onTouchMove={handleSwipeMove}
+          onTouchEnd={handleSwipeEnd}
+        >
+          {/* Sliding indicator */}
+          <div 
+            className="absolute bottom-0 h-[3px] bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-300 ease-out"
+            style={{
+              left: `calc(${(currentTabIndex / phoneTabs.length) * 100}% + ${swipeOffset / (barRef.current?.offsetWidth || 400) * 100}% + ${(100 / phoneTabs.length / 2)}% - 12px)`,
+              width: '24px',
+              opacity: swipeActive ? 0.8 : 1,
+            }}
+          />
+          {/* Tab icons */}
+          <div className="flex items-center justify-around px-2 py-2">
+            {phoneTabs.map((tab, i) => {
+              const Icon = tab.icon;
+              const isActive = tab.id === activeTab;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all duration-200 active:scale-90 ${
+                    isActive 
+                      ? 'text-emerald-400' 
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Icon size={18} className={isActive ? 'drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]' : ''} />
+                  <span className={`text-[9px] font-semibold ${isActive ? '' : ''}`}>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {/* Phone/Desktop Toggle */}
       <button
         onClick={() => setIsPhonePreview(!isPhonePreview)}
