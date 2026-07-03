@@ -537,7 +537,31 @@ app.post("/api/research/start", async (req, res) => {
         const provider = process.env.GEMINI_API_KEY ? "gemini" : "sumopod";
         
         task.currentStage = "Menyusun ringkasan..."; task.progress = 25;
+        
+        // Cari referensi relevan dari perpustakaan
+        const keywords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+        const kitabRefs = cungkringLibrary.filter(item => {
+          const t = (item.title || "").toLowerCase();
+          const c = (item.content || "").toLowerCase();
+          return keywords.some(kw => t.includes(kw) || c.includes(kw));
+        }).slice(0, 5);
+        const portalRefs = rujukanLibrary.filter(r => {
+          const t = (r.title || "").toLowerCase();
+          const d = (r.description || "").toLowerCase();
+          const cat = (r.category || "").toLowerCase();
+          return keywords.some(kw => t.includes(kw) || d.includes(kw) || cat.includes(kw));
+        }).slice(0, 5);
+        
+        let refContext = "";
+        if (kitabRefs.length > 0) {
+          refContext += "\nREFERENSI KITAB DARI PERPUSTAKAAN:\n" + kitabRefs.map(r => `- ${r.title} (${r.author}) — ${r.content?.slice(0,150)}... [Sumber: ${r.externalLink || r.uri}]`).join("\n");
+        }
+        if (portalRefs.length > 0) {
+          refContext += "\nREFERENSI PORTAL/JURNAL:\n" + portalRefs.map(r => `- ${r.title} — ${r.description} [Akses: ${r.url || r.uri}]`).join("\n");
+        }
+        
         const prompt = `Riset singkat tentang: "${topic}" dalam konteks Islam, Al-Quran, Hadits, dan Tafsir.
+${refContext}
 
 TULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):
 
@@ -548,7 +572,7 @@ TULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):
 - 1-2 ayat Al-Quran relevan (teks Arab + terjemah)
 - 1-2 hadits shahih (teks + perawi)
 - Ringkasan pendapat ulama (cukup 2 mazhab)
-
+${kitabRefs.length > 0 ? '- GUNAKAN referensi kitab di atas sebagai sumber primer.\n' : ''}
 ## Analisis
 - Poin kunci (3-5 bullet points)
 - Relevansi kontemporer (1 paragraf)
@@ -557,23 +581,55 @@ TULIS SINGKAT & PADAT (maks 3-4 paragraf per bagian):
 - Jawaban ringkas (2-3 kalimat)
 
 ## Referensi
-- 3 sumber utama (nama kitab/jurnal)
-
+- 3 sumber utama — SERTAKAN referensi dari perpustakaan digital Quranica AI yang sudah disediakan di atas
+${portalRefs.length > 0 ? '- Cantumkan minimal 1 portal/jurnal dari daftar yang tersedia.\n' : ''}
 FORMAT: Markdown, Bahasa Indonesia ringkas. JANGAN panjang lebar. Hindari BAB I-V skripsi. Hindari metodologi. Langsung ke inti.`;
         
         let result = "";
         if (provider === "gemini") {
           const { GoogleGenAI } = require("@google/genai");
           const ai = new GoogleGenAI({ apiKey });
-          const resp = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-          result = resp.text;
+          const stream = await ai.models.generateContentStream({ model: 'gemini-2.5-flash', contents: prompt });
+          task.currentStage = "Menulis..."; task.progress = 60;
+          for await (const chunk of stream) {
+            const text = chunk.text || "";
+            result += text;
+            task.result = result;
+            task.progress = Math.min(60 + Math.floor(result.length / 50), 95);
+          }
         } else {
           const resp = await fetch("https://ai.sumopod.com/v1/chat/completions", {
             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }] })
+            body: JSON.stringify({ model: "deepseek-v4-pro", messages: [{ role: "user", content: prompt }], stream: true })
           });
-          const data = await resp.json();
-          result = data.choices?.[0]?.message?.content || "";
+          const reader = resp.body?.getReader?.();
+          if (reader) {
+            const decoder = new TextDecoder();
+            task.currentStage = "Menulis..."; task.progress = 60;
+            let buffer = "";
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() || "";
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const d = line.slice(6).trim();
+                  if (d === "[DONE]") continue;
+                  try {
+                    const json = JSON.parse(d);
+                    result += json.choices?.[0]?.delta?.content || "";
+                    task.result = result;
+                    task.progress = Math.min(60 + Math.floor(result.length / 50), 95);
+                  } catch {}
+                }
+              }
+            }
+          } else {
+            const data = await resp.json();
+            result = data.choices?.[0]?.message?.content || "";
+          }
         }
         
         task.result = result; task.status = "completed"; task.progress = 100;

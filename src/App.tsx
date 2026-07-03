@@ -1122,7 +1122,7 @@ function App() {
       } catch (err: any) {
         console.error("Error polling research:", err);
       }
-    }, 3000);
+    }, 500); // real-time streaming — poll tiap 500ms
 
     return () => clearInterval(intervalId);
   }, [researchTaskId, isResearchRunning]);
@@ -2294,7 +2294,7 @@ function App() {
             )}
 
             {/* Manuskrip Penelitian Akhir */}
-            {researchResult && (
+            {(researchResult || isResearchRunning) && (
               <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl p-6 md:p-8 space-y-6 animate-in slide-in-from-bottom duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
                   <div>
@@ -2354,7 +2354,7 @@ function App() {
                         }
                       }}
                     >
-                      {researchResult}
+                      {researchResult}{isResearchRunning ? <span className="animate-pulse text-emerald-400 font-bold">|</span> : null}
                     </Markdown>
                   </div>
                 </div>
