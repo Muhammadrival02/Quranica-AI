@@ -1487,7 +1487,7 @@ function App() {
         </div>
 
         {activeTab === 'tahsin' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div key="tahsin" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
             {/* Kolom Utama: Kontrol & Evaluasi */}
             <div className="lg:col-span-2 space-y-6">
@@ -1804,7 +1804,7 @@ function App() {
         </div>
           </div>
         ) : activeTab === 'qa' ? (
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl h-[700px] flex flex-col overflow-hidden relative">
+          <div key="qa" className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl h-[700px] flex flex-col overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-teal-400 opacity-50"></div>
             
             {/* Chat History */}
@@ -2187,7 +2187,8 @@ function App() {
             )}
           </div>
         ) : activeTab === 'admin' ? (
-          <div className="space-y-6 text-slate-200 relative bg-slate-950/60 rounded-2xl p-1">\n            {/* Panel Admin Utama */}
+          <div key="admin" className="space-y-6 text-slate-200 relative bg-slate-950/60 rounded-2xl p-1">
+            {/* Panel Admin Utama */}
             <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-70"></div>
               
@@ -2351,7 +2352,7 @@ function App() {
             </div>
           </div>
         ) : activeTab === 'register' ? (
-          <div className="space-y-6 animate-in fade-in duration-300 text-slate-200">
+          <div key="register" className="space-y-6 animate-in fade-in duration-300 text-slate-200">
             {/* Banner Utama */}
             <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-emerald-400 opacity-80"></div>
