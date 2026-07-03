@@ -562,6 +562,10 @@ function App() {
   };
 
   const handleDriveSync = async () => {
+    if (!userProfile || userProfile.tier !== "Berbayar") {
+      setSyncError("Fitur sinkronisasi Google Drive hanya tersedia untuk pengguna Premium. Silakan upgrade di menu langganan.");
+      return;
+    }
     if (!googleToken) {
       setSyncStatus("Mengautentikasi...");
       try {
@@ -1035,6 +1039,10 @@ function App() {
   const handleStartResearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!researchTopic.trim() || isResearchRunning) return;
+    if (!userProfile || userProfile.tier !== "Berbayar") {
+      setResearchError("Fitur Deep Research hanya tersedia untuk pengguna Premium. Silakan upgrade di menu langganan.");
+      return;
+    }
 
     setIsResearchRunning(true);
     setResearchProgress(5);
@@ -1459,7 +1467,10 @@ function App() {
             onClick={() => setActiveTab('research')} 
             className={`flex items-center gap-2 pb-3 px-2 font-bold transition-all ${activeTab === 'research' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            <BookText size={18} /> Kajian Mendalam (Deep Research)
+            <BookText size={18} /> Kajian Mendalam
+            {userProfile && userProfile.tier !== "Berbayar" && (
+              <span className="text-[8px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">PREMIUM</span>
+            )}
           </button>
           <button 
             onClick={() => setActiveTab('mcp')} 
@@ -1955,6 +1966,23 @@ function App() {
             </form>
           </div>
         ) : activeTab === 'research' ? (
+          (userProfile && userProfile.tier !== "Berbayar") ? (
+            <div className="space-y-6 text-slate-200">
+              <div className="bg-slate-900 p-10 rounded-2xl border border-amber-500/20 shadow-2xl text-center space-y-5">
+                <div className="text-6xl">🔒</div>
+                <h2 className="text-xl font-bold text-amber-400">Fitur Eksklusif Premium</h2>
+                <p className="text-slate-400 text-sm max-w-lg mx-auto leading-relaxed">
+                  Deep Research hanya tersedia untuk pengguna Premium. Upgrade sekarang untuk akses riset mendalam tanpa batas, analisis komparasi mazhab, dan kajian literatur Turats klasik.
+                </p>
+                <button
+                  onClick={() => setActiveTab('register')}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-lg mt-4"
+                >
+                  <Crown size={18} /> Upgrade ke Premium Sekarang
+                </button>
+              </div>
+            </div>
+          ) : (
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Form Mulai Riset */}
             <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
@@ -2186,7 +2214,7 @@ function App() {
               </div>
             )}
           </div>
-        ) : activeTab === 'admin' ? (
+        )) : activeTab === 'admin' ? (
           <div key="admin" className="space-y-6 text-slate-200 relative z-10" style={{ isolation: 'isolate' }}>
             {/* Panel Admin Utama */}
             <div className="bg-slate-950 p-6 md:p-8 rounded-2xl border border-amber-500/20 shadow-2xl relative overflow-hidden">
@@ -2601,6 +2629,57 @@ function App() {
                 </div>
               </div>
 
+            </div>
+
+            {/* ═══════════ TABEL PERBANDINGAN FITUR ═══════════ */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+              <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                <span className="text-sm font-bold text-slate-200">📋 Perbandingan Fitur Reguler vs Premium</span>
+                <span className="text-[10px] text-slate-500">Pilih paket yang sesuai dengan kebutuhan Anda</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-950/50">
+                      <th className="text-left p-4 font-bold text-slate-300 uppercase tracking-wider w-[40%]">Fitur</th>
+                      <th className="text-center p-4 font-bold text-slate-400 uppercase tracking-wider bg-slate-800/20 w-[20%]">
+                        <span className="px-2 py-0.5 bg-slate-800 rounded text-slate-400">REGULER</span>
+                        <div className="text-[10px] font-normal text-slate-500 mt-1">Gratis</div>
+                      </th>
+                      <th className="text-center p-4 font-bold text-amber-400 uppercase tracking-wider w-[20%]">
+                        <span className="px-2 py-0.5 bg-amber-500/10 rounded border border-amber-500/20 text-amber-400">PREMIUM</span>
+                        <div className="text-[10px] font-normal text-amber-500/70 mt-1">Bulanan / Tahunan</div>
+                      </th>
+                      <th className="text-center p-4 font-bold text-slate-300 uppercase tracking-wider w-[20%]">Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50">
+                    {[
+                      { fitur: "Evaluasi E-Tahsin", reguler: "✅ Dasar (5x/hari)", premium: "✅ Tanpa Batas", note: "Kuota rekaman" },
+                      { fitur: "Huruf Hijaiyah & Makhraj", reguler: "✅ Akses Penuh", premium: "✅ Akses Penuh", note: "Gratis untuk semua" },
+                      { fitur: "Tanya Jawab Tafsir", reguler: "✅ Standard", premium: "✅ Premium (RAG AI)", note: "Kualitas AI" },
+                      { fitur: "Perpustakaan Cungkring", reguler: "✅ Lihat Katalog", premium: "✅ Baca & Rujuk", note: "Akses bacaan" },
+                      { fitur: "Deep Research", reguler: "🔒 Tidak Tersedia", premium: "✅ Tanpa Batas", note: "Riset mendalam" },
+                      { fitur: "Sinkronisasi Google Drive", reguler: "🔒 Tidak Tersedia", premium: "✅ Lintas Sesi", note: "Cloud storage" },
+                      { fitur: "RAG AI Rujukan Cepat", reguler: "🔒 Tidak Tersedia", premium: "✅ Kecepatan Tinggi", note: "AI retrieval" },
+                      { fitur: "Lencana Profil Eksklusif", reguler: "🔒 Tidak Tersedia", premium: "✅ Mahkota Emas (Tahunan)", note: "Hanya Tahunan" },
+                      { fitur: "Prioritas Server", reguler: "🔒 Tidak Tersedia", premium: "✅ Server Utama", note: "Response time" },
+                      { fitur: "Support Setup API", reguler: "🔒 Tidak Tersedia", premium: "✅ Lintas Platform", note: "Bantuan teknis" },
+                    ].map((row, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-transparent' : 'bg-slate-950/20'}>
+                        <td className="p-3 font-medium text-slate-200">{row.fitur}</td>
+                        <td className="p-3 text-center bg-slate-800/10">{row.reguler}</td>
+                        <td className="p-3 text-center font-medium">{row.premium}</td>
+                        <td className="p-3 text-center text-slate-500 text-[10px]">{row.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="bg-slate-950 px-6 py-3 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+                <span>🔒 = Fitur eksklusif Premium &bull; ✅ = Tersedia di paket</span>
+                <span className="text-emerald-400 font-mono">Update: {new Date().toLocaleDateString('id-ID')}</span>
+              </div>
             </div>
 
             {/* Panel Checkout Registrasi & Pembayaran Interaktif */}
@@ -3540,7 +3619,14 @@ function App() {
                       <Cloud size={24} className="animate-pulse" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="font-bold text-slate-100 font-sans text-lg">Sinkronisasi Rujukan Google Drive</h3>
+                      <h3 className="font-bold text-slate-100 font-sans text-lg flex items-center gap-2">
+                        Sinkronisasi Rujukan Google Drive
+                        {userProfile && userProfile.tier !== "Berbayar" && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
+                            <Crown size={10} /> PREMIUM
+                          </span>
+                        )}
+                      </h3>
                       <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
                         Hubungkan Google Drive Anda untuk memuat file rujukan, kitab digital, atau naskah kajian secara otonom. Berkas-berkas di dalam folder yang ditentukan akan diunduh, diekstrak, dan diintegrasikan sebagai <strong className="text-emerald-400 font-bold">referensi utama</strong> berprioritas tinggi dalam pencarian dan chatbot Quranica AI.
                       </p>
