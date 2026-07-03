@@ -3248,8 +3248,24 @@ function App() {
                             const data = await res.json();
                             setRegAiResult(data);
                             if (data.confirmed) {
+                              // Set user profile dari data yang dikembalikan backend
                               if (userProfile) {
                                 await syncUserProfileWithBackend(userProfile, "Berbayar", regPaymentData.billingCycle);
+                              } else if (data.user) {
+                                // Manual user — set profile dari respons backend
+                                const manualProfile = {
+                                  ...data.user,
+                                  role: data.user.role || "User",
+                                  pekerjaan: regManualPekerjaan || "",
+                                  phone: regManualPhone || "",
+                                  password: regManualPassword || ""
+                                };
+                                setUserProfile(manualProfile);
+                                saveUserWithExpiry(manualProfile);
+                                localStorage.setItem(`quranica_tier_${data.user.uid}`, "Berbayar");
+                                if (data.user.billingCycle) {
+                                  localStorage.setItem(`quranica_cycle_${data.user.uid}`, data.user.billingCycle);
+                                }
                               }
                               setRegPaymentStep("success");
                             } else {
