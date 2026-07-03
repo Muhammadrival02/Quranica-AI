@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock } from 'lucide-react';
+import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
@@ -27,6 +27,9 @@ function App() {
   const [isFetchingMcp, setIsFetchingMcp] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   
+  // Smartphone Preview Mode
+  const [isPhonePreview, setIsPhonePreview] = useState(true);
+
   // Q&A, Research, & MCP Client State
   const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
@@ -1422,7 +1425,24 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans selection:bg-emerald-500/30">
+    <div className={`min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 ${
+      isPhonePreview 
+        ? 'max-w-[420px] mx-auto my-4 rounded-[44px] border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.5),0_0_0_2px_rgba(16,185,129,0.15)] overflow-hidden relative p-2.5 pt-9 pb-8'
+        : 'p-4 md:p-8'
+    }`}>
+      {/* Phone Notch & Status Bar */}
+      {isPhonePreview && (
+        <>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[110px] h-[30px] bg-black rounded-b-[18px] z-50" />
+          <div className="absolute top-1.5 left-6 text-[10px] text-slate-500 z-50 font-medium">9:41</div>
+          <div className="absolute top-1.5 right-7 flex items-center gap-0.5 text-[10px] text-slate-500 z-50">
+            <span className="tracking-tighter">▮▮▮▮</span>
+            <span className="text-[8px]">WiFi</span>
+            <span>🔋</span>
+          </div>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[130px] h-[5px] bg-slate-600 rounded-full z-50" />
+        </>
+      )}
       {/* Modal Popup Error Mikrofon */}
       {micError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -4892,6 +4912,15 @@ function App() {
         </div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
+      {/* Phone/Desktop Toggle */}
+      <button
+        onClick={() => setIsPhonePreview(!isPhonePreview)}
+        className="fixed bottom-5 right-5 z-[100] px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-bold border border-slate-600 shadow-xl transition-all flex items-center gap-1.5 backdrop-blur-sm active:scale-95"
+        title={isPhonePreview ? "Switch to Desktop View" : "Switch to Phone View"}
+      >
+        {isPhonePreview ? <Monitor size={14} /> : <Smartphone size={14} />}
+        {isPhonePreview ? "Desktop" : "Phone"}
+      </button>
     </div>
   );
 }
