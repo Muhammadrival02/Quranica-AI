@@ -2967,7 +2967,28 @@ function App() {
                   </div>
                 </div>
 
-                {/* Submit / Checkout Button */}
+                {/* QRIS Payment Display */}
+                {regPaymentStep === "select" && regSelectedPlan !== "Reguler" && (
+                  <div className="bg-slate-950 border border-amber-500/20 rounded-xl p-6 space-y-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <QrCode size={20} className="text-amber-400" />
+                      <span className="text-sm font-bold text-amber-400">Scan QRIS untuk Pembayaran</span>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl inline-block mx-auto shadow-lg">
+                      <img src="/qris-payment.jpg" alt="QRIS Payment" className="w-48 h-48 object-contain" />
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-relaxed max-w-sm mx-auto">
+                      Buka aplikasi e-wallet atau mobile banking Anda (GoPay, OVO, DANA, BCA, Mandiri, dll), pindai kode QR di atas, dan selesaikan pembayaran.
+                    </p>
+                    <p className="text-[11px] font-bold text-slate-300">
+                      Total: <span className="text-amber-400 font-mono text-base">
+                        Rp {regSelectedPlan === "Tahunan" 
+                          ? (300000 - (300000 * regAppliedDiscount / 100)).toLocaleString("id-ID")
+                          : (30000 - (30000 * regAppliedDiscount / 100)).toLocaleString("id-ID")}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 {regErrorFeedback && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl text-xs text-center">
                     {regErrorFeedback}
