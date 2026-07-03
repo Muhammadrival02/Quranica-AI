@@ -1533,117 +1533,65 @@ function App() {
         </div>
       )}
 
-      {/* Header */}
-      <header className="max-w-6xl mx-auto flex items-center justify-between mb-8 border-b border-emerald-900/50 pb-4">
-        <div className="flex items-center gap-3">
-          <BookOpen className="text-emerald-500" size={32} />
+      {/* Header — Tarteel Style */}
+      <header className={`flex items-center justify-between mb-6 ${isPhonePreview ? 'px-1' : 'max-w-6xl mx-auto border-b border-emerald-900/50 pb-4'}`}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <BookOpen size={16} className="text-white" />
+          </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">
-              Quranica AI
-            </h1>
-            <p className="text-xs text-emerald-500/70 font-mono mt-1 flex items-center gap-1">
-              <ShieldCheck size={12} /> ULTIMATE HYBRID MCP EDITION v1.1.0
-            </p>
+            <h1 className="text-base font-bold text-white tracking-tight">Quranica</h1>
+            {!isPhonePreview && (
+              <p className="text-[10px] text-emerald-500/60 font-mono flex items-center gap-1">
+                <ShieldCheck size={10} /> AI-Powered Tahsin
+              </p>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {userProfile ? (
-            <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 shadow-md">
-              <div className="flex flex-col text-right">
-                <span className="text-xs font-bold text-slate-200">
-                  {userProfile.displayName}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  {userProfile.email}
-                </span>
-              </div>
-              
-              {/* Plan Badge */}
-              {userProfile.tier === "Berbayar" ? (
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-extrabold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
-                    <Crown size={10} className="fill-amber-400" /> PREMIUM
-                  </span>
-                  {userProfile.billingCycle && (
-                    <span className="text-[8px] font-bold text-amber-500 bg-amber-500/5 px-1 rounded border border-amber-500/10 mt-0.5 font-mono uppercase">
-                      {userProfile.billingCycle}
-                    </span>
-                  )}
+            <div className="flex items-center gap-2">
+              {/* Streak / Badge */}
+              {userProfile.tier === "Berbayar" && (
+                <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-1">
+                  <Crown size={11} className="text-amber-400 fill-amber-400" />
+                  <span className="text-[9px] font-bold text-amber-400">PREMIUM</span>
                 </div>
-              ) : (
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                  REGULER
-                </span>
               )}
-
-              {/* Role Badge */}
               {userProfile.role === "Admin" && (
-                <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  ADMIN
-                </span>
+                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">ADMIN</span>
               )}
-
-              {/* Quick Action Plan Switch */}
-              <div className="flex items-center gap-1.5 border-l border-slate-800 pl-3">
-                {userProfile.tier === "Reguler" ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleSelfTierUpgrade("Berbayar", "Bulanan")}
-                      className="text-[9px] font-bold bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white px-2 py-1 rounded-lg transition-all shadow"
-                      title="Upgrade ke Berbayar Bulanan (Rp 30.000 / bulan)"
-                    >
-                      30K/bln ⚡
-                    </button>
-                    <button
-                      onClick={() => handleSelfTierUpgrade("Berbayar", "Tahunan")}
-                      className="text-[9px] font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white px-2 py-1 rounded-lg transition-all shadow"
-                      title="Upgrade ke Berbayar Tahunan (Rp 300.000 / tahun - Hemat 16%)"
-                    >
-                      300K/thn ⭐
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleSelfTierUpgrade("Reguler")}
-                    className="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg transition-all"
-                    title="Downgrade ke Akun Reguler"
-                  >
-                    Ganti Reguler 🍃
-                  </button>
-                )}
-
-                <button
-                  onClick={async () => {
-                    await logout();
-                    setGoogleUser(null);
-                    setGoogleToken(null);
-                    setUserProfile(null);
-                    clearUserLogin();
-                    setActiveTab('tahsin');
-                    addLog("[Auth] Pengguna keluar (logged out).");
-                  }}
-                  className="p-1.5 bg-slate-950 text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/20 rounded-lg transition-all"
-                  title="Keluar Akun"
-                >
-                  <LogOut size={13} />
-                </button>
-              </div>
+              {/* Avatar */}
+              <button
+                onClick={async () => {
+                  await logout();
+                  setGoogleUser(null);
+                  setGoogleToken(null);
+                  setUserProfile(null);
+                  clearUserLogin();
+                  setActiveTab('tahsin');
+                }}
+                className="w-8 h-8 bg-gradient-to-br from-emerald-700 to-teal-800 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-emerald-500/30 hover:border-red-500/50 transition-all"
+                title="Logout"
+              >
+                {userProfile.displayName?.charAt(0)?.toUpperCase() || 'U'}
+              </button>
             </div>
           ) : (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-1.5 animate-pulse"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-full transition-all active:scale-95"
             >
-              <Sparkles size={13} /> Masuk / Registrasi
+              Masuk
             </button>
           )}
-          <Settings className="text-slate-500 hover:text-emerald-400 cursor-pointer transition-colors" size={24} />
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto relative" style={{ isolation: 'isolate' }}>
+      <main className={`mx-auto relative ${isPhonePreview ? '' : 'max-w-6xl'}`} style={{ isolation: 'isolate' }}>
         
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs — hidden in phone mode (use bottom bar) */}
+        {!isPhonePreview && (
         <div className="flex gap-6 mb-8 border-b border-emerald-900/50 px-2">
           <button 
             onClick={() => setActiveTab('tahsin')} 
@@ -1696,30 +1644,32 @@ function App() {
             </button>
           )}
         </div>
+        )}
 
         {activeTab === 'tahsin' ? (
-          <div key="tahsin" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div key="tahsin" className={`${isPhonePreview ? 'space-y-4' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}`}>
         
             {/* Kolom Utama: Kontrol & Evaluasi */}
-            <div className="lg:col-span-2 space-y-6">
-          {/* Panel Rekaman */}
-          <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
+            <div className={`${isPhonePreview ? '' : 'lg:col-span-2'} space-y-4`}>
+          {/* Panel Rekaman — Tarteel Style */}
+          <div className="bg-slate-900 p-4 md:p-6 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-teal-400 opacity-50"></div>
             
-            <div className="flex gap-4 mb-8">
+            {/* Surah/Ayah Selector — compact in phone */}
+            <div className={`flex gap-2 mb-5 ${isPhonePreview ? 'flex-wrap' : ''}`}>
               <select 
-                className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex-1 focus:ring-2 ring-emerald-500/50 outline-none text-slate-200 transition-all"
+                className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex-1 min-w-0 focus:ring-2 ring-emerald-500/50 outline-none text-slate-200 text-sm transition-all"
                 value={selectedSurah}
                 onChange={(e) => {
                   setSelectedSurah(e.target.value);
-                  setSelectedAyah("1"); // Reset ayah when surah changes
+                  setSelectedAyah("1");
                 }}
               >
                 {surahs.map(s => <option key={s.number} value={s.number}>{s.number}. {s.englishName} ({s.arab})</option>)}
               </select>
               <input 
                 type="number" 
-                className="bg-slate-950 border border-slate-800 rounded-xl p-3 w-24 text-center focus:ring-2 ring-emerald-500/50 outline-none text-slate-200" 
+                className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 w-16 text-center focus:ring-2 ring-emerald-500/50 outline-none text-slate-200 text-sm" 
                 value={selectedAyah}
                 onChange={(e) => {
                   const maxAyah = surahs.find(s => s.number.toString() === selectedSurah)?.numberOfAyahs || 1;
@@ -1730,84 +1680,89 @@ function App() {
                     setSelectedAyah("");
                   }
                 }}
-                onBlur={() => {
-                  if (selectedAyah === "") setSelectedAyah("1");
-                }}
+                onBlur={() => { if (selectedAyah === "") setSelectedAyah("1"); }}
                 min="1"
                 max={surahs.find(s => s.number.toString() === selectedSurah)?.numberOfAyahs || 1}
               />
               <button 
                 onClick={handleConfirmSelection}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-emerald-500/25 active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg hover:shadow-emerald-500/25 active:scale-95"
               >
-                Tarik Data (RAG)
+                RAG
               </button>
             </div>
 
-            <div className="text-center py-12 bg-slate-950/50 rounded-2xl mb-8 border border-slate-800/50">
-               <p className="text-emerald-400 font-bold mb-6 tracking-widest uppercase text-sm">
-                 {surahs.length > 0 ? `Surah ${surahs.find(s => s.number.toString() === confirmedSurah)?.englishName} : Ayat ${confirmedAyah}` : "Memuat..."}
+            {/* Verse Card — Tarteel style: large Arabic, clean background */}
+            <div className="text-center py-8 md:py-10 bg-slate-950/60 rounded-2xl mb-6 border border-slate-800/60 relative">
+               {/* Streak/badge indicator */}
+               {userProfile && (
+                 <div className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5">
+                   <Activity size={10} className="text-emerald-400" />
+                   <span className="text-[9px] font-bold text-emerald-400">LIVE</span>
+                 </div>
+               )}
+               <p className="text-emerald-400/70 font-medium mb-5 text-[11px] tracking-wider uppercase">
+                 {surahs.length > 0 ? `Surah ${surahs.find(s => s.number.toString() === confirmedSurah)?.englishName} · Ayat ${confirmedAyah}` : "Memuat..."}
                </p>
                
                {isFetchingMcp ? (
-                 <div className="py-8 animate-pulse">
-                   <div className="h-10 bg-slate-800 rounded w-3/4 mx-auto mb-4"></div>
-                   <div className="h-4 bg-slate-800 rounded w-1/2 mx-auto"></div>
-                 </div>
-               ) : mcpData ? (
-                 <div className="mb-8 px-4">
-                   <p className="text-4xl md:text-5xl font-serif mb-6 text-emerald-50 leading-relaxed" style={{ fontFamily: "'Amiri', serif", direction: 'rtl' }}>
-                     {mcpData.verifiedText}
-                   </p>
-                   <p className="text-lg md:text-xl text-emerald-300/90 italic font-medium">
-                     {mcpData.transliteration}
-                   </p>
+                 <div className="py-8 animate-pulse space-y-4">
+                   <div className="h-12 bg-slate-800 rounded w-3/4 mx-auto"></div>
+                   <div className="h-5 bg-slate-800 rounded w-1/2 mx-auto"></div>
                  </div>
                ) : (
-                 <div className="mb-8 px-4">
-                   <p className="text-4xl md:text-5xl font-serif mb-6 text-emerald-50 leading-relaxed" style={{ fontFamily: "'Amiri', serif" }}>
-                     بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+                 <div className="px-3">
+                   <p className="text-3xl md:text-4xl font-serif mb-5 text-white leading-[2.2] tracking-wide" style={{ fontFamily: "'Amiri', 'Traditional Arabic', serif", direction: 'rtl' }}>
+                     {mcpData?.verifiedText || "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ"}
                    </p>
-                   <p className="text-lg md:text-xl text-emerald-300/90 italic font-medium">
-                     Bismillaahir-Rahmaanir-Rahiim
+                   <p className="text-base md:text-lg text-emerald-300/80 italic font-medium">
+                     {mcpData?.transliteration || "Bismillaahir-Rahmaanir-Rahiim"}
                    </p>
                  </div>
                )}
 
-               <p className="text-slate-500 text-sm md:text-base italic">
-                 "Persiapkan diri Anda, tekan tombol mikrofon untuk mulai membaca."
+               <p className="text-slate-500 text-xs mt-6 italic">
+                 {isRecording ? "Merekam..." : isProcessing ? "Memproses..." : "Sentuh mikrofon untuk mulai membaca"}
                </p>
             </div>
 
-            {micError && (
-              <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm flex items-start gap-3">
-                <Activity className="shrink-0 mt-0.5" size={18} />
-                <div>
-                  <strong className="block font-semibold mb-1">Mikrofon Diblokir</strong>
-                  {micError}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-center">
+            {/* Recording Button — large circle, Tarteel style */}
+            <div className="flex justify-center -mt-2">
               {!isRecording ? (
                 <button 
                   onClick={startRecording}
                   disabled={isProcessing}
-                  className="w-24 h-24 bg-emerald-600 hover:bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.25)] hover:shadow-[0_0_50px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 group"
                 >
-                  <Mic size={36} className="text-white group-hover:scale-110 transition-transform" />
+                  <Mic size={30} className="text-white group-hover:scale-110 transition-transform" />
                 </button>
               ) : (
                 <button 
                   onClick={stopRecording}
-                  className="w-24 h-24 bg-rose-600 hover:bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(225,29,72,0.3)] animate-pulse transition-all"
+                  className="w-20 h-20 bg-gradient-to-br from-rose-500 to-red-600 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(225,29,72,0.35)] animate-pulse transition-all active:scale-95"
                 >
-                  <Square size={32} className="text-white" />
+                  <Square size={26} className="text-white" />
                 </button>
               )}
             </div>
-            {isProcessing && <p className="text-center text-emerald-400 mt-6 animate-pulse text-sm font-mono">Memproses via Tabayyun Pipeline...</p>}
+            
+            {/* Recording timer / status */}
+            {isRecording && (
+              <div className="text-center mt-4">
+                <div className="inline-flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1.5">
+                  <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                  <span className="text-rose-400 text-xs font-bold">MEREKAM</span>
+                </div>
+              </div>
+            )}
+            {isProcessing && (
+              <div className="text-center mt-4">
+                <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1.5">
+                  <RefreshCw size={11} className="text-amber-400 animate-spin" />
+                  <span className="text-amber-400 text-xs font-bold">Memproses Tahsin...</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Makharijul Huruf Interaktif */}
@@ -4958,48 +4913,53 @@ function App() {
         </div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
-      {/* Swipeable Bottom Navigation Bar (Phone Only) */}
+      {/* Bottom Navigation Bar — Tarteel Style (Phone Only) */}
       {isPhonePreview && (
         <div 
           ref={barRef}
-          className="fixed bottom-16 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-[380px] bg-slate-900/95 backdrop-blur-xl border border-slate-700/60 rounded-2xl shadow-2xl z-[90] overflow-hidden"
+          className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-[90] safe-area-inset-bottom"
           onTouchStart={handleSwipeStart}
           onTouchMove={handleSwipeMove}
           onTouchEnd={handleSwipeEnd}
         >
-          {/* Sliding indicator */}
+          {/* Sliding active indicator — top bar */}
           <div 
-            className="absolute bottom-0 h-[3px] bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-300 ease-out"
+            className="absolute top-0 h-[2px] bg-emerald-400 rounded-full transition-all duration-300 ease-out"
             style={{
-              left: `calc(${(currentTabIndex / phoneTabs.length) * 100}% + ${swipeOffset / (barRef.current?.offsetWidth || 400) * 100}% + ${(100 / phoneTabs.length / 2)}% - 12px)`,
-              width: '24px',
-              opacity: swipeActive ? 0.8 : 1,
+              left: `calc(${(currentTabIndex / phoneTabs.length) * 100}% + ${(swipeOffset / (barRef.current?.offsetWidth || 400)) * 100}% + ${(100 / phoneTabs.length / 2)}% - 16px)`,
+              width: '32px',
+              opacity: swipeActive ? 0.7 : 1,
             }}
           />
-          {/* Tab icons */}
-          <div className="flex items-center justify-around px-2 py-2">
-            {phoneTabs.map((tab, i) => {
+          <div className="flex items-center justify-around py-2 px-1">
+            {phoneTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = tab.id === activeTab;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all duration-200 active:scale-90 ${
+                  className={`flex flex-col items-center gap-0.5 min-w-[48px] py-0.5 transition-all duration-200 active:scale-90 ${
                     isActive 
                       ? 'text-emerald-400' 
-                      : 'text-slate-500 hover:text-slate-300'
+                      : 'text-slate-500 hover:text-slate-400'
                   }`}
                 >
-                  <Icon size={18} className={isActive ? 'drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]' : ''} />
-                  <span className={`text-[9px] font-semibold ${isActive ? '' : ''}`}>{tab.label}</span>
+                  <div className={`p-1 rounded-lg transition-all ${isActive ? 'bg-emerald-500/10' : ''}`}>
+                    <Icon size={20} />
+                  </div>
+                  <span className="text-[10px] font-medium leading-none">{tab.label}</span>
                 </button>
               );
             })}
           </div>
+          {/* Safe area spacer for notched phones */}
+          <div className="h-5" />
         </div>
       )}
-      {/* Phone/Desktop Toggle */}
+
+      {/* Bottom padding for phone mode so content isn't hidden behind nav */}
+      {isPhonePreview && <div className="h-20" />}
       <button
         onClick={() => setIsPhonePreview(!isPhonePreview)}
         className="fixed bottom-5 right-5 z-[100] px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-bold border border-slate-600 shadow-xl transition-all flex items-center gap-1.5 backdrop-blur-sm active:scale-95"
