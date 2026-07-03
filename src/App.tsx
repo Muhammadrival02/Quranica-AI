@@ -27,8 +27,8 @@ function App() {
   const [isFetchingMcp, setIsFetchingMcp] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   
-  // Smartphone Preview Mode
-  const [isPhonePreview, setIsPhonePreview] = useState(true);
+  // Smartphone Preview Mode — selalu aktif, tidak ada toggle
+  const isPhonePreview = true;
 
   // Q&A, Research, & MCP Client State
   const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
@@ -4959,15 +4959,7 @@ function App() {
       )}
 
       {/* Bottom padding for phone mode so content isn't hidden behind nav */}
-      {isPhonePreview && <div className="h-20" />}
-      <button
-        onClick={() => setIsPhonePreview(!isPhonePreview)}
-        className="fixed bottom-5 right-5 z-[100] px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-bold border border-slate-600 shadow-xl transition-all flex items-center gap-1.5 backdrop-blur-sm active:scale-95"
-        title={isPhonePreview ? "Switch to Desktop View" : "Switch to Phone View"}
-      >
-        {isPhonePreview ? <Monitor size={14} /> : <Smartphone size={14} />}
-        {isPhonePreview ? "Desktop" : "Phone"}
-      </button>
+      <div className="h-20" />
     </div>
   );
 }
