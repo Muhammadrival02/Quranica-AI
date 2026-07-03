@@ -76,6 +76,16 @@ function App() {
     setSwipeOffset(0);
   };
 
+  // Helper: tampilkan nama tier yang user-friendly
+  const getTierDisplay = (tier: string, cycle?: string | null) => {
+    if (tier === "Berbayar") return cycle === "Tahunan" ? "Platinum" : "Premium";
+    return "Reguler";
+  };
+  const getTierColor = (tier: string, cycle?: string | null) => {
+    if (tier === "Berbayar") return cycle === "Tahunan" ? "from-purple-500 to-indigo-500" : "from-amber-500 to-amber-400";
+    return "from-slate-600 to-slate-500";
+  };
+
   // Riwayat Chat
   interface ChatHistory { id: string; title: string; messages: {role:string;content:string}[]; createdAt: string; }
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
@@ -457,7 +467,7 @@ function App() {
     let chosenCycle: "Bulanan" | "Tahunan" | null = null;
     
     if (newTier === "Berbayar") {
-      const isTahunan = confirm("Pilih 'OK' untuk menetapkan Paket Tahunan (300K/thn), atau 'Cancel' untuk menetapkan Paket Bulanan (30K/bln).");
+      const isTahunan = confirm("Pilih 'OK' untuk menetapkan Paket Platinum (1 Tahun), atau 'Cancel' untuk menetapkan Paket Premium (1 Bulan).");
       chosenCycle = isTahunan ? "Tahunan" : "Bulanan";
     }
 
@@ -1553,9 +1563,11 @@ function App() {
             <div className="flex items-center gap-2">
               {/* Streak / Badge */}
               {userProfile.tier === "Berbayar" && (
-                <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-1">
-                  <Crown size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-[9px] font-bold text-amber-400">PREMIUM</span>
+                <div className={`flex items-center gap-1 bg-gradient-to-r ${userProfile.billingCycle === "Tahunan" ? 'from-purple-500/10 to-indigo-500/10 border-purple-500/20' : 'from-amber-500/10 to-amber-500/10 border-amber-500/20'} border rounded-full px-2.5 py-1`}>
+                  <Crown size={11} className={userProfile.billingCycle === "Tahunan" ? "text-purple-400 fill-purple-400" : "text-amber-400 fill-amber-400"} />
+                  <span className={`text-[9px] font-bold ${userProfile.billingCycle === "Tahunan" ? 'text-purple-400' : 'text-amber-400'}`}>
+                    {userProfile.billingCycle === "Tahunan" ? "PLATINUM" : "PREMIUM"}
+                  </span>
                 </div>
               )}
               {userProfile.role === "Admin" && (
@@ -2735,15 +2747,15 @@ function App() {
                 </div>
               </div>
 
-              {/* Paket Premium Bulanan */}
+              {/* Paket Premium (1 Bulan) */}
               <div className="bg-slate-900 rounded-2xl border border-amber-500/20 p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-amber-500/30 shadow-xl">
                 <div className="space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="text-[9px] font-extrabold text-amber-400 uppercase bg-amber-500/10 px-2 py-0.5 rounded tracking-wider">
-                        PREMIUM BULANAN
+                        PREMIUM
                       </span>
-                      <h3 className="text-lg font-bold text-amber-400 mt-2">Bulanan</h3>
+                      <h3 className="text-lg font-bold text-amber-400 mt-2">1 Bulan</h3>
                     </div>
                     <div className="text-right">
                       <span className="text-xl font-bold text-amber-400 font-mono">Rp 30.000</span>
@@ -2802,21 +2814,21 @@ function App() {
                 </div>
               </div>
 
-              {/* Paket Premium Tahunan */}
-              <div className="bg-slate-900 rounded-2xl border border-emerald-500/30 p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-emerald-500/40 shadow-2xl">
-                <div className="absolute top-0 right-0 bg-gradient-to-l from-emerald-600 to-teal-500 text-[9px] font-extrabold text-white px-3 py-1 rounded-bl font-sans tracking-wide uppercase shadow">
+              {/* Paket Platinum (1 Tahun) */}
+              <div className="bg-slate-900 rounded-2xl border border-purple-500/30 p-6 flex flex-col justify-between relative overflow-hidden transition-all hover:border-purple-500/40 shadow-2xl">
+                <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-indigo-500 text-[9px] font-extrabold text-white px-3 py-1 rounded-bl font-sans tracking-wide uppercase shadow">
                   Hemat 16% ⭐ Best Value
                 </div>
                 <div className="space-y-4">
                   <div className="flex justify-between items-start pt-2">
                     <div>
-                      <span className="text-[9px] font-extrabold text-emerald-400 uppercase bg-emerald-500/10 px-2 py-0.5 rounded tracking-wider">
-                        PREMIUM TAHUNAN
+                      <span className="text-[9px] font-extrabold text-purple-400 uppercase bg-purple-500/10 px-2 py-0.5 rounded tracking-wider">
+                        PLATINUM
                       </span>
-                      <h3 className="text-lg font-bold text-emerald-400 mt-2">Tahunan</h3>
+                      <h3 className="text-lg font-bold text-purple-400 mt-2">1 Tahun</h3>
                     </div>
                     <div className="text-right">
-                      <span className="text-xl font-bold text-emerald-400 font-mono">Rp 300.000</span>
+                      <span className="text-xl font-bold text-purple-400 font-mono">Rp 300.000</span>
                       <span className="text-[10px] text-slate-400 block">/ tahun</span>
                     </div>
                   </div>
@@ -2826,26 +2838,26 @@ function App() {
                   
                   <div className="border-t border-slate-800/80 pt-4 space-y-2.5 text-xs text-slate-300">
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Semua Fitur Premium Bulanan
+                      <span className="text-purple-400 font-bold">✓</span> Semua Fitur Premium
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Biaya Jauh Lebih Murah (Setara 25K/bln)
+                      <span className="text-purple-400 font-bold">✓</span> Biaya Jauh Lebih Murah (Setara 25K/bln)
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Lencana Profil Mahkota Emas Eksklusif
+                      <span className="text-purple-400 font-bold">✓</span> Lencana Profil Platinum Eksklusif
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Prioritas Akses Server Pembelajaran Utama
+                      <span className="text-purple-400 font-bold">✓</span> Prioritas Akses Server Pembelajaran Utama
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> Pendampingan Setup API Lintas Platform
+                      <span className="text-purple-400 font-bold">✓</span> Pendampingan Setup API Lintas Platform
                     </div>
                   </div>
                 </div>
                 
                 <div className="pt-6">
                   {userProfile && userProfile.tier === "Berbayar" && userProfile.billingCycle === "Tahunan" ? (
-                    <button className="w-full py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold rounded-xl text-xs cursor-default" disabled>
+                    <button className="w-full py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold rounded-xl text-xs cursor-default" disabled>
                       ✓ Paket Aktif Saat Ini
                     </button>
                   ) : (
@@ -2862,7 +2874,7 @@ function App() {
                       }}
                       className={`w-full py-2 font-bold rounded-xl text-xs transition-all ${
                         regSelectedPlan === "Tahunan" && userProfile
-                          ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg"
+                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg"
                           : "bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800"
                       }`}
                     >
@@ -2877,43 +2889,46 @@ function App() {
             {/* ═══════════ TABEL PERBANDINGAN FITUR ═══════════ */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
               <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                <span className="text-sm font-bold text-slate-200">📋 Perbandingan Fitur Reguler vs Premium</span>
+                <span className="text-sm font-bold text-slate-200">📋 Perbandingan Fitur Reguler vs Premium vs Platinum</span>
                 <span className="text-[10px] text-slate-500">Pilih paket yang sesuai dengan kebutuhan Anda</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-800 bg-slate-950/50">
-                      <th className="text-left p-4 font-bold text-slate-300 uppercase tracking-wider w-[40%]">Fitur</th>
-                      <th className="text-center p-4 font-bold text-slate-400 uppercase tracking-wider bg-slate-800/20 w-[20%]">
+                      <th className="text-left p-3 font-bold text-slate-300 uppercase tracking-wider w-[30%]">Fitur</th>
+                      <th className="text-center p-3 font-bold text-slate-400 uppercase tracking-wider bg-slate-800/20 w-[18%]">
                         <span className="px-2 py-0.5 bg-slate-800 rounded text-slate-400">REGULER</span>
-                        <div className="text-[10px] font-normal text-slate-500 mt-1">Gratis</div>
+                        <div className="text-[9px] font-normal text-slate-500 mt-0.5">Gratis</div>
                       </th>
-                      <th className="text-center p-4 font-bold text-amber-400 uppercase tracking-wider w-[20%]">
+                      <th className="text-center p-3 font-bold text-amber-400 uppercase tracking-wider w-[18%]">
                         <span className="px-2 py-0.5 bg-amber-500/10 rounded border border-amber-500/20 text-amber-400">PREMIUM</span>
-                        <div className="text-[10px] font-normal text-amber-500/70 mt-1">Bulanan / Tahunan</div>
+                        <div className="text-[9px] font-normal text-amber-500/70 mt-0.5">1 Bulan</div>
                       </th>
-                      <th className="text-center p-4 font-bold text-slate-300 uppercase tracking-wider w-[20%]">Keterangan</th>
+                      <th className="text-center p-3 font-bold text-purple-400 uppercase tracking-wider w-[18%]">
+                        <span className="px-2 py-0.5 bg-purple-500/10 rounded border border-purple-500/20 text-purple-400">PLATINUM</span>
+                        <div className="text-[9px] font-normal text-purple-500/70 mt-0.5">1 Tahun</div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50">
                     {[
-                      { fitur: "Evaluasi E-Tahsin", reguler: "✅ Dasar (5x/hari)", premium: "✅ Tanpa Batas", note: "Kuota rekaman" },
-                      { fitur: "Huruf Hijaiyah & Makhraj", reguler: "✅ Akses Penuh", premium: "✅ Akses Penuh", note: "Gratis untuk semua" },
-                      { fitur: "Tanya Jawab Tafsir", reguler: "✅ Standard", premium: "✅ Premium (RAG AI)", note: "Kualitas AI" },
-                      { fitur: "Cungkring Library", reguler: "✅ View Catalog", premium: "✅ Full Access", note: "Reference access" },
-                      { fitur: "Deep Research", reguler: "🔒 Tidak Tersedia", premium: "✅ Tanpa Batas", note: "Riset mendalam" },
-                      { fitur: "Sinkronisasi Google Drive", reguler: "🔒 Tidak Tersedia", premium: "✅ Lintas Sesi", note: "Cloud storage" },
-                      { fitur: "RAG AI Rujukan Cepat", reguler: "🔒 Tidak Tersedia", premium: "✅ Kecepatan Tinggi", note: "AI retrieval" },
-                      { fitur: "Lencana Profil Eksklusif", reguler: "🔒 Tidak Tersedia", premium: "✅ Mahkota Emas (Tahunan)", note: "Hanya Tahunan" },
-                      { fitur: "Prioritas Server", reguler: "🔒 Tidak Tersedia", premium: "✅ Server Utama", note: "Response time" },
-                      { fitur: "Support Setup API", reguler: "🔒 Tidak Tersedia", premium: "✅ Lintas Platform", note: "Bantuan teknis" },
+                      { fitur: "Evaluasi E-Tahsin", reguler: "✅ 5x/hari", premium: "✅ Tanpa Batas", platinum: "✅ Tanpa Batas" },
+                      { fitur: "Huruf Hijaiyah & Makhraj", reguler: "✅ Penuh", premium: "✅ Penuh", platinum: "✅ Penuh" },
+                      { fitur: "Tanya Jawab Tafsir", reguler: "✅ Standard", premium: "✅ RAG AI", platinum: "✅ RAG AI" },
+                      { fitur: "Digital Library", reguler: "✅ View", premium: "✅ Full", platinum: "✅ Full" },
+                      { fitur: "Deep Research", reguler: "🔒", premium: "✅ Tanpa Batas", platinum: "✅ Tanpa Batas" },
+                      { fitur: "Google Drive Sync", reguler: "🔒", premium: "✅ Aktif", platinum: "✅ Aktif" },
+                      { fitur: "RAG AI Cepat", reguler: "🔒", premium: "✅ Aktif", platinum: "✅ Aktif" },
+                      { fitur: "Lencana Eksklusif", reguler: "🔒", premium: "🔒", platinum: "✅ Platinum" },
+                      { fitur: "Prioritas Server", reguler: "🔒", premium: "🔒", platinum: "✅ Utama" },
+                      { fitur: "Support Setup API", reguler: "🔒", premium: "🔒", platinum: "✅ Prioritas" },
                     ].map((row, i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-transparent' : 'bg-slate-950/20'}>
-                        <td className="p-3 font-medium text-slate-200">{row.fitur}</td>
-                        <td className="p-3 text-center bg-slate-800/10">{row.reguler}</td>
-                        <td className="p-3 text-center font-medium">{row.premium}</td>
-                        <td className="p-3 text-center text-slate-500 text-[10px]">{row.note}</td>
+                        <td className="p-2.5 font-medium text-slate-200">{row.fitur}</td>
+                        <td className="p-2.5 text-center bg-slate-800/10 text-[10px]">{row.reguler}</td>
+                        <td className="p-2.5 text-center text-[10px]">{row.premium}</td>
+                        <td className="p-2.5 text-center font-medium text-[10px]">{row.platinum}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -2942,7 +2957,7 @@ function App() {
                   <div className="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 text-right">
                     <div className="text-[9px] font-mono text-slate-500 uppercase">Paket Terpilih</div>
                     <div className="text-xs font-extrabold text-amber-400">
-                      PREMIUM {regSelectedPlan === "Tahunan" ? "TAHUNAN (300K)" : "BULANAN (30K)"}
+                      {regSelectedPlan === "Tahunan" ? "PLATINUM (1 Tahun)" : "PREMIUM (1 Bulan)"}
                     </div>
                   </div>
                 </div>
@@ -4865,7 +4880,7 @@ function App() {
                       onClick={() => setLoginTierSelection("Reguler")}
                       className={`p-2 rounded-lg border text-[10px] font-bold text-center transition-all ${
                         loginTierSelection === "Reguler"
-                          ? "bg-slate-950 border-emerald-500 text-emerald-400"
+                          ? "bg-slate-950 border-slate-500 text-slate-300"
                           : "bg-slate-950/40 border-slate-800 text-slate-500"
                       }`}
                     >
@@ -4880,18 +4895,18 @@ function App() {
                           : "bg-slate-950/40 border-slate-800 text-slate-500"
                       }`}
                     >
-                      Premium Bulanan (30K)
+                      Premium (1 Bulan)
                     </button>
                     <button
                       type="button"
                       onClick={() => setLoginTierSelection("Berbayar_Tahunan")}
                       className={`p-2 rounded-lg border text-[10px] font-bold text-center transition-all ${
                         loginTierSelection === "Berbayar_Tahunan"
-                          ? "bg-slate-950 border-amber-500 text-amber-400"
+                          ? "bg-slate-950 border-purple-500 text-purple-400"
                           : "bg-slate-950/40 border-slate-800 text-slate-500"
                       }`}
                     >
-                      Premium Tahunan (300K)
+                      Platinum (1 Tahun)
                     </button>
                   </div>
                 </div>
