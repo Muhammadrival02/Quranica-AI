@@ -1381,6 +1381,23 @@ function App() {
           const evalData = await response.json();
           setEvaluation(evalData);
           addLog("[Tier 4] Evaluasi selesai. Pipeline Tabayyun ditutup.");
+
+          // Track Al-Baqarah progress — if Mumtaz (no errors) and Surah 2
+          if (evalData.status === 'Mumtaz' && confirmedSurah === '2' && userProfile) {
+            const key = `quranica_baqarah_${userProfile.uid}`;
+            try {
+              const done: number[] = JSON.parse(localStorage.getItem(key) || '[]');
+              const ayahNum = parseInt(confirmedAyah);
+              if (!done.includes(ayahNum)) {
+                done.push(ayahNum);
+                localStorage.setItem(key, JSON.stringify(done));
+                addLog(`[🏆] Ayat ${ayahNum} Al-Baqarah selesai tanpa kesalahan! (${done.length}/286)`);
+                if (done.length >= 286) {
+                  addLog(`[🎉] KHATAM AL-BAQARAH! Semua 286 ayat selesai tanpa kesalahan.`);
+                }
+              }
+            } catch {}
+          }
           
           // Automatically speak the result
           setTimeout(() => {
@@ -4931,7 +4948,112 @@ function App() {
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
       {activeTab === 'profile' && (
         <div className="space-y-6">
-          {/* Sertifikat Tahsin */}
+          {/* Progress Khatam Al-Baqarah */}
+          {userProfile && (() => {
+            const baqarahKey = `quranica_baqarah_${userProfile.uid}`;
+            const baqarahDone: number[] = (() => { try { return JSON.parse(localStorage.getItem(baqarahKey) || '[]'); } catch { return []; } })();
+            const baqarahTotal = 286;
+            const baqarahPct = Math.round((baqarahDone.length / baqarahTotal) * 100);
+            const isKhatam = baqarahDone.length >= baqarahTotal;
+            return (
+              <div className={`bg-slate-900 border rounded-2xl p-6 shadow-xl ${isKhatam ? 'border-amber-500/40' : 'border-slate-800'}`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`p-2.5 rounded-xl ${isKhatam ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                    {isKhatam ? <Crown size={22} className="text-amber-400" /> : <BookOpen size={22} className="text-emerald-400" />}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-200">
+                      {isKhatam ? '🎉 Khatam Al-Baqarah!' : 'Progress Khatam Al-Baqarah'}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {isKhatam ? 'Semua 286 ayat selesai tanpa kesalahan!' : `Bacaan sempurna (Mumtaz) per ayat — ${baqarahDone.length}/${baqarahTotal} ayat`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mb-3">
+                  <div className="flex justify-between text-[10px] text-slate-500 mb-1.5">
+                    <span>{baqarahPct}% selesai</span>
+                    <span>{baqarahDone.length} / {baqarahTotal} ayat</span>
+                  </div>
+                  <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${isKhatam ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : 'bg-gradient-to-r from-emerald-500 to-teal-400'}`}
+                      style={{ width: `${baqarahPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Mini grid — ayat selesai */}
+                {baqarahDone.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-3 max-h-[80px] overflow-y-auto">
+                    {baqarahDone.sort((a,b)=>a-b).map(n => (
+                      <span key={n} className="w-5 h-5 flex items-center justify-center text-[8px] font-bold bg-emerald-500/20 text-emerald-400 rounded">✓</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Khatam Certificate */}
+                {isKhatam && (
+                  <button
+                    onClick={() => {
+                      const certHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Khatam Al-Baqarah - ${userProfile.displayName}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
+  .cert{width:800px;padding:50px 45px;border:8px double #b45309;border-radius:20px;text-align:center;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fffbeb 100%);position:relative}
+  .cert::before{content:'';position:absolute;inset:12px;border:2px solid #fcd34d;border-radius:12px;pointer-events:none}
+  .logo{font-size:26px;font-weight:700;color:#b45309;margin-bottom:8px}
+  .subtitle{font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:4px;margin-bottom:20px}
+  .icon{font-size:50px;margin-bottom:10px}
+  .title{font-size:28px;font-family:'Amiri',serif;color:#78350f;margin-bottom:5px;font-weight:700}
+  .title-en{font-size:12px;color:#a16207;text-transform:uppercase;letter-spacing:2px;margin-bottom:25px}
+  .to{font-size:14px;color:#92400e;margin-bottom:5px}
+  .name{font-size:34px;font-weight:700;color:#451a03;font-family:'Amiri',serif;margin-bottom:5px}
+  .email{font-size:12px;color:#a16207;margin-bottom:20px}
+  .achievement{font-size:14px;color:#b45309;font-weight:600;margin-bottom:20px;padding:10px 20px;border:1px dashed #d97706;display:inline-block;border-radius:8px}
+  .info{display:flex;justify-content:center;gap:40px;font-size:11px;color:#92400e;margin-bottom:20px}
+  .info b{color:#b45309}
+  .desc{font-size:12px;color:#92400e;font-style:italic;line-height:1.7;max-width:500px;margin:0 auto 25px}
+  .footer{font-size:10px;color:#a16207}
+  .stamp{font-size:70px;opacity:0.08;position:absolute;bottom:20px;right:50px}
+  @media print{body{background:#fff}.cert{box-shadow:none;border-color:#b45309}}
+</style></head><body>
+<div class="cert">
+  <div class="stamp">🏆</div>
+  <div class="icon">🌟</div>
+  <div class="logo">🏛️ Quranica AI</div>
+  <div class="subtitle">E-Tahsin Certification Authority</div>
+  <div class="title">شهادة ختم سورة البقرة</div>
+  <div class="title-en">Certificate of Surah Al-Baqarah Completion</div>
+  <p class="to">Dengan ini dinyatakan bahwa:</p>
+  <p class="name">${userProfile.displayName}</p>
+  <p class="email">${userProfile.email}</p>
+  <div class="achievement">🏆 Telah Menyelesaikan 286 Ayat Surah Al-Baqarah Tanpa Kesalahan</div>
+  <div class="info">
+    <span>Tingkat: <b>${getTierDisplay(userProfile.tier, userProfile.billingCycle)}</b></span>
+    <span>Tanggal: <b>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span>
+  </div>
+  <p class="desc">Prestasi ini menunjukkan dedikasi dan ketekunan dalam menyempurnakan bacaan Al-Quran. Semoga menjadi amal jariyah dan keberkahan di dunia dan akhirat.</p>
+  <p class="footer">© ${new Date().getFullYear()} Quranica AI — Platform Evaluasi Tahsin Berbasis AI</p>
+</div>
+<script>window.onload=()=>window.print()</script>
+</body></html>`;
+                      const w = window.open('', '_blank', 'width=900,height=700');
+                      if (w) { w.document.write(certHTML); w.document.close(); }
+                    }}
+                    className="w-full mt-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-amber-900 font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Printer size={16} /> Cetak Sertifikat Khatam Al-Baqarah 🏆
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Sertifikat Tahsin Umum */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2.5 bg-emerald-500/10 rounded-xl">
@@ -4945,12 +5067,10 @@ function App() {
 
             {userProfile ? (
               <>
-                {/* Preview Certificate */}
                 <div className="bg-gradient-to-br from-emerald-950/40 via-slate-950 to-teal-950/40 border-2 border-emerald-500/20 rounded-xl p-6 mb-4 text-center">
                   <div className="text-amber-400 text-4xl mb-3">📜</div>
                   <h4 className="text-lg font-serif font-bold text-emerald-300 mb-1">Syahadah Tahsin Al-Quran</h4>
                   <p className="text-[10px] text-emerald-500/60 uppercase tracking-widest mb-4">Certificate of Quranic Recitation Excellence</p>
-                  
                   <div className="border-t border-emerald-500/10 pt-4 space-y-2 text-sm">
                     <p className="text-slate-300">Diberikan kepada:</p>
                     <p className="text-xl font-bold text-white font-serif">{userProfile.displayName}</p>
@@ -4960,7 +5080,6 @@ function App() {
                       <span>Terbit: <b className="text-slate-400">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span>
                     </div>
                   </div>
-                  
                   <div className="border-t border-emerald-500/10 mt-4 pt-3">
                     <p className="text-[11px] text-slate-400 italic leading-relaxed">
                       "Sertifikat ini menandakan bahwa pemilik telah menyelesaikan evaluasi tahsin dan berkomitmen 
@@ -4968,51 +5087,37 @@ function App() {
                     </p>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => {
-                    const certHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sertifikat Tahsin - ${userProfile.displayName}</title>
+                <button onClick={() => {
+                  const certHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Sertifikat Tahsin - ${userProfile.displayName}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-  .cert { width: 800px; padding: 60px 50px; border: 8px double #059669; border-radius: 20px; text-align: center; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #ecfdf5 100%); position: relative; }
-  .cert::before { content: ''; position: absolute; inset: 12px; border: 2px solid #a7f3d0; border-radius: 12px; pointer-events: none; }
-  .logo { font-size: 28px; font-weight: 700; color: #059669; margin-bottom: 10px; }
-  .subtitle { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 30px; }
-  .title { font-size: 26px; font-family: 'Amiri', serif; color: #047857; margin-bottom: 8px; font-weight: 700; }
-  .title-en { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
-  .to { font-size: 14px; color: #6b7280; margin-bottom: 5px; }
-  .name { font-size: 32px; font-weight: 700; color: #064e3b; font-family: 'Amiri', serif; margin-bottom: 5px; }
-  .email { font-size: 12px; color: #9ca3af; margin-bottom: 25px; }
-  .info { display: flex; justify-content: center; gap: 40px; font-size: 11px; color: #6b7280; margin-bottom: 25px; }
-  .info b { color: #059669; }
-  .desc { font-size: 12px; color: #6b7280; font-style: italic; line-height: 1.7; max-width: 500px; margin: 0 auto 30px; }
-  .footer { font-size: 10px; color: #9ca3af; }
-  .stamp { font-size: 60px; opacity: 0.1; position: absolute; bottom: 30px; right: 60px; }
-  @media print { body { background: #fff; } .cert { box-shadow: none; border-color: #059669; } }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
+  .cert{width:800px;padding:60px 50px;border:8px double #059669;border-radius:20px;text-align:center;background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 50%,#ecfdf5 100%);position:relative}
+  .cert::before{content:'';position:absolute;inset:12px;border:2px solid #a7f3d0;border-radius:12px;pointer-events:none}
+  .logo{font-size:28px;font-weight:700;color:#059669;margin-bottom:10px}
+  .subtitle{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:4px;margin-bottom:30px}
+  .title{font-size:26px;font-family:'Amiri',serif;color:#047857;margin-bottom:8px;font-weight:700}
+  .title-en{font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:2px;margin-bottom:30px}
+  .to{font-size:14px;color:#6b7280;margin-bottom:5px}
+  .name{font-size:32px;font-weight:700;color:#064e3b;font-family:'Amiri',serif;margin-bottom:5px}
+  .email{font-size:12px;color:#9ca3af;margin-bottom:25px}
+  .info{display:flex;justify-content:center;gap:40px;font-size:11px;color:#6b7280;margin-bottom:25px}
+  .info b{color:#059669}
+  .desc{font-size:12px;color:#6b7280;font-style:italic;line-height:1.7;max-width:500px;margin:0 auto 30px}
+  .footer{font-size:10px;color:#9ca3af}
+  .stamp{font-size:60px;opacity:0.1;position:absolute;bottom:30px;right:60px}
+  @media print{body{background:#fff}.cert{box-shadow:none;border-color:#059669}}
 </style></head><body>
-<div class="cert">
-  <div class="stamp">📜</div>
-  <div class="logo">🏛️ Quranica AI</div>
-  <div class="subtitle">E-Tahsin Certification Authority</div>
-  <div class="title">شهادة تحسين القرآن</div>
-  <div class="title-en">Certificate of Quranic Recitation Excellence</div>
-  <p class="to">Diberikan kepada:</p>
-  <p class="name">${userProfile.displayName}</p>
-  <p class="email">${userProfile.email}</p>
-  <div class="info">
-    <span>Tingkat: <b>${getTierDisplay(userProfile.tier, userProfile.billingCycle)}</b></span>
-    <span>Tanggal: <b>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span>
-  </div>
-  <p class="desc">Sertifikat ini menandakan bahwa pemilik telah menyelesaikan evaluasi tahsin dan berkomitmen untuk terus memperbaiki bacaan Al-Quran sesuai kaidah tajwid yang benar.</p>
-  <p class="footer">© ${new Date().getFullYear()} Quranica AI — Platform Evaluasi Tahsin Berbasis AI</p>
-</div>
-<script>window.onload = () => window.print();</script>
-</body></html>`;
-                    const w = window.open('', '_blank', 'width=900,height=700');
-                    if (w) { w.document.write(certHTML); w.document.close(); }
-                  }}
+<div class="cert"><div class="stamp">📜</div><div class="logo">🏛️ Quranica AI</div><div class="subtitle">E-Tahsin Certification Authority</div><div class="title">شهادة تحسين القرآن</div><div class="title-en">Certificate of Quranic Recitation Excellence</div>
+<p class="to">Diberikan kepada:</p><p class="name">${userProfile.displayName}</p><p class="email">${userProfile.email}</p>
+<div class="info"><span>Tingkat: <b>${getTierDisplay(userProfile.tier, userProfile.billingCycle)}</b></span><span>Tanggal: <b>${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</b></span></div>
+<p class="desc">Sertifikat ini menandakan bahwa pemilik telah menyelesaikan evaluasi tahsin dan berkomitmen untuk terus memperbaiki bacaan Al-Quran sesuai kaidah tajwid yang benar.</p>
+<p class="footer">© ${new Date().getFullYear()} Quranica AI — Platform Evaluasi Tahsin Berbasis AI</p></div>
+<script>window.onload=()=>window.print()</script></body></html>`;
+                  const w = window.open('', '_blank', 'width=900,height=700');
+                  if (w) { w.document.write(certHTML); w.document.close(); }
+                }}
                   className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Printer size={16} /> Cetak Sertifikat
