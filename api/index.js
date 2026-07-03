@@ -12,6 +12,21 @@ let userDatabase = [
 ];
 let preApprovedAdmins = new Set(["rivalgamingchannel@gmail.com"]);
 
+// ===== PENDING PAYMENTS =====
+let pendingPayments = [];
+
+// ===== TELEGRAM BOT =====
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean);
+function isTelegramAdmin(chatId) { return ADMIN_IDS.includes(String(chatId)); }
+async function tgSend(chatId, text) {
+  if (!BOT_TOKEN) return;
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" })
+  });
+}
+
 // Load library data
 let cungkringLibrary = [];
 try {
@@ -123,6 +138,224 @@ app.post("/api/users/update-role", (req, res) => {
     user.role = role;
     res.json({ success: true, user });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ===== PAYMENT: CREATE PENDING =====
+app.post("/api/payment/create", (req, res) => {
+  try {
+    const { email, displayName, tier, billingCycle, amount, method } = req.body;
+    if (!email || !amount) return res.status(400).json({ error: "Data tidak lengkap" });
+    const payment = {
+      id: `PAY-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      email: email.toLowerCase(),
+      displayName: displayName || email.split("@")[0],
+      tier: "Berbayar",
+      billingCycle: billingCycle || "Bulanan",
+      amount, method: method || "QRIS",
+      confirmed: false,
+      createdAt: new Date().toISOString()
+    };
+    pendingPayments.push(payment);
+    res.json({ ok: true, payment });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/api/payment/pending", (req, res) => {
+  const unconfirmed = pendingPayments.filter(p => !p.confirmed);
+  res.json({ payments: unconfirmed });
+});
+
+// ===== AI VERIFY PAYMENT PROOF =====
+app.post("/api/payment/verify-proof", async (req, res) => {
+  try {
+    const { paymentId, imageBase64, userEmail } = req.body;
+    if (!paymentId || !imageBase64) return res.status(400).json({ error: "paymentId dan imageBase64 wajib" });
+
+    const payment = pendingPayments.find(p => p.id === paymentId);
+    if (!payment) return res.status(404).json({ error: "Pembayaran tidak ditemukan" });
+    if (payment.confirmed) return res.status(400).json({ error: "Pembayaran sudah dikonfirmasi" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "Gemini API key tidak dikonfigurasi" });
+
+    // Expected account details
+    const expectedAccounts = {
+      BCA: { bank: "BCA", number: "7753050282", name: "RINAL ZAMZAM ELHASBI" },
+      DANA: { bank: "DANA", number: "085159552762", name: "RINAL ZAMZAM ELHASBI" },
+      QRIS: { bank: "QRIS", number: "N/A", name: "Quranica AI / RINAL ZAMZAM ELHASBI" }
+    };
+
+    const expected = expectedAccounts[payment.method] || expectedAccounts.QRIS;
+
+    const { GoogleGenAI } = require("@google/genai");
+    const ai = new GoogleGenAI({ apiKey });
+
+    const prompt = `ANALISIS BUKTI TRANSFER / PEMBAYARAN
+
+Anda adalah AI verifikator pembayaran Quranica AI. Analisis gambar bukti transfer ini dan berikan hasil dalam JSON.
+
+DETAIL PEMBAYARAN YANG DIHARAPKAN:
+- Metode: ${payment.method}
+- Jumlah: Rp ${payment.amount.toLocaleString("id-ID")}
+- Tujuan: ${expected.bank} ${expected.number} a.n. ${expected.name}
+- Email pengguna: ${userEmail || payment.email}
+
+VERIFIKASI:
+1. Apakah nominal transfer sesuai? (toleransi ±Rp 1.000)
+2. Apakah nomor rekening/tujuan sesuai dengan ${expected.bank}: ${expected.number}?
+3. Apakah bukti transfer terlihat asli (ada timestamp, nomor referensi, logo bank)?
+4. Apakah ada indikasi manipulasi atau editan?
+
+OUTPUT HANYA JSON (tanpa backtick):
+{
+  "valid": true/false,
+  "confidence": 0-100,
+  "amount_match": true/false,
+  "detected_amount": "jumlah yang terdeteksi",
+  "account_match": true/false,
+  "detected_account": "nomor rekening yang terdeteksi",
+  "timestamp_detected": "timestamp jika ada",
+  "summary": "ringkasan analisis dalam Bahasa Indonesia",
+  "red_flags": ["daftar masalah jika ada"]
+}`;
+
+    const imagePart = { inlineData: { mimeType: "image/jpeg", data: imageBase64 } };
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: { role: "user", parts: [{ text: prompt }, imagePart] }
+    });
+
+    let analysis;
+    try {
+      const raw = result.text.replace(/```json|```/g, "").trim();
+      analysis = JSON.parse(raw);
+    } catch (e) {
+      analysis = { valid: false, confidence: 0, summary: "Gagal parsing hasil AI: " + result.text.slice(0, 200) };
+    }
+
+    // Auto-confirm if AI says valid with high confidence
+    if (analysis.valid && analysis.confidence >= 70) {
+      let user = userDatabase.find(u => u.email.toLowerCase() === (userEmail || payment.email).toLowerCase());
+      if (!user) {
+        user = {
+          uid: `user_${Date.now()}`,
+          email: (userEmail || payment.email).toLowerCase(),
+          displayName: payment.displayName,
+          role: "User",
+          tier: "Berbayar",
+          billingCycle: payment.billingCycle,
+          createdAt: new Date().toISOString(),
+          password: ""
+        };
+        userDatabase.push(user);
+      } else {
+        user.tier = "Berbayar";
+        user.billingCycle = payment.billingCycle;
+      }
+      payment.confirmed = true;
+      payment.confirmedAt = new Date().toISOString();
+      payment.aiVerification = analysis;
+      payment.proofImage = imageBase64.slice(0, 200); // only store prefix for audit
+
+      return res.json({
+        ok: true,
+        confirmed: true,
+        analysis,
+        user: { uid: user.uid, email: user.email, displayName: user.displayName, tier: user.tier, billingCycle: user.billingCycle }
+      });
+    }
+
+    // Not confirmed
+    return res.json({
+      ok: true,
+      confirmed: false,
+      analysis,
+      message: "Bukti pembayaran tidak dapat diverifikasi otomatis. Mohon periksa kembali."
+    });
+
+  } catch (err) {
+    console.error("Verify proof error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== TELEGRAM BOT WEBHOOK =====
+app.post("/api/telegram-webhook", async (req, res) => {
+  try {
+    const body = req.body;
+    const msg = body.message || (body.callback_query && body.callback_query.message);
+    if (!msg) return res.status(200).json({ ok: true });
+    const chatId = msg.chat?.id;
+    const text = (msg.text || "").trim();
+    const fromName = msg.from?.first_name || "";
+
+    if (!chatId || !text) return res.status(200).json({ ok: true });
+
+    const parts = text.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+
+    if (cmd === "/start") {
+      const adminMsg = isTelegramAdmin(chatId);
+      await tgSend(chatId, adminMsg
+        ? `<b>Bot Konfirmasi Quranica AI</b>\n\nHalo ${fromName}!\n\n/confirm &lt;ID&gt; — Konfirmasi bayar\n/pending — Lihat pending\n/upgrade &lt;email&gt; &lt;bulanan|tahunan&gt; — Manual\n/help — Bantuan`
+        : `Halo ${fromName}! Silakan lakukan pembayaran di aplikasi. Admin akan konfirmasi.`);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (!isTelegramAdmin(chatId)) {
+      await tgSend(chatId, "⚠️ Akses ditolak.");
+      return res.status(200).json({ ok: true });
+    }
+
+    if (cmd === "/pending") {
+      const list = pendingPayments.filter(p => !p.confirmed);
+      if (list.length === 0) {
+        await tgSend(chatId, "✅ Tidak ada pembayaran pending.");
+      } else {
+        const txt = list.map((p, i) =>
+          `${i+1}. <b>${p.displayName}</b>\n📧 ${p.email}\n💰 Rp ${p.amount.toLocaleString("id-ID")}\n🏦 ${p.method} (${p.billingCycle})\n🆔 <code>${p.id}</code>\n📅 ${new Date(p.createdAt).toLocaleString("id-ID")}`
+        ).join("\n\n");
+        await tgSend(chatId, `<b>📋 Pending (${list.length})</b>\n\n${txt}\n\n/confirm &lt;ID&gt; untuk konfirmasi.`);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    if (cmd === "/confirm" && parts[1]) {
+      const id = parts[1];
+      const payment = pendingPayments.find(p => p.id === id);
+      if (!payment) { await tgSend(chatId, `❌ ID <code>${id}</code> tidak ditemukan.`); }
+      else if (payment.confirmed) { await tgSend(chatId, `⚠️ Sudah dikonfirmasi.`); }
+      else {
+        let user = userDatabase.find(u => u.email.toLowerCase() === payment.email.toLowerCase());
+        if (!user) {
+          user = { uid: `user_${Date.now()}`, email: payment.email, displayName: payment.displayName, role: "User", tier: "Berbayar", billingCycle: payment.billingCycle, createdAt: new Date().toISOString(), password: "" };
+          userDatabase.push(user);
+        } else { user.tier = "Berbayar"; user.billingCycle = payment.billingCycle; }
+        payment.confirmed = true;
+        payment.confirmedAt = new Date().toISOString();
+        await tgSend(chatId, `<b>✅ Dikonfirmasi!</b>\n👤 ${payment.displayName}\n📧 ${payment.email}\n⭐ Premium (${payment.billingCycle})\n💰 Rp ${payment.amount.toLocaleString("id-ID")}`);
+      }
+      return res.status(200).json({ ok: true });
+    }
+
+    if (cmd === "/upgrade" && parts[1] && parts[2]) {
+      const email = parts[1].toLowerCase();
+      const cyc = parts[2].toLowerCase() === "tahunan" ? "Tahunan" : "Bulanan";
+      let user = userDatabase.find(u => u.email.toLowerCase() === email);
+      if (!user) {
+        user = { uid: `user_${Date.now()}`, email, displayName: email.split("@")[0], role: "User", tier: "Berbayar", billingCycle: cyc, createdAt: new Date().toISOString(), password: "" };
+        userDatabase.push(user);
+      } else { user.tier = "Berbayar"; user.billingCycle = cyc; }
+      await tgSend(chatId, `<b>✅ Upgrade Manual</b>\n📧 ${email}\n⭐ Premium (${cyc})`);
+      return res.status(200).json({ ok: true });
+    }
+
+    await tgSend(chatId, "❓ /help untuk bantuan");
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("TG webhook error:", err);
+    res.status(200).json({ ok: true });
+  }
 });
 
 // ===== LIBRARY =====

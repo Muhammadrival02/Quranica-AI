@@ -145,7 +145,11 @@ function App() {
   const [regAppliedDiscount, setRegAppliedDiscount] = useState(0); // 10 means 10%
   const [regPromoFeedback, setRegPromoFeedback] = useState<string | null>(null);
   const [regPaymentMethod, setRegPaymentMethod] = useState<"QRIS" | "BCA" | "DANA">("QRIS");
-  const [regPaymentStep, setRegPaymentStep] = useState<"select" | "processing" | "success">("select");
+  const [regPaymentStep, setRegPaymentStep] = useState<"select" | "processing" | "upload-proof" | "verifying" | "success">("select");
+  const [regPaymentData, setRegPaymentData] = useState<any>(null); // pending payment result
+  const [regProofImage, setRegProofImage] = useState<string | null>(null); // base64 bukti transfer
+  const [regAiResult, setRegAiResult] = useState<any>(null); // hasil analisis AI
+  const [regFileRef, setRegFileRef] = useState<HTMLInputElement | null>(null);
   const [regManualName, setRegManualName] = useState("");
   const [regManualEmail, setRegManualEmail] = useState("");
   const [regManualPekerjaan, setRegManualPekerjaan] = useState("");
@@ -2683,7 +2687,7 @@ function App() {
             </div>
 
             {/* Panel Checkout Registrasi & Pembayaran Interaktif */}
-            {regPaymentStep !== "success" ? (
+            {(regPaymentStep === "select" || regPaymentStep === "processing") && regPaymentStep !== "upload-proof" && regPaymentStep !== "verifying" && regPaymentStep !== "success" ? (
               <div id="payment-form" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-emerald-400 opacity-60"></div>
                 
@@ -3096,85 +3100,35 @@ function App() {
 
                         setRegPaymentStep("processing");
 
-                        // Simulate API network call delay
-                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        // Hitung total
+                        const totalAmount = regSelectedPlan === "Tahunan" 
+                          ? (300000 - (300000 * regAppliedDiscount / 100))
+                          : (30000 - (30000 * regAppliedDiscount / 100));
 
+                        // Buat pending payment di backend
                         try {
-                          let finalEmail = regManualEmail.trim().toLowerCase();
-                          let finalDisplayName = regManualName.trim();
-
-                          if (!userProfile) {
-                            // If not logged in, we simulate a mock auto-registration in backend database
-                            const mockUserUid = "mock_reg_" + Math.random().toString(36).substring(2, 10);
-                            const res = await fetch("/api/users/profile", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                uid: mockUserUid,
-                                email: finalEmail,
-                                displayName: finalDisplayName,
-                                tier: "Berbayar",
-                                billingCycle: regSelectedPlan,
-                                pekerjaan: regManualPekerjaan.trim(),
-                                phone: regManualPhone.trim(),
-                                password: regManualPassword
-                              })
-                            });
-                            
-                            if (res.ok) {
-                              const profile = await res.json();
-                              setUserProfile(profile);
-                              saveUserWithExpiry(profile);
-                              localStorage.setItem(`quranica_tier_${mockUserUid}`, "Berbayar");
-                              localStorage.setItem(`quranica_cycle_${mockUserUid}`, regSelectedPlan);
-                              addLog(`[Profile] Registrasi Mandiri Berhasil: Akun Premium ${regSelectedPlan}`);
-                            } else {
-                              throw new Error("Gagal mendaftarkan profil di backend.");
-                            }
+                          const payRes = await fetch("/api/payment/create", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              email: regManualEmail.trim().toLowerCase(),
+                              displayName: regManualName.trim(),
+                              amount: totalAmount,
+                              method: regPaymentMethod,
+                              billingCycle: regSelectedPlan
+                            })
+                          });
+                          const payData = await payRes.json();
+                          if (payData.ok) {
+                            setRegPaymentData(payData.payment);
+                            setRegPaymentStep("upload-proof");
+                            setRegProofImage(null);
+                            setRegAiResult(null);
                           } else {
-                            // Already logged in, use handleSelfTierUpgrade backend logic
-                            const res = await fetch("/api/users/update-tier", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                uid: userProfile.uid,
-                                email: finalEmail,
-                                tier: "Berbayar",
-                                billingCycle: regSelectedPlan,
-                                pekerjaan: regManualPekerjaan.trim(),
-                                phone: regManualPhone.trim(),
-                                password: regManualPassword
-                              })
-                            });
-                            
-                            if (res.ok) {
-                              setUserProfile(prev => {
-                                const updated = prev ? { 
-                                  ...prev, 
-                                  displayName: finalDisplayName,
-                                  email: finalEmail,
-                                  tier: "Berbayar" as const, 
-                                  billingCycle: regSelectedPlan,
-                                  pekerjaan: regManualPekerjaan.trim(),
-                                  phone: regManualPhone.trim(),
-                                  password: regManualPassword
-                                } : null;
-                                if (updated) {
-                                  saveUserWithExpiry(updated);
-                                }
-                                return updated;
-                              });
-                              localStorage.setItem(`quranica_tier_${userProfile.uid}`, "Berbayar");
-                              localStorage.setItem(`quranica_cycle_${userProfile.uid}`, regSelectedPlan);
-                              addLog(`[Profile] Upgrade Keanggotaan Berhasil: Premium ${regSelectedPlan}`);
-                            } else {
-                              throw new Error("Gagal melakukan upgrade di backend.");
-                            }
+                            throw new Error(payData.error || "Gagal membuat pembayaran");
                           }
-
-                          setRegPaymentStep("success");
                         } catch (err: any) {
-                          setRegErrorFeedback(`Gagal memproses pendaftaran: ${err.message || err}`);
+                          setRegErrorFeedback(`Gagal: ${err.message}`);
                           setRegPaymentStep("select");
                         }
                       }}
@@ -3188,6 +3142,190 @@ function App() {
                   </p>
                 </div>
 
+              </div>
+            ) : (regPaymentStep === "upload-proof" || regPaymentStep === "verifying") ? (
+              /* UPLOAD BUKTI TRANSFER + AI VERIFICATION */
+              <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-emerald-400 opacity-60"></div>
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <UploadCloud size={14} className="text-amber-400" /> Upload Bukti Transfer
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      ID: <code className="bg-slate-950 px-2 py-0.5 rounded text-amber-400">{regPaymentData?.id}</code>
+                    </p>
+                  </div>
+                  <div className="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 text-right">
+                    <div className="text-[9px] font-mono text-slate-500 uppercase">Total</div>
+                    <div className="text-xs font-extrabold text-amber-400">
+                      Rp {regPaymentData?.amount?.toLocaleString("id-ID") || "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail pembayaran */}
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                  <div className="flex justify-between"><span className="text-slate-500">Metode</span><span className="font-bold text-slate-300">{regPaymentMethod}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Paket</span><span className="font-bold text-amber-400">PREMIUM {regPaymentData?.billingCycle?.toUpperCase()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Jumlah</span><span className="font-bold text-slate-200">Rp {regPaymentData?.amount?.toLocaleString("id-ID")}</span></div>
+                  {regPaymentMethod === "BCA" && (
+                    <div className="flex justify-between"><span className="text-slate-500">Tujuan</span><span className="font-mono text-emerald-400">BCA 7753050282 a.n. RINAL ZAMZAM ELHASBI</span></div>
+                  )}
+                  {regPaymentMethod === "DANA" && (
+                    <div className="flex justify-between"><span className="text-slate-500">Tujuan</span><span className="font-mono text-emerald-400">DANA 085159552762 a.n. RINAL ZAMZAM ELHASBI</span></div>
+                  )}
+                  {regPaymentMethod === "QRIS" && (
+                    <div className="flex justify-between"><span className="text-slate-500">Tujuan</span><span className="font-mono text-emerald-400">QRIS — Quranica AI</span></div>
+                  )}
+                  <div className="border-t border-slate-800 pt-2 mt-2">
+                    <p className="text-amber-400 text-[10px]">
+                      📸 Upload screenshot bukti transfer Anda. AI kami akan memverifikasi otomatis.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Upload Area */}
+                {regPaymentStep === "upload-proof" && (
+                  <div className="space-y-4">
+                    <label className="block w-full cursor-pointer">
+                      <div className="border-2 border-dashed border-slate-700 hover:border-amber-500/50 rounded-2xl p-8 text-center transition-all group">
+                        {regProofImage ? (
+                          <div className="space-y-3">
+                            <img src={`data:image/jpeg;base64,${regProofImage}`} alt="Bukti Transfer" className="max-h-64 mx-auto rounded-xl border border-slate-700 shadow-lg" />
+                            <p className="text-xs text-emerald-400 font-bold">✅ Gambar berhasil diunggah</p>
+                            <button onClick={(e) => { e.preventDefault(); setRegProofImage(null); setRegAiResult(null); }} className="text-[10px] text-slate-500 hover:text-red-400 underline">Ganti gambar</button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <UploadCloud size={40} className="mx-auto text-slate-600 group-hover:text-amber-400 transition-colors" />
+                            <p className="text-xs text-slate-400 font-bold">Klik untuk upload screenshot bukti transfer</p>
+                            <p className="text-[10px] text-slate-600">PNG, JPG, atau WEBP (maks 5MB)</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) {
+                              setRegErrorFeedback("Ukuran file maksimal 5MB.");
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const base64 = (reader.result as string).split(",")[1];
+                              setRegProofImage(base64);
+                              setRegAiResult(null);
+                              setRegErrorFeedback(null);
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </div>
+                    </label>
+
+                    {regProofImage && (
+                      <button
+                        onClick={async () => {
+                          if (!regProofImage || !regPaymentData) return;
+                          setRegPaymentStep("verifying");
+                          setRegErrorFeedback(null);
+                          try {
+                            const res = await fetch("/api/payment/verify-proof", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                paymentId: regPaymentData.id,
+                                imageBase64: regProofImage,
+                                userEmail: regManualEmail || userProfile?.email
+                              })
+                            });
+                            const data = await res.json();
+                            setRegAiResult(data);
+                            if (data.confirmed) {
+                              if (userProfile) {
+                                await syncUserProfileWithBackend(userProfile, "Berbayar", regPaymentData.billingCycle);
+                              }
+                              setRegPaymentStep("success");
+                            } else {
+                              setRegPaymentStep("upload-proof");
+                              setRegErrorFeedback(data.analysis?.summary || data.message || "Verifikasi gagal");
+                            }
+                          } catch (err: any) {
+                            setRegPaymentStep("upload-proof");
+                            setRegErrorFeedback(`Gagal: ${err.message}`);
+                          }
+                        }}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <Wand2 size={16} /> Verifikasi dengan AI
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => { setRegPaymentStep("select"); setRegPaymentData(null); setRegProofImage(null); setRegAiResult(null); }}
+                      className="w-full py-2.5 text-slate-500 hover:text-slate-300 text-xs font-bold transition-all"
+                    >
+                      ← Kembali
+                    </button>
+                  </div>
+                )}
+
+                {/* Verifying spinner */}
+                {regPaymentStep === "verifying" && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <Wand2 size={48} className="text-amber-400 animate-pulse" />
+                    <p className="text-sm font-bold text-slate-300">AI sedang menganalisis bukti transfer...</p>
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "-0.3s" }}></span>
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "-0.15s" }}></span>
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></span>
+                    </div>
+                    <p className="text-[10px] text-slate-500">Memeriksa nominal, rekening tujuan, dan keaslian bukti</p>
+                  </div>
+                )}
+
+                {/* AI Result (not confirmed) */}
+                {regAiResult && !regAiResult.confirmed && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-xs space-y-2">
+                    <div className="flex items-center gap-2 text-red-400 font-bold">
+                      <AlertCircle size={14} /> Verifikasi Gagal
+                    </div>
+                    <p className="text-slate-400">{regAiResult.analysis?.summary || regAiResult.message}</p>
+                    {regAiResult.analysis?.red_flags?.length > 0 && (
+                      <div className="mt-1 space-y-1">
+                        <span className="text-red-400 font-bold">Masalah terdeteksi:</span>
+                        <ul className="list-disc list-inside text-slate-500 space-y-0.5">
+                          {regAiResult.analysis.red_flags.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {regAiResult.analysis && (
+                      <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800">
+                        <div><span className="text-slate-600">Nominal cocok:</span> <span className={regAiResult.analysis.amount_match ? "text-emerald-400" : "text-red-400"}>{regAiResult.analysis.amount_match ? "✅" : "❌"}</span></div>
+                        <div><span className="text-slate-600">Rekening cocok:</span> <span className={regAiResult.analysis.account_match ? "text-emerald-400" : "text-red-400"}>{regAiResult.analysis.account_match ? "✅" : "❌"}</span></div>
+                        <div><span className="text-slate-600">Confidence:</span> <span className="font-mono text-amber-400">{regAiResult.analysis.confidence}%</span></div>
+                        <div><span className="text-slate-600">Terdeteksi:</span> <span className="font-mono text-slate-400">{regAiResult.analysis.detected_amount || "—"}</span></div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => { setRegAiResult(null); setRegProofImage(null); }}
+                      className="w-full py-2 mt-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Coba Upload Ulang
+                    </button>
+                  </div>
+                )}
+
+                {regErrorFeedback && !regAiResult && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-400 flex items-start gap-2">
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" /> {regErrorFeedback}
+                  </div>
+                )}
               </div>
             ) : (
               /* Success Animated screen */

@@ -320,6 +320,94 @@ async function startServer() {
     }
   });
 
+  // --- PENDING PAYMENT & TELEGRAM BOT ---
+  let pendingPayments: any[] = [];
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+  const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || "").split(",").map(s => s.trim()).filter(Boolean);
+  function isTelegramAdmin(chatId: string) { return ADMIN_IDS.includes(String(chatId)); }
+  async function tgSend(chatId: string, text: string) {
+    if (!BOT_TOKEN) return;
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" })
+    });
+  }
+
+  app.post("/api/payment/create", (req, res) => {
+    const { email, displayName, amount, method, billingCycle } = req.body;
+    if (!email || !amount) return res.status(400).json({ error: "Data tidak lengkap" });
+    const payment = {
+      id: `PAY-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      email: email.toLowerCase(), displayName: displayName || email.split("@")[0],
+      tier: "Berbayar", billingCycle: billingCycle || "Bulanan", amount, method: method || "QRIS",
+      confirmed: false, createdAt: new Date().toISOString()
+    };
+    pendingPayments.push(payment);
+    res.json({ ok: true, payment });
+  });
+
+  app.get("/api/payment/pending", (req, res) => {
+    res.json({ payments: pendingPayments.filter(p => !p.confirmed) });
+  });
+
+  app.post("/api/telegram-webhook", async (req, res) => {
+    try {
+      const body = req.body;
+      const msg = body.message || (body.callback_query && body.callback_query.message);
+      if (!msg) return res.status(200).json({ ok: true });
+      const chatId = msg.chat?.id;
+      const text = (msg.text || "").trim();
+      const fromName = msg.from?.first_name || "";
+      if (!chatId || !text) return res.status(200).json({ ok: true });
+      const parts = text.split(/\s+/);
+      const cmd = parts[0].toLowerCase();
+
+      if (cmd === "/start") {
+        await tgSend(chatId, isTelegramAdmin(chatId)
+          ? `<b>Bot Konfirmasi Quranica AI</b>\n\nHalo ${fromName}!\n\n/confirm <ID> — Konfirmasi\n/pending — Lihat pending\n/upgrade <email> <bulanan|tahunan> — Manual`
+          : `Halo ${fromName}! Bayar via QRIS/BCA/DANA di aplikasi. Admin akan konfirmasi.`);
+        return res.status(200).json({ ok: true });
+      }
+      if (!isTelegramAdmin(chatId)) { await tgSend(chatId, "Akses ditolak."); return res.status(200).json({ ok: true }); }
+
+      if (cmd === "/pending") {
+        const list = pendingPayments.filter(p => !p.confirmed);
+        const txt = list.length === 0 ? "Tidak ada pending." : list.map((p, i) => `${i+1}. ${p.displayName} — ${p.email} — Rp ${p.amount.toLocaleString("id-ID")} — ${p.method} — ID: ${p.id}`).join("\n");
+        await tgSend(chatId, txt);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (cmd === "/confirm" && parts[1]) {
+        const id = parts[1];
+        const p = pendingPayments.find(x => x.id === id);
+        if (!p) { await tgSend(chatId, "ID tidak ditemukan."); }
+        else if (p.confirmed) { await tgSend(chatId, "Sudah dikonfirmasi."); }
+        else {
+          let user = userDatabase.find(u => u.email.toLowerCase() === p.email.toLowerCase());
+          if (!user) {
+            user = { uid: `user_${Date.now()}`, email: p.email, displayName: p.displayName, role: "User", tier: "Berbayar", billingCycle: p.billingCycle, createdAt: new Date().toISOString(), password: "" };
+            userDatabase.push(user);
+          } else { user.tier = "Berbayar"; user.billingCycle = p.billingCycle; }
+          p.confirmed = true; p.confirmedAt = new Date().toISOString();
+          await tgSend(chatId, `✅ Dikonfirmasi!\n${p.displayName}\n${p.email}\n⭐ Premium (${p.billingCycle})\nRp ${p.amount.toLocaleString("id-ID")}`);
+        }
+        return res.status(200).json({ ok: true });
+      }
+
+      if (cmd === "/upgrade" && parts[1] && parts[2]) {
+        const email = parts[1].toLowerCase();
+        const cyc = parts[2].toLowerCase() === "tahunan" ? "Tahunan" : "Bulanan";
+        let user = userDatabase.find(u => u.email.toLowerCase() === email);
+        if (!user) { user = { uid: `user_${Date.now()}`, email, displayName: email.split("@")[0], role: "User", tier: "Berbayar", billingCycle: cyc, createdAt: new Date().toISOString(), password: "" }; userDatabase.push(user); }
+        else { user.tier = "Berbayar"; user.billingCycle = cyc; }
+        await tgSend(chatId, `✅ Upgrade: ${email} → Premium (${cyc})`);
+        return res.status(200).json({ ok: true });
+      }
+      await tgSend(chatId, "? /help");
+      res.status(200).json({ ok: true });
+    } catch (err: any) { res.status(200).json({ ok: true }); }
+  });
+
   // --- DATABASE PERPUSTAKAAN MAHASISWA CUNGKRING (MCP) ---
   let cungkringLibrary = [...secondarySources];
 
