@@ -504,7 +504,10 @@ function App() {
       () => {
         setGoogleUser(null);
         setGoogleToken(null);
-        setUserProfile(null);
+        // Jangan hapus userProfile jika masih login via email (localStorage)
+        if (!localStorage.getItem("quranica_current_user")) {
+          setUserProfile(null);
+        }
       }
     );
     return () => {
