@@ -27,8 +27,16 @@ function App() {
   const [isFetchingMcp, setIsFetchingMcp] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   
-  // Smartphone Preview Mode — selalu aktif, tidak ada toggle
-  const isPhonePreview = true;
+  // Smartphone Preview Mode — deteksi otomatis dari lebar layar
+  const [isPhonePreview, setIsPhonePreview] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : true
+  );
+
+  useEffect(() => {
+    const checkWidth = () => setIsPhonePreview(window.innerWidth < 768);
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, []);
 
   // Q&A, Research, & MCP Client State
   const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah'>('tahsin');
