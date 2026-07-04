@@ -2,7 +2,7 @@
  * Quranica AI - Official API Client (TypeScript / JavaScript)
  * 
  * Client ini memudahkan integrasi dan cross-check data antara Quranica AI
- * dengan aplikasi eksternal (seperti Perpustakaan Mahasiswa Cungkring).
+ * dengan aplikasi eksternal (seperti Quranica Library).
  */
 
 export interface McpServer {
@@ -60,7 +60,7 @@ export class QuranicaApiClient {
   }
 
   /**
-   * Mendaftarkan server MCP baru (misalnya Perpustakaan Mahasiswa Cungkring).
+   * Mendaftarkan server MCP baru (misalnya Quranica Library).
    */
   async registerMcpServer(name: string, url: string, description?: string): Promise<McpServer> {
     const res = await fetch(`${this.baseUrl}/api/mcp/servers`, {

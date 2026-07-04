@@ -408,8 +408,8 @@ async function startServer() {
     } catch (err: any) { res.status(200).json({ ok: true }); }
   });
 
-  // --- DATABASE PERPUSTAKAAN MAHASISWA CUNGKRING (MCP) ---
-  let cungkringLibrary = [...secondarySources];
+  // --- DATABASE PERPUSTAKAAN MAHASISWA QURANICA LIBRARY (MCP) ---
+  let quranicaLibrary = [...secondarySources];
 
   // API Route: Sync Google Drive files into the library
   app.post("/api/library/sync-drive", (req, res) => {
@@ -432,10 +432,10 @@ async function startServer() {
       }));
 
       // Remove previous Google Drive synchronized items to prevent duplicate piling
-      cungkringLibrary = cungkringLibrary.filter(item => !item.id.startsWith("gdrive_"));
+      quranicaLibrary = quranicaLibrary.filter(item => !item.id.startsWith("gdrive_"));
 
       // Prepend the new Google Drive references so they act as the highest-priority "referensi utama" (main references)
-      cungkringLibrary = [...mappedFiles, ...cungkringLibrary];
+      quranicaLibrary = [...mappedFiles, ...quranicaLibrary];
 
       console.log(`[Google Drive Sync] Successfully integrated ${mappedFiles.length} files as main references.`);
       res.json({ success: true, count: mappedFiles.length, files: mappedFiles });
@@ -448,12 +448,12 @@ async function startServer() {
   // In-memory MCP Server Configuration
   let mcpServers = [
     {
-      id: "cungkring_mcp",
-      name: "Perpustakaan Mahasiswa Cungkring (Model Context Protocol)",
-      url: "http://localhost:3000/api/mcp/perpustakaan-cungkring",
+      id: "quranica_library_mcp",
+      name: "Quranica Library (Model Context Protocol)",
+      url: "http://localhost:3000/api/mcp/quranica-library",
       type: "local-virtual",
       status: "connected",
-      description: "Menghubungkan platform dengan database digital naskah klasik Turats, kritik sanad, dan kajian aqidah luhur Mahasiswa Cungkring."
+      description: "Menghubungkan platform dengan database digital naskah klasik Turats, kritik sanad, dan kajian aqidah luhur Quranica Library."
     }
   ];
 
@@ -462,16 +462,16 @@ async function startServer() {
     res.json(mcpServers);
   });
 
-  // API Route: Get Primary Libraries Directory (cungkringLibrary)
+  // API Route: Get Primary Libraries Directory (quranicaLibrary)
   app.get("/api/library", (req, res) => {
-    const populated = cungkringLibrary.map(item => {
+    const populated = quranicaLibrary.map(item => {
       const newItem = { ...item };
       if (!newItem.externalLink) {
         if (newItem.category?.toLowerCase().includes("hadits") || newItem.category?.toLowerCase().includes("syarah")) {
           newItem.externalLink = "https://sunnah.one";
         } else if (newItem.category?.toLowerCase().includes("tafsir") || newItem.category?.toLowerCase().includes("qur'an")) {
           newItem.externalLink = "https://shamela.ws";
-        } else if (newItem.id === "cungkring_04" || newItem.id === "cungkring_05") {
+        } else if (newItem.id === "ql_04" || newItem.id === "ql_05") {
           newItem.externalLink = "https://waqfeya.net";
         } else {
           newItem.externalLink = "https://shamela.ws";
@@ -490,9 +490,9 @@ async function startServer() {
         return res.status(400).json({ error: "Kueri pencarian wajib diisi." });
       }
 
-      // 1. Scoring & filtering of candidates from cungkringLibrary (491 sources)
+      // 1. Scoring & filtering of candidates from quranicaLibrary (491 sources)
       const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-      const scored = cungkringLibrary.map(item => {
+      const scored = quranicaLibrary.map(item => {
         let score = 0;
         const titleLower = item.title.toLowerCase();
         const authorLower = item.author.toLowerCase();
@@ -534,7 +534,7 @@ async function startServer() {
 
       // If no keyword matches, fallback to first 30 items or random items
       if (candidates.length === 0) {
-        candidates = cungkringLibrary.slice(0, 30).map(item => {
+        candidates = quranicaLibrary.slice(0, 30).map(item => {
           const newItem = { ...item };
           if (!newItem.externalLink) {
             newItem.externalLink = "https://shamela.ws";
@@ -554,7 +554,7 @@ async function startServer() {
       const ai = new GoogleGenAI({ apiKey: apiKey });
 
       // Build the prompt with candidates
-      const prompt = `Anda adalah Pustakawan AI Pintar dari Perpustakaan Mahasiswa Cungkring.
+      const prompt = `Anda adalah Pustakawan AI Pintar dari Quranica Library.
 Tugas Anda adalah membantu pengguna mencari dan merekomendasikan referensi kitab, artikel, situs web, atau saluran telegram yang sesuai dengan kueri atau konteks pencarian mereka.
 
 Kueri Pencarian Pengguna: "${query}"
@@ -616,8 +616,8 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
   // API Route: Delete Custom MCP Server
   app.delete("/api/mcp/servers/:id", (req, res) => {
     const { id } = req.params;
-    if (id === "cungkring_mcp") {
-      return res.status(400).json({ error: "Server Perpustakaan Mahasiswa Cungkring bawaan tidak boleh dihapus." });
+    if (id === "quranica_library_mcp") {
+      return res.status(400).json({ error: "Server Quranica Library bawaan tidak boleh dihapus." });
     }
     mcpServers = mcpServers.filter(s => s.id !== id);
     res.json({ success: true });
@@ -627,7 +627,7 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
   app.post("/api/mcp/connect", async (req, res) => {
     const { url, type } = req.body;
     try {
-      if (type === "local-virtual" || url.includes("perpustakaan-cungkring")) {
+      if (type === "local-virtual" || url.includes("quranica-library")) {
         // Mock successful initialization handshakes
         return res.json({
           status: "connected",
@@ -637,13 +637,13 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
             tools: {}
           },
           serverInfo: {
-            name: "Perpustakaan Mahasiswa Cungkring MCP",
+            name: "Quranica Library MCP",
             version: "1.0.0"
           },
           tools: [
             {
               name: "search_library",
-              description: "Mencari kitab, naskah klasik, fatwa, dan artikel ilmiah di Perpustakaan Mahasiswa Cungkring berdasarkan kata kunci.",
+              description: "Mencari kitab, naskah klasik, fatwa, dan artikel ilmiah di Quranica Library berdasarkan kata kunci.",
               inputSchema: {
                 type: "object",
                 properties: {
@@ -702,11 +702,11 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
   app.post("/api/mcp/query", async (req, res) => {
     const { url, toolName, arguments: toolArgs, type } = req.body;
     try {
-      if (type === "local-virtual" || url.includes("perpustakaan-cungkring")) {
+      if (type === "local-virtual" || url.includes("quranica-library")) {
         // Handle virtual tool execution
         if (toolName === "search_library") {
           const kw = (toolArgs?.keyword || "").toLowerCase();
-          const results = cungkringLibrary.filter(item => 
+          const results = quranicaLibrary.filter(item => 
             item.title.toLowerCase().includes(kw) || 
             item.author.toLowerCase().includes(kw) || 
             item.content.toLowerCase().includes(kw) ||
@@ -736,7 +736,7 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
 
         if (toolName === "verify_reference") {
           const quote = (toolArgs?.quote || "").toLowerCase();
-          const matched = cungkringLibrary.find(item => 
+          const matched = quranicaLibrary.find(item => 
             item.content.toLowerCase().includes(quote) ||
             item.title.toLowerCase().includes(quote)
           );
@@ -755,7 +755,7 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
                     uri: matched.uri
                   } : null,
                   message: matched 
-                    ? "Kutipan terverifikasi dengan sukses di dalam basis naskah Perpustakaan Mahasiswa Cungkring!" 
+                    ? "Kutipan terverifikasi dengan sukses di dalam basis naskah Quranica Library!" 
                     : "Kutipan tidak ditemukan dalam database perpustakaan. Harap periksa ejaan atau rujukan."
                 }, null, 2)
               }
@@ -804,11 +804,11 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
       const chatMode: 'tafsir' | 'hadits' | 'maqashid' = 
         mode === 'hadits' ? 'hadits' : mode === 'maqashid' ? 'maqashid' : 'tafsir';
 
-      // Cari referensi relevan dari cungkringLibrary berdasarkan pesan pengguna terakhir
+      // Cari referensi relevan dari quranicaLibrary berdasarkan pesan pengguna terakhir
       const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === "user")?.content || "";
       const searchKeywords = lastUserMessage.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
       
-      const matchedReferences = cungkringLibrary.filter(item => {
+      const matchedReferences = quranicaLibrary.filter(item => {
         return searchKeywords.some((kw: string) => 
           item.title.toLowerCase().includes(kw) ||
           item.author.toLowerCase().includes(kw) ||
@@ -820,14 +820,14 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
 
       let referenceContext = "";
       if (matchedReferences.length > 0) {
-        referenceContext = "\n\n=== BERIKUT ADALAH RUJUKAN UTAMA DARI DATABASE PERPUSTAKAAN MAHASISWA CUNGKRING (WAJIB DISEBUTKAN SECARA EKSPLISIT): ===\n" + 
+        referenceContext = "\n\n=== BERIKUT ADALAH RUJUKAN UTAMA DARI DATABASE PERPUSTAKAAN MAHASISWA QURANICA LIBRARY (WAJIB DISEBUTKAN SECARA EKSPLISIT): ===\n" + 
           matchedReferences.map((ref, idx) => `[Sumber Referensi #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKajian/Naskah: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") + 
-          "\n\nWAJIB sebutkan secara eksplisit rujukan dan argumen ilmiah di atas dalam jawaban Anda serta nyatakan bahwa data ini diverifikasi langsung melalui database Perpustakaan Mahasiswa Cungkring.";
+          "\n\nWAJIB sebutkan secara eksplisit rujukan dan argumen ilmiah di atas dalam jawaban Anda serta nyatakan bahwa data ini diverifikasi langsung melalui database Quranica Library.";
       } else {
         // Fallback: sertakan seluruh katalog utama sebagai rujukan dasar
-        referenceContext = "\n\n=== DATABASE UTAMA REFERENSI PERPUSTAKAAN MAHASISWA CUNGKRING: ===\n" + 
-          cungkringLibrary.map((ref, idx) => `[Katalog #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKajian: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") + 
-          "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan argumen dari database Perpustakaan Mahasiswa Cungkring di atas jika relevan dengan pertanyaan pengguna untuk memformulasikan jawaban ilmiah Anda.";
+        referenceContext = "\n\n=== DATABASE UTAMA REFERENSI PERPUSTAKAAN MAHASISWA QURANICA LIBRARY: ===\n" + 
+          quranicaLibrary.map((ref, idx) => `[Katalog #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKajian: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") + 
+          "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan argumen dari database Quranica Library di atas jika relevan dengan pertanyaan pengguna untuk memformulasikan jawaban ilmiah Anda.";
       }
 
       // Gunakan API Key dari environment variable, fallback ke yang diberikan user
@@ -1000,9 +1000,9 @@ ATURAN:
     const cleanId = id.trim().toLowerCase();
 
     // Find reference by ID or matching URI slug
-    const item = cungkringLibrary.find(x => 
+    const item = quranicaLibrary.find(x => 
       x.id.toLowerCase() === cleanId || 
-      x.uri.toLowerCase() === `mcp://cungkring/${cleanId}` ||
+      x.uri.toLowerCase() === `mcp://quranica-library/${cleanId}` ||
       x.uri.toLowerCase().endsWith(`/${cleanId}`)
     );
 
@@ -1012,15 +1012,15 @@ ATURAN:
     }
 
     if (!externalLink) {
-      if (cleanId === "fathul-bari" || cleanId === "cungkring_01") {
+      if (cleanId === "fathul-bari" || cleanId === "ql_01") {
         externalLink = "https://shamela.ws/book/1681";
-      } else if (cleanId === "tafsir-ibnu-katsir" || cleanId === "cungkring_02") {
+      } else if (cleanId === "tafsir-ibnu-katsir" || cleanId === "ql_02") {
         externalLink = "https://shamela.ws/book/23567";
-      } else if (cleanId === "al-itqan" || cleanId === "cungkring_03") {
+      } else if (cleanId === "al-itqan" || cleanId === "ql_03") {
         externalLink = "https://shamela.ws/book/11444";
-      } else if (cleanId === "debunk-tabarruk" || cleanId === "cungkring_04") {
+      } else if (cleanId === "debunk-tabarruk" || cleanId === "ql_04") {
         externalLink = "https://waqfeya.net";
-      } else if (cleanId === "ngalap-berkah-kuburan" || cleanId === "cungkring_05") {
+      } else if (cleanId === "ngalap-berkah-kuburan" || cleanId === "ql_05") {
         externalLink = "https://waqfeya.net";
       } else if (cleanId.includes("shamela")) {
         externalLink = "https://shamela.ws";
@@ -1041,9 +1041,9 @@ ATURAN:
     const cleanId = id.trim().toLowerCase();
 
     // Find reference by ID or matching URI slug
-    const item = cungkringLibrary.find(x => 
+    const item = quranicaLibrary.find(x => 
       x.id.toLowerCase() === cleanId || 
-      x.uri.toLowerCase() === `mcp://cungkring/${cleanId}` ||
+      x.uri.toLowerCase() === `mcp://quranica-library/${cleanId}` ||
       x.uri.toLowerCase().endsWith(`/${cleanId}`)
     );
 
@@ -1068,7 +1068,7 @@ ATURAN:
             </div>
             <div class="space-y-2">
               <h1 class="text-2xl font-bold text-slate-200">Referensi Tidak Ditemukan</h1>
-              <p class="text-sm text-slate-400">Maaf, tautan referensi <code class="text-emerald-400 font-mono">${id}</code> tidak terdaftar dalam database Perpustakaan Mahasiswa Cungkring.</p>
+              <p class="text-sm text-slate-400">Maaf, tautan referensi <code class="text-emerald-400 font-mono">${id}</code> tidak terdaftar dalam database Quranica Library.</p>
             </div>
             <a href="/" class="inline-flex items-center justify-center w-full px-5 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-lg hover:shadow-emerald-600/20">
               Kembali ke Quranica AI
@@ -1084,19 +1084,19 @@ ATURAN:
     let locationDetail = (item as any).locationDetail || "";
     
     if (!externalLink && !locationDetail) {
-      if (item.id === "cungkring_01") {
+      if (item.id === "ql_01") {
         externalLink = "https://shamela.ws/book/1681";
         locationDetail = "Maktabah Shamela (Kitab Digital Klasik #1681), Jilid 3, Bab Ziarah Kubur.";
-      } else if (item.id === "cungkring_02") {
+      } else if (item.id === "ql_02") {
         externalLink = "https://shamela.ws/book/23567";
         locationDetail = "Maktabah Shamela (Kitab Digital Klasik #23567), Penafsiran Surah An-Najm: 19-23.";
-      } else if (item.id === "cungkring_03") {
+      } else if (item.id === "ql_03") {
         externalLink = "https://shamela.ws/book/11444";
         locationDetail = "Maktabah Shamela (Kitab Digital Klasik #11444), Bab 47: I'jazul Qur'an.";
-      } else if (item.id === "cungkring_04") {
-        locationDetail = "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 12.";
-      } else if (item.id === "cungkring_05") {
-        locationDetail = "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 13.";
+      } else if (item.id === "ql_04") {
+        locationDetail = "Arsip Digital & Fisik Quranica Library, Lemari Kajian Teologi, Baris 2, No. 12.";
+      } else if (item.id === "ql_05") {
+        locationDetail = "Arsip Digital & Fisik Quranica Library, Lemari Kajian Teologi, Baris 2, No. 13.";
       }
     }
 
@@ -1309,9 +1309,9 @@ ATURAN:
     const task = researchTasks[id];
     if (!task) return;
 
-    // Ambil referensi dari Perpustakaan Mahasiswa Cungkring yang relevan dengan topik riset
+    // Ambil referensi dari Quranica Library yang relevan dengan topik riset
     const topicKeywords = task.topic.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-    const matchedReferences = cungkringLibrary.filter(item => {
+    const matchedReferences = quranicaLibrary.filter(item => {
       return topicKeywords.some((kw: string) => 
         item.title.toLowerCase().includes(kw) ||
         item.author.toLowerCase().includes(kw) ||
@@ -1323,14 +1323,14 @@ ATURAN:
 
     let referenceContext = "";
     if (matchedReferences.length > 0) {
-      referenceContext = "\n\n=== BERIKUT ADALAH DATABASE REFERENSI UTAMA PERPUSTAKAAN MAHASISWA CUNGKRING YANG WAJIB DIGUNAKAN (RAG): ===\n" + 
+      referenceContext = "\n\n=== BERIKUT ADALAH DATABASE REFERENSI UTAMA PERPUSTAKAAN MAHASISWA QURANICA LIBRARY YANG WAJIB DIGUNAKAN (RAG): ===\n" + 
         matchedReferences.map((ref, idx) => `[Rujukan #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKonten/Kajian: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") +
         "\n\nAnda WAJIB memprioritaskan, mengutip, dan mengintegrasikan seluruh argumentasi dan data dari referensi di atas di dalam karya ilmiah hasil riset Anda.";
     } else {
       // Masukkan seluruh database sebagai rujukan dasar
-      referenceContext = "\n\n=== SELURUH DATABASE REFERENSI PERPUSTAKAAN MAHASISWA CUNGKRING: ===\n" + 
-        cungkringLibrary.map((ref, idx) => `[Rujukan #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKonten: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") +
-        "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan rujukan dari Perpustakaan Mahasiswa Cungkring di atas di dalam karya ilmiah hasil riset Anda.";
+      referenceContext = "\n\n=== SELURUH DATABASE REFERENSI PERPUSTAKAAN MAHASISWA QURANICA LIBRARY: ===\n" + 
+        quranicaLibrary.map((ref, idx) => `[Rujukan #${idx + 1}]\nJudul: ${ref.title}\nPenulis: ${ref.author}\nKategori: ${ref.category}\nKonten: ${ref.content}\nURI: ${ref.uri}`).join("\n\n") +
+        "\n\nAnda WAJIB memprioritaskan, mengutip, dan menggunakan rujukan dari Quranica Library di atas di dalam karya ilmiah hasil riset Anda.";
     }
 
     const apiKey = process.env.SUMOPOD_API_KEY || "";

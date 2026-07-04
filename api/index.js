@@ -55,13 +55,13 @@ async function tgSend(chatId, text) {
 }
 
 // Load library data
-let cungkringLibrary = [];
+let quranicaLibrary = [];
 let rujukanLibrary = [];
 try {
   const data = require("../src/data/secondarySources");
-  cungkringLibrary = [...data.secondarySources];
+  quranicaLibrary = [...data.secondarySources];
 } catch(e2) {
-  cungkringLibrary = [];
+  quranicaLibrary = [];
 }
 try {
   const rdata = require("../src/data/rujukanLinks");
@@ -394,7 +394,7 @@ app.post("/api/telegram-webhook", async (req, res) => {
 
 // ===== LIBRARY =====
 app.get("/api/library", (req, res) => {
-  const populated = cungkringLibrary.map(item => ({ ...item, externalLink: item.externalLink || "https://shamela.ws" }));
+  const populated = quranicaLibrary.map(item => ({ ...item, externalLink: item.externalLink || "https://shamela.ws" }));
   const rujukanAsLibrary = rujukanLibrary.map(r => ({
     id: r.id,
     title: r.title,
@@ -416,7 +416,7 @@ app.post("/api/library/ai-search", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "Gemini API key tidak dikonfigurasi" });
 
     const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    let candidates = cungkringLibrary.map(item => {
+    let candidates = quranicaLibrary.map(item => {
       let score = 0;
       const t = item.title.toLowerCase(), c = (item.content || "").toLowerCase();
       if (t.includes(query.toLowerCase())) score += 60;
@@ -424,7 +424,7 @@ app.post("/api/library/ai-search", async (req, res) => {
       return { ...item, externalLink: item.externalLink || "https://shamela.ws", score };
     }).filter(x => x.score > 0).sort((a,b) => b.score - a.score).slice(0, 20);
 
-    if (!candidates.length) candidates = cungkringLibrary.slice(0, 15).map(c => ({ ...c, externalLink: c.externalLink || "https://shamela.ws" }));
+    if (!candidates.length) candidates = quranicaLibrary.slice(0, 15).map(c => ({ ...c, externalLink: c.externalLink || "https://shamela.ws" }));
 
     const { GoogleGenAI } = require("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
@@ -447,7 +447,7 @@ app.post("/api/chat", async (req, res) => {
 
     const lastMsg = messages.slice().reverse().find(m => m.role === "user")?.content || "";
     const keywords = lastMsg.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const refs = cungkringLibrary.filter(item => keywords.some(kw => item.title.toLowerCase().includes(kw) || (item.content || "").toLowerCase().includes(kw)));
+    const refs = quranicaLibrary.filter(item => keywords.some(kw => item.title.toLowerCase().includes(kw) || (item.content || "").toLowerCase().includes(kw)));
 
     let refCtx = "";
     if (refs.length) {
@@ -598,7 +598,7 @@ app.post("/api/research/start", async (req, res) => {
         // STEP 2: Cari referensi
         task.steps[1].status = "running"; task.steps[1].detail = "Mencocokkan dengan database...";
         task.currentStage = "Mencari referensi..."; task.progress = 15;
-        const kitabRefs = cungkringLibrary.filter(item => {
+        const kitabRefs = quranicaLibrary.filter(item => {
           const t = (item.title || "").toLowerCase();
           const c = (item.content || "").toLowerCase();
           return keywords.some(kw => t.includes(kw) || c.includes(kw));

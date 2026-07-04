@@ -157,7 +157,7 @@ function App() {
   const [mcpServerNameInput, setMcpServerNameInput] = useState("");
   const [mcpServerUrlInput, setMcpServerUrlInput] = useState("");
   const [mcpServerDescInput, setMcpServerDescInput] = useState("");
-  const [mcpSelectedServerId, setMcpSelectedServerId] = useState("cungkring_mcp");
+  const [mcpSelectedServerId, setMcpSelectedServerId] = useState("quranica_library_mcp");
   const [mcpTools, setMcpTools] = useState<any[]>([]);
   const [mcpSelectedTool, setMcpSelectedTool] = useState("search_library");
   
@@ -607,11 +607,11 @@ function App() {
       const id = cleanHref.replace('/ref/', '').trim().toLowerCase();
       
       // Explicit static mappings
-      if (id === 'fathul-bari' || id === 'cungkring_01') return 'https://shamela.ws/book/1681';
-      if (id === 'tafsir-ibnu-katsir' || id === 'cungkring_02') return 'https://shamela.ws/book/23567';
-      if (id === 'al-itqan' || id === 'cungkring_03') return 'https://shamela.ws/book/11444';
-      if (id === 'debunk-tabarruk' || id === 'cungkring_04') return 'https://waqfeya.net';
-      if (id === 'ngalap-berkah-kuburan' || id === 'cungkring_05') return 'https://waqfeya.net';
+      if (id === 'fathul-bari' || id === 'ql_01') return 'https://shamela.ws/book/1681';
+      if (id === 'tafsir-ibnu-katsir' || id === 'ql_02') return 'https://shamela.ws/book/23567';
+      if (id === 'al-itqan' || id === 'ql_03') return 'https://shamela.ws/book/11444';
+      if (id === 'debunk-tabarruk' || id === 'ql_04') return 'https://waqfeya.net';
+      if (id === 'ngalap-berkah-kuburan' || id === 'ql_05') return 'https://waqfeya.net';
       if (id === 'ref_shamela_web') return 'https://shamela.ws';
       if (id === 'ref_bahith_hadithi') return 'https://sunnah.one';
       if (id === 'ref_download_waqfeya') return 'https://waqfeya.net';
@@ -935,10 +935,10 @@ function App() {
       const servers = await apiClient.getMcpServers();
       setMcpServers(servers);
       
-      // Auto-connect to Cungkring MCP if available
-      const cungkring = servers.find((s: any) => s.id === "cungkring_mcp");
-      if (cungkring) {
-        handleConnectMcpServer(cungkring);
+      // Auto-connect to Quranica Library MCP if available
+      const qlServer = servers.find((s: any) => s.id === "quranica_library_mcp");
+      if (qlServer) {
+        handleConnectMcpServer(qlServer);
       }
     } catch (err: any) {
       console.error("Error fetching MCP servers:", err);
@@ -1046,7 +1046,7 @@ function App() {
     try {
       await apiClient.deleteMcpServer(id);
       if (mcpSelectedServerId === id) {
-        setMcpSelectedServerId("cungkring_mcp");
+        setMcpSelectedServerId("quranica_library_mcp");
       }
       await fetchMcpServers();
     } catch (err: any) {
@@ -1075,7 +1075,7 @@ function App() {
 
     try {
       const data = await apiClient.queryMcpTool(
-        "http://localhost:3000/api/mcp/perpustakaan-cungkring",
+        "http://localhost:3000/api/mcp/quranica-library",
         "verify_reference",
         { quote: keyword },
         "local-virtual"
@@ -1171,7 +1171,7 @@ function App() {
         <div class="header">
           <h1>📘 Quranica AI</h1>
           <p style="font-size:11pt;font-weight:600;">Hasil Tanya Jawab Ilmiah</p>
-          <p class="meta">Dicetak: ${now} | Sumber: Quranica AI + Perpustakaan Mahasiswa Cungkring</p>
+          <p class="meta">Dicetak: ${now} | Sumber: Quranica AI + Quranica Library</p>
         </div>
 
         <div style="text-align:left;direction:ltr;">
@@ -1180,7 +1180,7 @@ function App() {
 
         <div class="footer">
           <p><strong>Quranica AI</strong> — Platform E-Tahsin & Tafsir Al-Quran Berbasis AI</p>
-          <p>Diberdayakan oleh Perpustakaan Mahasiswa Cungkring & Jaringan Referensi Islam Global</p>
+          <p>Diberdayakan oleh Quranica Library & Jaringan Referensi Islam Global</p>
           <p>github.com/Muhammadrival02/Quranica-AI</p>
         </div>
       </body>
@@ -1196,7 +1196,7 @@ function App() {
 
   const handleMcpLinkClick = (href: string) => {
     try {
-      const slug = href.replace("mcp://cungkring/", "");
+      const slug = href.replace("mcp://quranica-library/", "");
       const keyword = slug.replace(/-/g, " ");
 
       setActiveTab('mcp');
@@ -2259,7 +2259,7 @@ function App() {
                                   type="button"
                                   onClick={() => handleMcpLinkClick(href)}
                                   className="text-emerald-400 hover:text-emerald-300 underline font-semibold transition-all inline-flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono text-[11px] align-middle my-0.5"
-                                  title="Lacak rujukan asli di Perpustakaan Cungkring"
+                                  title="Lacak rujukan asli di Quranica Library"
                                 >
                                   <Database size={11} className="animate-pulse text-emerald-400" />
                                   {children}
@@ -2294,7 +2294,7 @@ function App() {
                             onClick={() => handleCrossCheckMcp(msg.content)}
                             className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 transition-all active:scale-95"
                           >
-                            <Database size={12} className="animate-pulse" /> Verifikasi Sumber (Cross-Check via MCP Cungkring)
+                            <Database size={12} className="animate-pulse" /> Verifikasi Sumber (Cross-Check via MCP Quranica Library)
                           </button>
                           <button 
                             type="button"
@@ -2330,7 +2330,7 @@ function App() {
                           ) : (
                             <span className="text-[10px] bg-red-500/15 text-red-400 border border-red-500/20 px-2 py-0.5 rounded font-bold">SUMBER MERAGUKAN</span>
                           )}
-                          <span className="text-[10px] text-slate-500 font-mono">Node: cungkring_mcp</span>
+                          <span className="text-[10px] text-slate-500 font-mono">Node: quranica_library_mcp</span>
                         </div>
                         <p className="text-slate-300 leading-relaxed">{mcpCrossCheckResult.message}</p>
                         
@@ -2350,7 +2350,7 @@ function App() {
 
                   {msg.role !== 'user' && mcpIsCrossChecking && (
                     <div className="self-start ml-2 text-xs text-slate-500 flex items-center gap-1.5 py-1">
-                      <RefreshCw className="animate-spin text-emerald-500" size={12} /> Menghubungi Perpustakaan Cungkring via MCP...
+                      <RefreshCw className="animate-spin text-emerald-500" size={12} /> Menghubungi Quranica Library via MCP...
                     </div>
                   )}
                 </div>
@@ -2644,7 +2644,7 @@ function App() {
                                 type="button"
                                 onClick={() => handleMcpLinkClick(href)}
                                 className="text-emerald-400 hover:text-emerald-300 underline font-semibold transition-all inline-flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono text-[11px] align-middle my-0.5"
-                                title="Lacak rujukan asli di Perpustakaan Cungkring"
+                                title="Lacak rujukan asli di Quranica Library"
                               >
                                 <Database size={11} className="animate-pulse text-emerald-400" />
                                 {children}
@@ -2915,7 +2915,7 @@ function App() {
                       <span className="text-emerald-400 font-bold">✓</span> Konsultasi Tafsir Standard
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-bold">✓</span> View Cungkring Library Catalog
+                      <span className="text-emerald-400 font-bold">✓</span> View Quranica Library Library Catalog
                     </div>
                     <div className="flex items-center gap-2 text-slate-500 line-through">
                       <span>✗</span> Kajian Deep Research Tanpa Batas
@@ -4133,7 +4133,7 @@ function App() {
                     <div className="flex justify-between items-center">
                       <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1.5">
                         <Database size={11} className="text-emerald-500 animate-pulse" />
-                        Terhubung ke Database Pustaka Mahasiswa Cungkring
+                        Terhubung ke Database Quranica Library
                       </div>
                       <button
                         type="submit"

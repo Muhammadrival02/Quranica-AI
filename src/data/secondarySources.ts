@@ -13,54 +13,54 @@ export interface SecondarySource {
 
 export const secondarySources: SecondarySource[] = [
   {
-    "id": "cungkring_01",
+    "id": "ql_01",
     "title": "Kitab Fathul Bari (Syarah Shahih Al-Bukhari)",
     "author": "Imam Ibnu Hajar Al-Asqalani",
     "category": "Hadits & Syarah",
     "content": "Membahas hadits-hadits shahih mengenai aqidah, akhlak, dan ibadah. Dalam jilid 3 bab Ziarah Kubur, Imam Ibnu Hajar menjelaskan tentang batasan ziarah kubur: 'Ziarah kubur disyariatkan untuk mengingat akhirat dan mendoakan ahli kubur, bukan untuk meminta syafaat atau berkah (tabarruk) dari orang mati secara langsung, karena doa dan ibadah murni hak Allah semata.' Rujukan ini mengkritik habis pemahaman keliru mengenai tabarruk di kuburan.",
-    "uri": "mcp://cungkring/fathul-bari",
+    "uri": "mcp://quranica-library/fathul-bari",
     "externalLink": "https://shamela.ws/book/1681",
     "locationDetail": "Maktabah Shamela (Kitab Digital Klasik #1681), Jilid 3, Bab Ziarah Kubur."
   },
   {
-    "id": "cungkring_02",
+    "id": "ql_02",
     "title": "Kitab Tafsir Al-Qur'an Al-Azhim",
     "author": "Imam Ibnu Katsir",
     "category": "Tafsir",
     "content": "Penafsiran komprehensif ayat Al-Qur'an bil-Ma'tsur. Mengenai Surah An-Najm ayat 19-23 tentang Latta, Uzza, dan Manat: 'Berhala-berhala tersebut pada mulanya merupakan nama dari orang-orang shalih yang diagung-agungkan setelah wafatnya. Kaumnya membuat patung-patung mereka untuk tabarruk (mengingat keshalihan mereka), namun generasi berikutnya mulai menyembah mereka.' Hal ini menjadi dasar larangan membangun masjid atau mengagungkan kuburan secara berlebihan.",
-    "uri": "mcp://cungkring/tafsir-ibnu-katsir",
+    "uri": "mcp://quranica-library/tafsir-ibnu-katsir",
     "externalLink": "https://shamela.ws/book/23567",
     "locationDetail": "Maktabah Shamela (Kitab Digital Klasik #23567), Penafsiran Surah An-Najm: 19-23."
   },
   {
-    "id": "cungkring_03",
+    "id": "ql_03",
     "title": "Kitab Al-Itqan fi Ulumil Qur'an",
     "author": "Imam Jalaluddin As-Suyuthi",
     "category": "Ulumul Qur'an",
     "content": "Ensiklopedi terlengkap ilmu-ilmu Al-Qur'an. Membahas sejarah pengumpulan naskah, asbabun nuzul, munasabah, dan metodologi penafsiran. Bab 47 membahas tentang I'jazul Qur'an (kemukjizatan Al-Qur'an) dari segi fonetik, susunan kata, dan keagungan makna yang tidak tertandingi oleh naskah ciptaan manusia mana pun.",
-    "uri": "mcp://cungkring/al-itqan",
+    "uri": "mcp://quranica-library/al-itqan",
     "externalLink": "https://shamela.ws/book/11444",
     "locationDetail": "Maktabah Shamela (Kitab Digital Klasik #11444), Bab 47: I'jazul Qur'an."
   },
   {
-    "id": "cungkring_04",
+    "id": "ql_04",
     "title": "Naskah Kajian Ilmiah: Mendebunk Kaum Tabbaruk Secara Kritis",
-    "author": "Lajnah Akademik Mahasiswa Cungkring",
+    "author": "Lajnah Akademik Quranica Library",
     "category": "Kajian Aqidah",
     "content": "Membahas kritik mendalam terhadap dalil-dalil kaum pemboleh tabarruk ekstrem di kuburan. Menguliti sanad riwayat Malik ad-Dar mengenai seseorang yang mendatangi kubur Nabi saat paceklik: Riwayat tersebut dinilai dha'if (lemah) karena di dalam sanadnya terdapat Abu Shalih As-Saman yang meriwayatkan secara mu'an'an atau adanya keterputusan, serta Malik ad-Dar sendiri diperselisihkan ketsiqahannya (majhul hal menurut sebagian ulama hadits). Penulis menyimpulkan bahwa meminta berkah atau syafaat dari kuburan kuburiyah adalah bid'ah dhalalah yang menjurus pada syirik akbar.",
-    "uri": "mcp://cungkring/debunk-tabarruk",
+    "uri": "mcp://quranica-library/debunk-tabarruk",
     "externalLink": "",
-    "locationDetail": "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 12."
+    "locationDetail": "Arsip Digital & Fisik Quranica Library, Lemari Kajian Teologi, Baris 2, No. 12."
   },
   {
-    "id": "cungkring_05",
+    "id": "ql_05",
     "title": "Naskah Kajian: Ngalap Berkah Dengan Kuburan Bolehkah?",
-    "author": "Perpustakaan Mahasiswa Cungkring",
+    "author": "Quranica Library",
     "category": "Kajian Aqidah",
     "content": "Menganalisis hukum tabarruk dengan kuburan orang shalih. Berdasarkan dalil-dalil ushul fiqih, tabarruk hanya diperbolehkan dengan apa yang telah dituntunkan syariat, seperti tabarruk dengan air zamzam, ibadah di Masjidil Haram, atau rambut Nabi semasa hidup beliau (yang saat ini sudah tidak dapat diverifikasi secara fisik). Tabarruk dengan tanah makam, nisan, kain kafan, atau meminta langsung kepada penghuni kubur agar menyampaikan hajat kita kepada Allah adalah tindakan terlarang dan bertentangan dengan Tauhid Uluhiyah.",
-    "uri": "mcp://cungkring/ngalap-berkah-kuburan",
+    "uri": "mcp://quranica-library/ngalap-berkah-kuburan",
     "externalLink": "",
-    "locationDetail": "Arsip Digital & Fisik Perpustakaan Mahasiswa Cungkring, Lemari Kajian Teologi, Baris 2, No. 13."
+    "locationDetail": "Arsip Digital & Fisik Quranica Library, Lemari Kajian Teologi, Baris 2, No. 13."
   },
   {
     "id": "sec_1",
