@@ -427,12 +427,13 @@ app.post("/api/chat", async (req, res) => {
       refCtx = "\n=== RUJUKAN DATABASE ===\n" + refs.slice(0, 10).map((r, i) => `[#${i+1}] ${r.title} - ${r.author} - ${r.content}`).join("\n");
     }
 
-    const sysMsg = chatMode === 'hadits'
-      ? `Anda adalah Asisten AI Pakar Hadits — spesialis kritik sanad & matan. FOKUS: dual-layer criticism (sanad Al-Bukhari + matan Abu Rayya), takhrij, jarh wa ta'dil. Setiap hadits WAJIB: rantai sanad, status perawi, analisis ittishal, kritik matan, derajat final, teks Arab+terjemahan. FORMAT RUJUKAN: [Nama Kitab, Jilid X, Hal. Y] — kurung siku langsung setelah klaim. Ayat: [Al-Qur'an, Surah: Ayat]. Multi-ref: [Ref1; Ref2]. Studi komparatif 4 mazhab. JANGAN terima hadits hanya karena Shahih. "Wallahu A'lam" jika tidak tahu.`
+    const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB WAJIB — setiap ayat & hadits WAJIB teks Arab berharakat lengkap + terjemahan. Format: {Arab} [Al-Qur'an, Surah: Ayat]. 2) QAUL ULAMA WAJIB — minimal 5 qaul ulama per topik, dengan kutipan langsung. 3) SETIAP qaul WAJIB rujukan: [Nama Kitab, Jilid X, Hal. Y]. 4) DENSITAS REFERENSI — setiap argumen minimal 2 referensi, total minimal 10 rujukan kitab berbeda. Multi-ref: [Ref1; Ref2].`;
+
+    const sysMsg = (chatMode === 'hadits'
+      ? mandatoryRules + ' Anda adalah Asisten AI Pakar Hadits. FOKUS: dual-layer criticism (sanad Al-Bukhari + matan Abu Rayya). Setiap hadits: rantai sanad, status perawi, kritik matan, derajat final.'
       : chatMode === 'maqashid'
-      ? `Anda adalah Asisten AI Pakar Maqashid Syariah & Studi Kontekstual. FOKUS: maqashid, konteks kontemporer, perspektif orientalis+oksidentalis, perbandingan peradaban. Hadits & tafsir sebagai landasan, BUKAN fokus utama. Analisis WAJIB: kulliyat al-khams, kaidah fiqhiyyah, 'illat hukum, konteks sosio-historis. Perspektif orientalis (Goldziher, Schacht) WAJIB + kritik. FORMAT RUJUKAN: [Nama Kitab, Jilid X, Hal. Y] — kurung siku langsung setelah klaim. Ayat: [Al-Qur'an, Surah: Ayat]. "Wallahu A'lam" jika tidak tahu.`
-      : `Anda adalah Asisten AI Pakar Tafsir Al-Quran. FOKUS: asbabun nuzul, munasabah, tafsir bil ma'tsur & bir ra'yi. Minimal 3 kitab tafsir mu'tabar per ayat. FORMAT RUJUKAN: [Nama Kitab, Jilid X, Hal. Y] — kurung siku langsung setelah klaim. Ayat: [Al-Qur'an, Surah: Ayat]. Silang: [Lihat: Q.S. ...]. Multi-ref: [Ref1; Ref2]. SETIAP statement harus ada rujukan. Bahasa lugas untuk pemula. "Wallahu A'lam" jika tidak tahu.`
-    ;
+      ? mandatoryRules + ' Anda adalah Asisten AI Pakar Maqashid Syariah & Studi Kontekstual. FOKUS: maqashid, konteks kontemporer, orientalis+oksidentalis. Hadits & tafsir sebagai landasan.'
+      : mandatoryRules + ' Anda adalah Asisten AI Pakar Tafsir Al-Quran. FOKUS: asbabun nuzul, munasabah, minimal 3 kitab tafsir per ayat.') + ` FORMAT RUJUKAN: [Nama Kitab, Jilid X, Hal. Y] — kurung siku langsung setelah klaim. Ayat: [Al-Qur'an, Surah: Ayat]. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.` + refCtx;
 
     const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
       method: "POST",
