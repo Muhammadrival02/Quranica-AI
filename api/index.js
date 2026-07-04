@@ -414,7 +414,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const { messages, mode } = req.body;
     if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: "Messages wajib" });
-    const chatMode = mode === 'pro' ? 'pro' : 'lite';
+    const chatMode = mode === 'hadits' ? 'hadits' : mode === 'maqashid' ? 'maqashid' : 'tafsir';
     const apiKey = process.env.SUMOPOD_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Sumopod API key tidak dikonfigurasi" });
 
@@ -427,9 +427,11 @@ app.post("/api/chat", async (req, res) => {
       refCtx = "\n=== RUJUKAN DATABASE ===\n" + refs.slice(0, 10).map((r, i) => `[#${i+1}] ${r.title} - ${r.author} - ${r.content}`).join("\n");
     }
 
-    const sysMsg = chatMode === 'pro'
-      ? `Anda adalah Asisten AI dengan 10 Agent Spesialis setara Magister (S-2) — narasi akademis mengalir, rujukan inline. 10 Agent: Quran+Tafsir, Hadits+Ulumul, Fiqh Muqaran (8 mazhab), Filologi, Perbandingan Aliran, Lintas Peradaban, Ushul Fiqh, Maqashid, Kalam+Filsafat, Tarikh+Sirah. GAYA: Narasi mengalir, SETIAP klaim WAJIB rujukan inline (Kitab, Bab, Jilid hlm. X). Hadits proporsional. Struktur fleksibel. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
-      : `Anda adalah Asisten AI Ringan (Flash Mode) — jawaban singkat, praktis, ilmiah. GAYA: Langsung ke inti, ringkas, 3-5 paragraf. Dalil sebutkan singkat (surah:ayat / perawi). Rujukan kumpulkan di BAWAH — tidak inline. Poin-poin pendek. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
+    const sysMsg = chatMode === 'hadits'
+      ? `Anda adalah Asisten AI Pakar Hadits — spesialis kritik sanad & matan. FOKUS: dual-layer criticism (sanad Al-Bukhari + matan Abu Rayya), takhrij, jarh wa ta'dil. Setiap hadits WAJIB: rantai sanad, status perawi, analisis ittishal, kritik matan, derajat final, teks Arab+terjemahan, kitab+bab+halaman+penerbit. Studi komparatif 4 mazhab fokus argumen hadits. JANGAN terima hadits hanya karena Shahih. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
+      : chatMode === 'maqashid'
+      ? `Anda adalah Asisten AI Pakar Maqashid Syariah & Studi Kontekstual. FOKUS: maqashid, konteks kontemporer, perspektif orientalis+oksidentalis, perbandingan peradaban. Hadits & tafsir sebagai landasan, BUKAN fokus utama. Analisis WAJIB: kulliyat al-khams, kaidah fiqhiyyah, 'illat hukum, konteks sosio-historis. Perspektif orientalis (Goldziher, Schacht) WAJIB + kritik. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
+      : `Anda adalah Asisten AI Pakar Tafsir Al-Quran. FOKUS: asbabun nuzul, munasabah, tafsir bil ma'tsur & bir ra'yi. Minimal 3 kitab tafsir mu'tabar per ayat. Rujukan di BAWAH, tidak inline. Hadits pendukung ringkas (perawi+derajat). Bahasa lugas untuk pemula. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
     ;
 
     const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {

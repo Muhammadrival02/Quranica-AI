@@ -53,7 +53,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [qaMode, setQaMode] = useState<'lite' | 'pro'>('lite'); // Lite = rujukan bawah, Pro = rujukan inline
+  const [qaMode, setQaMode] = useState<'tafsir' | 'hadits' | 'maqashid'>('tafsir');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Bottom bar constants (klik saja, tanpa swipe)
@@ -2153,27 +2153,37 @@ function App() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* Mode Toggle: Lite vs Pro */}
+                  {/* Mode Toggle: Tafsir vs Hadits vs Maqashid */}
                   <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700">
                     <button
-                      onClick={() => setQaMode('lite')}
-                      className={`text-[9px] font-bold px-2.5 py-1 rounded-md transition-all ${
-                        qaMode === 'lite' 
-                          ? 'bg-slate-700 text-slate-200 shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-300'
-                      }`}
-                    >
-                      ⚡ Ringan
-                    </button>
-                    <button
-                      onClick={() => setQaMode('pro')}
-                      className={`text-[9px] font-bold px-2.5 py-1 rounded-md transition-all ${
-                        qaMode === 'pro' 
+                      onClick={() => setQaMode('tafsir')}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-md transition-all ${
+                        qaMode === 'tafsir' 
                           ? 'bg-emerald-600 text-white shadow-sm' 
                           : 'text-slate-500 hover:text-slate-300'
                       }`}
                     >
-                      🎓 Akademik
+                      📖 Tafsir
+                    </button>
+                    <button
+                      onClick={() => setQaMode('hadits')}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-md transition-all ${
+                        qaMode === 'hadits' 
+                          ? 'bg-amber-600 text-white shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      🕌 Hadits
+                    </button>
+                    <button
+                      onClick={() => setQaMode('maqashid')}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-md transition-all ${
+                        qaMode === 'maqashid' 
+                          ? 'bg-indigo-600 text-white shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      🌍 Maqashid
                     </button>
                   </div>
                   {activeHistoryId && (
