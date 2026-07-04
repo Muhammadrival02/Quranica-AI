@@ -1181,7 +1181,7 @@ function App() {
         <div class="footer">
           <p><strong>Quranica AI</strong> — Platform E-Tahsin & Tafsir Al-Quran Berbasis AI</p>
           <p>Diberdayakan oleh Quranica Library & Jaringan Referensi Islam Global</p>
-          <p>github.com/Muhammadrival02/Quranica-AI</p>
+          <p>Quranica AI — Researcher</p>
         </div>
       </body>
       </html>
@@ -2728,7 +2728,7 @@ function App() {
                         required
                         value={newAdminEmail}
                         onChange={(e) => setNewAdminEmail(e.target.value)}
-                        placeholder="contoh: rivalgamingchannel@gmail.com"
+                        placeholder="contoh: researcher@quranica.ai"
                         className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none transition-all focus:ring-1 focus:ring-amber-500/30"
                       />
                     </div>
@@ -3190,7 +3190,7 @@ function App() {
                         <label className="text-[11px] font-bold text-slate-400">Nama Lengkap</label>
                         <input 
                           type="text" 
-                          placeholder="Contoh: Muhammad Rival" 
+                          placeholder="Contoh: Researcher Quranica AI" 
                           className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 outline-none focus:ring-1 ring-amber-500/50"
                           value={regManualName}
                           onChange={(e) => setRegManualName(e.target.value)}
@@ -3220,7 +3220,7 @@ function App() {
                         <label className="text-[11px] font-bold text-slate-400">Alamat Email</label>
                         <input 
                           type="email" 
-                          placeholder="Contoh: rival@gmail.com" 
+                          placeholder="Contoh: researcher@quranica.ai" 
                           className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 outline-none focus:ring-1 ring-amber-500/50"
                           value={regManualEmail}
                           onChange={(e) => setRegManualEmail(e.target.value)}
