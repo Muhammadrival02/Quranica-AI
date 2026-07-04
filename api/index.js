@@ -427,7 +427,7 @@ app.post("/api/chat", async (req, res) => {
       refCtx = "\n=== RUJUKAN DATABASE ===\n" + refs.slice(0, 10).map((r, i) => `[#${i+1}] ${r.title} - ${r.author} - ${r.content}`).join("\n");
     }
 
-    const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB WAJIB — setiap ayat & hadits WAJIB teks Arab berharakat lengkap + terjemahan. Format: {Arab} [Al-Qur'an, Surah: Ayat]. 2) QAUL ULAMA WAJIB — minimal 5 qaul ulama per topik, dengan kutipan langsung. 3) SETIAP qaul WAJIB rujukan: [Nama Kitab, Jilid X, Hal. Y]. 4) DENSITAS REFERENSI — setiap argumen minimal 2 referensi, total minimal 10 rujukan kitab berbeda. Multi-ref: [Ref1; Ref2].`;
+    const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB MELIMPAH — setiap ayat, hadits, istilah kunci, & kutipan kitab WAJIB teks Arab berharakat + terjemahan. JANGAN hanya transliterasi. 2) QAUL ULAMA minimal 7 kutipan LANGSUNG — format: "[Ulama] dalam [Kitab] menyatakan: '...kutipan...'" [Kitab, Jilid X, Hal. Y]. WAJIB tanda kutip, bukan parafrase. 3) ORIENTALIS dalam BAHASA ASLI — kutipan orientalis WAJIB bahasa aslinya (Inggris/Jerman/Prancis) dulu, baru terjemahan Indonesia. 4) DENSITAS — tiap argumen 2+ ref, total 10+ kitab berbeda + 2 orientalis, tiap paragraf 1+ rujukan [Kurung Siku].`;
 
     const sysMsg = (chatMode === 'hadits'
       ? mandatoryRules + ' Anda adalah Asisten AI Pakar Hadits. FOKUS: dual-layer criticism (sanad Al-Bukhari + matan Abu Rayya). Setiap hadits: rantai sanad, status perawi, kritik matan, derajat final.'
