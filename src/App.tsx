@@ -53,6 +53,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [qaMode, setQaMode] = useState<'lite' | 'pro'>('lite'); // Lite = rujukan bawah, Pro = rujukan inline
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Bottom bar constants (klik saja, tanpa swipe)
@@ -1573,7 +1574,7 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const data = await apiClient.sendChatMessage(updatedMessages);
+      const data = await apiClient.sendChatMessage(updatedMessages, qaMode);
       setChatMessages(prev => [...prev, { role: 'model', content: data.reply }]);
     } catch (error: any) {
       setChatMessages(prev => [...prev, { role: 'model', content: `[Error]: ${error.message}` }]);
@@ -2135,7 +2136,7 @@ function App() {
           <div key="qa" className="bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl h-[700px] flex flex-col overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-teal-400 opacity-50"></div>
             
-            {/* Chat Header — Riwayat */}
+            {/* Chat Header — Riwayat + Mode Toggle */}
             {userProfile && (
               <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-950/50 z-10">
                 <div className="flex items-center gap-2">
@@ -2151,11 +2152,36 @@ function App() {
                     <BookOpen size={12} /> Riwayat {chatHistories.length > 0 && `(${chatHistories.length})`}
                   </button>
                 </div>
-                {activeHistoryId && (
-                  <span className="text-[9px] text-slate-500 font-mono truncate max-w-[200px]">
-                    💾 Tersimpan otomatis
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Mode Toggle: Lite vs Pro */}
+                  <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700">
+                    <button
+                      onClick={() => setQaMode('lite')}
+                      className={`text-[9px] font-bold px-2.5 py-1 rounded-md transition-all ${
+                        qaMode === 'lite' 
+                          ? 'bg-slate-700 text-slate-200 shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      ⚡ Ringan
+                    </button>
+                    <button
+                      onClick={() => setQaMode('pro')}
+                      className={`text-[9px] font-bold px-2.5 py-1 rounded-md transition-all ${
+                        qaMode === 'pro' 
+                          ? 'bg-emerald-600 text-white shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      🎓 Akademik
+                    </button>
+                  </div>
+                  {activeHistoryId && (
+                    <span className="text-[9px] text-slate-500 font-mono truncate max-w-[120px]">
+                      💾 Tersimpan
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 

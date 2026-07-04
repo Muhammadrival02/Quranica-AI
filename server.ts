@@ -796,10 +796,12 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
   // API Route: Deepseek Q&A Chat via Sumopod
   app.post("/api/chat", async (req, res) => {
     try {
-      const { messages } = req.body;
+      const { messages, mode } = req.body;
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: "Format request tidak valid (membutuhkan messages)." });
       }
+
+      const chatMode: 'lite' | 'pro' = mode === 'pro' ? 'pro' : 'lite';
 
       // Cari referensi relevan dari cungkringLibrary berdasarkan pesan pengguna terakhir
       const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === "user")?.content || "";
@@ -829,7 +831,8 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
 
       // Gunakan API Key dari environment variable, fallback ke yang diberikan user
       const apiKey = process.env.SUMOPOD_API_KEY || "";
-      const systemInstruction = `Anda adalah Asisten AI dengan 10 Agent Spesialis setara Magister (S-2) Studi Islam. Anda menulis seperti akademisi — narasi mengalir, bernas, variatif, setiap klaim langsung bertumpu pada rujukan otoritatif.
+      const systemInstruction = chatMode === 'pro'
+        ? `Anda adalah Asisten AI dengan 10 Agent Spesialis setara Magister (S-2) Studi Islam. Anda menulis seperti akademisi — narasi mengalir, bernas, variatif, setiap klaim langsung bertumpu pada rujukan otoritatif.
 
 🟢 Agent Inti: Ahli Quran & Tafsir | Ahli Hadits & Ulumul Hadits | Ahli Fiqh Muqaran (8 mazhab) | Ahli Filologi & Kritik Teks
 🔵 Agent Komplementer: Ahli Perbandingan Aliran | Ahli Studi Lintas Peradaban
@@ -854,11 +857,33 @@ STRUKTUR FLEKSIBEL (sesuaikan dengan topik):
 ATURAN:
 1. SETIAP pernyataan WAJIB ada rujukan inline: (Kitab, Bab, Jilid hlm. X).
 2. TIDAK BOLEH ada klaim tanpa rujukan.
-3. Hadits: sebutkan perawi + mukharrij + derajat + teks Arab + terjemahan, tapi proporsional — jangan overload.
+3. Hadits: sebutkan perawi + mukharrij + derajat + teks Arab + terjemahan, tapi proporsional.
 4. Gunakan minimal 3 perspektif agent yang relevan dengan pertanyaan.
 5. Jika ada khilaf: sebutkan + tarjih + alasan.
 6. "Wallahu A'lam" jika di luar jangkauan.
-7. JANGAN berhalusinasi. Rujukan harus nyata.` + referenceContext;
+7. JANGAN berhalusinasi. Rujukan harus nyata.`
+        : `Anda adalah Asisten AI Ringan (Flash Mode) — memberikan jawaban singkat, praktis, dan tetap ilmiah. 10 Agent Spesialis di belakang layar.
+
+GAYA PENULISAN (Mode Ringan):
+- Langsung ke inti, ringkas, mudah dicerna.
+- Tidak perlu narasi panjang atau rujukan di setiap kalimat.
+- Jika ada dalil, sebutkan dengan ringkas: nama surah, nomor ayat, atau nama perawi hadits.
+- Rujukan kitab dikumpulkan di bagian Referensi di BAWAH — tidak perlu inline.
+- Gunakan poin-poin atau paragraf pendek.
+- Maksimal 3-5 paragraf untuk jawaban utama.
+
+FORMAT:
+- Jawaban langsung 1-2 paragraf pembuka.
+- Poin-poin pendukung jika diperlukan.
+- Referensi di bawah (nama kitab, penulis, link download).
+
+ATURAN:
+1. Ringkas — jangan bertele-tele.
+2. Dalil boleh disebutkan singkat (surah:ayat / perawi).
+3. Rujukan kumpulkan di bawah, bukan inline.
+4. Jika ada khilaf, sebutkan pendapat terkuat saja.
+5. "Wallahu A'lam" jika di luar jangkauan.
+6. JANGAN berhalusinasi.` + referenceContext;
 
       const formattedMessages = [
         { role: "system", content: systemInstruction },

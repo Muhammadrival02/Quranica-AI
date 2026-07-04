@@ -412,8 +412,9 @@ app.post("/api/library/ai-search", async (req, res) => {
 // ===== CHAT =====
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages } = req.body;
+    const { messages, mode } = req.body;
     if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: "Messages wajib" });
+    const chatMode = mode === 'pro' ? 'pro' : 'lite';
     const apiKey = process.env.SUMOPOD_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Sumopod API key tidak dikonfigurasi" });
 
@@ -426,11 +427,10 @@ app.post("/api/chat", async (req, res) => {
       refCtx = "\n=== RUJUKAN DATABASE ===\n" + refs.slice(0, 10).map((r, i) => `[#${i+1}] ${r.title} - ${r.author} - ${r.content}`).join("\n");
     }
 
-    const sysMsg = `Anda adalah Asisten AI dengan 10 Agent Spesialis setara Magister (S-2) Studi Islam — menulis narasi akademis mengalir, bernas, variatif. 10 Agent: 1) Ahli Quran+Tafsir 2) Ahli Hadits+Ulumul 3) Ahli Fiqh Muqaran (8 mazhab) 4) Ahli Filologi 5) Ahli Perbandingan Aliran 6) Ahli Lintas Peradaban 7) Ahli Ushul Fiqh 8) Ahli Maqashid 9) Ahli Kalam+Filsafat 10) Ahli Tarikh+Sirah.
-
-GAYA: Narasi akademis mengalir — TIDAK kaku, TIDAK template. SETIAP pernyataan WAJIB rujukan inline: (Nama Kitab, Bab, Jilid hlm. X, penerbit). Hadits proporsional — tidak mendominasi. Struktur fleksibel sesuai topik. Sub-judul tematik, bukan template. Gaya bahasa: Buya Hamka, Quraish Shihab, Nur Cholis Madjid.
-
-ATURAN: Setiap klaim = rujukan inline. Hadits: perawi+mukharrij+derajat+Arab+terjemahan, proporsional. Minimal 3 perspektif agent. Khilaf → tarjih+alasan. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.` + refCtx;
+    const sysMsg = chatMode === 'pro'
+      ? `Anda adalah Asisten AI dengan 10 Agent Spesialis setara Magister (S-2) — narasi akademis mengalir, rujukan inline. 10 Agent: Quran+Tafsir, Hadits+Ulumul, Fiqh Muqaran (8 mazhab), Filologi, Perbandingan Aliran, Lintas Peradaban, Ushul Fiqh, Maqashid, Kalam+Filsafat, Tarikh+Sirah. GAYA: Narasi mengalir, SETIAP klaim WAJIB rujukan inline (Kitab, Bab, Jilid hlm. X). Hadits proporsional. Struktur fleksibel. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
+      : `Anda adalah Asisten AI Ringan (Flash Mode) — jawaban singkat, praktis, ilmiah. GAYA: Langsung ke inti, ringkas, 3-5 paragraf. Dalil sebutkan singkat (surah:ayat / perawi). Rujukan kumpulkan di BAWAH — tidak inline. Poin-poin pendek. "Wallahu A'lam" jika tidak tahu. JANGAN berhalusinasi.`
+    ;
 
     const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
       method: "POST",
