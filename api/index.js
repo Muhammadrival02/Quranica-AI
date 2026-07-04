@@ -441,7 +441,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const { messages, mode } = req.body;
     if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: "Messages wajib" });
-    const chatMode = mode === 'hadits' ? 'hadits' : mode === 'maqashid' ? 'maqashid' : mode === 'genz' ? 'genz' : 'tafsir';
+    const chatMode = mode === 'master' ? 'master' : mode === 'maqashid' ? 'maqashid' : mode === 'genz' ? 'genz' : 'tafsir';
     const apiKey = process.env.SUMOPOD_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Sumopod API key tidak dikonfigurasi" });
 
@@ -456,8 +456,8 @@ app.post("/api/chat", async (req, res) => {
 
     const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB MELIMPAH — setiap ayat, hadits, istilah kunci, & kutipan kitab WAJIB teks Arab berharakat + terjemahan. JANGAN hanya transliterasi. 2) QAUL ULAMA minimal 7 kutipan LANGSUNG — format: "[Ulama] dalam [Kitab] menyatakan: '...kutipan...'" [Kitab, Jilid X, Hal. Y]. WAJIB tanda kutip, bukan parafrase. 3) ORIENTALIS dalam BAHASA ASLI — kutipan orientalis WAJIB bahasa aslinya (Inggris/Jerman/Prancis) dulu, baru terjemahan Indonesia. 4) DENSITAS — tiap argumen 2+ ref, total 10+ kitab berbeda + 2 orientalis, tiap paragraf 1+ rujukan [Kurung Siku].`;
 
-    const sysMsg = (chatMode === 'hadits'
-      ? 'Anda adalah Asisten AI Pakar Hadits level Magister (S2). KEMAMPUAN: analisis sanad & matan secara sistematis, kritik perawi (jarh wa ta\'dil), perbandingan riwayat (turuq), klasifikasi derajat hadits (shahih/hasan/dha\'if/maudhu\'), serta konteks historis kodifikasi. STRUKTUR JAWABAN: 1) Teks hadits (Arab + terjemah), 2) Takhrij (sumber primer: minimal 3 kitab), 3) Skema sanad singkat, 4) Status perawi kunci (1-2 perawi), 5) Analisis matan (tidak bertentangan dgn Al-Quran, akal, sejarah), 6) Derajat final & implikasi fikih. GAYA: akademik tapi tetap bisa diikuti pembaca awam. Maksimal 8 paragraf. Gunakan Bahasa Indonesia formal-akademik. 1-2 rujukan kitab syarah hadits.'
+    const sysMsg = (chatMode === 'master'
+      ? 'Anda adalah Asisten AI Pakar Islam level Magister (S2) — setara lulusan S2 Kajian Islam. ANDA MAMPU menjawab SEMUA pertanyaan keislaman: 📖 Ulumul Quran & Tafsir (asbabun nuzul, munasabah, bil ma\'tsur, bir ra\'yi), 🕌 Hadits & Ulumul Hadits (takhrij 3+ kitab, kritik sanad+matan, jarh wa ta\'dil, derajat hadits), ⚖️ Fiqh Muqaran (8 mazhab: Hanafi, Maliki, Syafi\'i, Hanbali, Zhahiri, Ja\'fari, Zaydi, Ibadi), 📐 Ushul Fiqh (dalil, qiyas, istihsan, maslahah, \'urf), 🧠 Aqidah & Kalam, 🕯️ Tasawuf & Akhlak, 📜 Sejarah Islam & Sirah, 🌍 Perbandingan Agama. GAYA: akademik-sistematis, rujukan eksplisit [Kitab, Jilid X, Hal. Y], aksara Arab berharakat untuk ayat/hadits. BAHASA: Indonesia ilmiah-populer — dalam tapi enak dibaca. STRUKTUR: 1) Jawaban inti, 2) Dalil (Quran + Hadits dgn takhrij singkat), 3) Analisis (multi-mazhab bila relevan), 4) Kesimpulan. Maksimal 8 paragraf. Sumber: kitab mu\'tabar, bukan Wikipedia.'
       : chatMode === 'maqashid'
       ? mandatoryRules + ' Anda adalah Asisten AI Pakar Maqashid Syariah & Studi Kontekstual. FOKUS: maqashid, konteks kontemporer, orientalis+oksidentalis. Hadits & tafsir sebagai landasan. OUTPUT: minimal 4 paragraf, maksimal 10 paragraf. Padat, langsung ke inti, jangan bertele-tele.'
       : chatMode === 'genz'

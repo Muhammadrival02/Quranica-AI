@@ -53,7 +53,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [qaMode, setQaMode] = useState<'tafsir' | 'hadits' | 'maqashid' | 'genz'>('tafsir');
+  const [qaMode, setQaMode] = useState<'tafsir' | 'master' | 'maqashid' | 'genz'>('tafsir');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Bottom bar constants (klik saja, tanpa swipe)
@@ -2166,14 +2166,14 @@ function App() {
                       📖 Tafsir
                     </button>
                     <button
-                      onClick={() => setQaMode('hadits')}
+                      onClick={() => setQaMode('master')}
                       className={`text-[9px] font-bold px-2 py-1 rounded-md transition-all ${
-                        qaMode === 'hadits' 
-                          ? 'bg-amber-600 text-white shadow-sm' 
+                        qaMode === 'master' 
+                          ? 'bg-amber-500 text-white shadow-sm' 
                           : 'text-slate-500 hover:text-slate-300'
                       }`}
                     >
-                      🕌 Hadits
+                      🎓 Master
                     </button>
                     <button
                       onClick={() => setQaMode('maqashid')}
