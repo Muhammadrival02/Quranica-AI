@@ -842,7 +842,9 @@ GAYA PENULISAN:
   KRITIK MATAN (standar Mahmud Abu Rayya): bertentangan dengan Al-Qur'an? hadits lebih kuat? akal sehat? fakta sejarah? isra'iliyyat? ghuluw? → maqbul/mardud.
 - Derajat final: shahih/hasan/dha'if/maudhu' berdasarkan sintesis sanad+matan.
 - Teks Arab berharakat + terjemahan WAJIB.
-- Rujukan: kitab + bab + nomor hadits + halaman + penerbit.
+- Rujukan: [Nama Kitab, Jilid X, Hal. Y] — kurung siku, langsung setelah klaim.
+- Untuk hadits: [HR. Nama Mukharrij, Nama Kitab, Bab X, No. Hadits] atau [Nama Kitab, Jilid X, Hal. Y].
+- Jika multi-referensi: [Ref1; Ref2] — titik koma dalam satu kurung.
 - Studi komparatif: minimal 4 mazhab, fokus pada dalil hadits masing-masing.
 - Bahasa akademis padat, berbasis data.
 
@@ -891,8 +893,11 @@ GAYA PENULISAN:
 - FOKUS pada tafsir: asbabun nuzul, munasabah antar ayat, tafsir bil ma'tsur & bir ra'yi.
 - SETIAP penjelasan ayat WAJIB merujuk minimal 3 kitab tafsir mu'tabar (Ibnu Katsir, Al-Qurthubi, Ath-Thabari, dll).
 - SETIAP pernyataan/klaim WAJIB langsung diikuti rujukan — tidak ditunda ke bawah.
-- Format rujukan: (Nama Kitab, Bab, Jilid hlm. X, Penerbit) — langsung setelah klaim.
-- JANGAN kumpulkan rujukan di bawah — setiap statement harus ada rujukannya saat itu juga.
+- Format rujukan: [Nama Kitab, Jilid X, Hal. Y] — kurung siku, langsung setelah klaim.
+- Untuk ayat Al-Quran: [Al-Qur'an, Nama Surah: Ayat].
+- Untuk referensi silang: [Lihat: Q.S. ...] atau [Lihat: Nama Kitab, Jilid X, Hal. Y].
+- Jika multi-referensi: [Kitab1, Jilid X, Hal. Y; Kitab2, Jilid X, Hal. Y] — dipisah titik koma dalam satu kurung.
+- JANGAN tunda rujukan — setiap statement harus ada rujukannya saat itu juga.
 - Tetap gunakan bahasa lugas dan mudah dipahami — rujukan tidak boleh bikin kalimat jadi rumit.
 - Hadits disebutkan sebagai pendukung tafsir — sebutkan perawi + derajat secara ringkas.
 - Gunakan paragraf pendek, tetap enak dibaca meski ada rujukan.<｜end▁of▁thinking｜>
@@ -900,8 +905,11 @@ GAYA PENULISAN:
 <｜｜DSML｜｜tool_calls>
 <｜｜DSML｜｜invoke name="patch">
 <｜｜DSML｜｜parameter name="new_string" string="true">- SETIAP pernyataan/klaim WAJIB langsung diikuti rujukan — tidak ditunda ke bawah.
-- Format rujukan: (Nama Kitab, Bab, Jilid hlm. X, Penerbit) — langsung setelah klaim.
-- JANGAN kumpulkan rujukan di bawah — setiap statement harus ada rujukannya saat itu juga.
+- Format rujukan: [Nama Kitab, Jilid X, Hal. Y] — kurung siku, langsung setelah klaim.
+- Untuk ayat Al-Quran: [Al-Qur'an, Nama Surah: Ayat].
+- Untuk referensi silang: [Lihat: Q.S. ...] atau [Lihat: Nama Kitab, Jilid X, Hal. Y].
+- Jika multi-referensi: [Kitab1, Jilid X, Hal. Y; Kitab2, Jilid X, Hal. Y] — dipisah titik koma dalam satu kurung.
+- JANGAN tunda rujukan — setiap statement harus ada rujukannya saat itu juga.
 - Tetap gunakan bahasa lugas dan mudah dipahami — rujukan tidak boleh bikin kalimat jadi rumit.
 - Hadits disebutkan sebagai pendukung tafsir — sebutkan perawi + derajat secara ringkas.
 - Gunakan paragraf pendek, tetap enak dibaca meski ada rujukan.
