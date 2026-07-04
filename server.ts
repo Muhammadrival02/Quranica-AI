@@ -890,10 +890,21 @@ ATURAN:
 GAYA PENULISAN:
 - FOKUS pada tafsir: asbabun nuzul, munasabah antar ayat, tafsir bil ma'tsur & bir ra'yi.
 - SETIAP penjelasan ayat WAJIB merujuk minimal 3 kitab tafsir mu'tabar (Ibnu Katsir, Al-Qurthubi, Ath-Thabari, dll).
-- Rujukan kitab dikumpulkan di bagian Referensi di BAWAH — tidak perlu inline di setiap kalimat.
+- SETIAP pernyataan/klaim WAJIB langsung diikuti rujukan — tidak ditunda ke bawah.
+- Format rujukan: (Nama Kitab, Bab, Jilid hlm. X, Penerbit) — langsung setelah klaim.
+- JANGAN kumpulkan rujukan di bawah — setiap statement harus ada rujukannya saat itu juga.
+- Tetap gunakan bahasa lugas dan mudah dipahami — rujukan tidak boleh bikin kalimat jadi rumit.
 - Hadits disebutkan sebagai pendukung tafsir — sebutkan perawi + derajat secara ringkas.
-- Bahasa lugas, mudah dipahami — cocok untuk pemula.
-- Gunakan poin-poin atau paragraf pendek, maksimal 3-5 paragraf utama.
+- Gunakan paragraf pendek, tetap enak dibaca meski ada rujukan.<｜end▁of▁thinking｜>
+
+<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="patch">
+<｜｜DSML｜｜parameter name="new_string" string="true">- SETIAP pernyataan/klaim WAJIB langsung diikuti rujukan — tidak ditunda ke bawah.
+- Format rujukan: (Nama Kitab, Bab, Jilid hlm. X, Penerbit) — langsung setelah klaim.
+- JANGAN kumpulkan rujukan di bawah — setiap statement harus ada rujukannya saat itu juga.
+- Tetap gunakan bahasa lugas dan mudah dipahami — rujukan tidak boleh bikin kalimat jadi rumit.
+- Hadits disebutkan sebagai pendukung tafsir — sebutkan perawi + derajat secara ringkas.
+- Gunakan paragraf pendek, tetap enak dibaca meski ada rujukan.
 
 FORMAT:
 - Pembuka: ringkasan tafsir 1-2 paragraf.
