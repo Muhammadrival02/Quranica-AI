@@ -409,7 +409,7 @@ app.post("/api/library/ai-search", async (req, res) => {
   }
 });
 
-// ===== CHAT =====
+// ===== CHAT (4 mode: Tafsir | Hadits | Maqashid | Gen Z) =====
 app.post("/api/chat", async (req, res) => {
   try {
     const { messages, mode } = req.body;
