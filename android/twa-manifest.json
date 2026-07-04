@@ -1,0 +1,26 @@
+{
+  "packageId": "com.quranica.ai",
+  "host": "quranica-ai.vercel.app",
+  "name": "Quranica AI",
+  "launcherName": "Quranica AI",
+  "display": "standalone",
+  "themeColor": "#0d9488",
+  "navigationColor": "#0d9488",
+  "backgroundColor": "#0f172a",
+  "startUrl": "/",
+  "iconUrl": "https://quranica-ai.vercel.app/icon-512.png",
+  "maskableIconUrl": "https://quranica-ai.vercel.app/icon-512.png",
+  "monochromeIconUrl": "https://quranica-ai.vercel.app/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "enableNotifications": false,
+  "enableSiteSettingsShortcut": true,
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  },
+  "signingKey": {
+    "path": "/home/ubuntu/Quranica-AI/android/android.keystore",
+    "alias": "quranica"
+  }
+}

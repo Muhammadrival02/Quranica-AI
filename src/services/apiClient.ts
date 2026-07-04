@@ -155,7 +155,7 @@ export class QuranicaApiClient {
   /**
    * Mengirim pesan ke asisten AI (Deepseek-v4-pro) untuk kajian tafsir & hadits.
    */
-  async sendChatMessage(messages: { role: string; content: string }[], mode: 'tafsir' | 'hadits' | 'maqashid' = 'tafsir'): Promise<{ reply: string }> {
+  async sendChatMessage(messages: { role: string; content: string }[], mode: 'tafsir' | 'hadits' | 'maqashid' | 'genz' = 'tafsir'): Promise<{ reply: string }> {
     const res = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

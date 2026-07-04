@@ -53,7 +53,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [qaMode, setQaMode] = useState<'tafsir' | 'hadits' | 'maqashid'>('tafsir');
+  const [qaMode, setQaMode] = useState<'tafsir' | 'hadits' | 'maqashid' | 'genz'>('tafsir');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Bottom bar constants (klik saja, tanpa swipe)
@@ -2184,6 +2184,16 @@ function App() {
                       }`}
                     >
                       🌍 Maqashid
+                    </button>
+                    <button
+                      onClick={() => setQaMode('genz')}
+                      className={`text-[9px] font-bold px-2 py-1 rounded-md transition-all ${
+                        qaMode === 'genz' 
+                          ? 'bg-pink-600 text-white shadow-sm' 
+                          : 'text-slate-500 hover:text-slate-300'
+                      }`}
+                    >
+                      💅 Gen Z
                     </button>
                   </div>
                   {activeHistoryId && (
