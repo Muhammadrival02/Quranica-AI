@@ -4,16 +4,43 @@ const path = require("path");
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 
-// ===== IN-MEMORY DB =====
-let userDatabase = [
+// ===== PERSISTENT DB (file-based — tahan update/deploy) =====
+const fs = require("fs");
+const DB_FILE = path.join(__dirname, "..", "data", "userDatabase.json");
+const PREAPPROVED_FILE = path.join(__dirname, "..", "data", "preApprovedAdmins.json");
+const PAYMENTS_FILE = path.join(__dirname, "..", "data", "pendingPayments.json");
+
+// Ensure data dir
+const dataDir = path.join(__dirname, "..", "data");
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+function loadJSON(file, fallback) {
+  try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf-8")); }
+  catch(e) { console.error("Gagal load " + file + ":", e.message); }
+  return fallback;
+}
+function saveJSON(file, data) {
+  try { fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf-8"); }
+  catch(e) { console.error("Gagal save " + file + ":", e.message); }
+}
+
+let userDatabase = loadJSON(DB_FILE, [
   { uid: "bootstrapped_admin", email: "rivalgamingchannel@gmail.com", displayName: "Admin Utama", role: "Admin", tier: "Berbayar", billingCycle: "Tahunan", createdAt: new Date().toISOString(), password: process.env.ADMIN_PASSWORD || "" },
   { uid: "user_1", email: "ahmad.tafsir@gmail.com", displayName: "Ahmad Tafsir", role: "User", tier: "Reguler", createdAt: new Date().toISOString() },
   { uid: "user_2", email: "fatimah.zahra@yahoo.com", displayName: "Fatimah Az-Zahra", role: "User", tier: "Berbayar", billingCycle: "Bulanan", createdAt: new Date().toISOString() }
-];
-let preApprovedAdmins = new Set(["rivalgamingchannel@gmail.com"]);
+]);
 
-// ===== PENDING PAYMENTS =====
-let pendingPayments = [];
+let preApprovedSet = loadJSON(PREAPPROVED_FILE, ["rivalgamingchannel@gmail.com"]);
+let preApprovedAdmins = new Set(preApprovedSet);
+
+let pendingPayments = loadJSON(PAYMENTS_FILE, []);
+
+// Auto-save after modifications
+function saveAll() {
+  saveJSON(DB_FILE, userDatabase);
+  saveJSON(PREAPPROVED_FILE, [...preApprovedAdmins]);
+  saveJSON(PAYMENTS_FILE, pendingPayments);
+}
 
 // ===== TELEGRAM BOT =====
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -60,7 +87,7 @@ app.post("/api/users/profile", (req, res) => {
     if (password) user.password = password;
   } else {
     user = { uid, email, displayName: displayName || email.split("@")[0], role: isAdmin ? "Admin" : "User", tier: tier || "Reguler", billingCycle: tier === "Berbayar" ? (billingCycle || "Bulanan") : null, createdAt: new Date().toISOString(), pekerjaan: pekerjaan || "", phone: phone || "", password: password || "" };
-    userDatabase.push(user);
+    userDatabase.push(user); saveAll();
   }
   res.json(user);
 });
@@ -88,7 +115,7 @@ app.post("/api/users/add-admin", (req, res) => {
     const admin = userDatabase.find(u => u.uid === adminUid && u.role === "Admin");
     if (!admin) return res.status(403).json({ error: "Akses ditolak. Anda bukan Admin." });
     const emailClean = email.trim().toLowerCase();
-    preApprovedAdmins.add(emailClean);
+    preApprovedAdmins.add(emailClean); saveAll();
     const existingUser = userDatabase.find(u => u.email.toLowerCase() === emailClean);
     if (existingUser) existingUser.role = "Admin";
     res.json({ success: true, message: `Email ${emailClean} berhasil didaftarkan sebagai Admin.` });
@@ -107,7 +134,7 @@ app.delete("/api/users/:uid", (req, res) => {
     const idx = userDatabase.findIndex(u => u.uid === uid);
     if (idx === -1) return res.status(404).json({ error: "User tidak ditemukan." });
     const deleted = userDatabase[idx];
-    userDatabase.splice(idx, 1);
+    userDatabase.splice(idx, 1); saveAll();
     res.json({ success: true, message: `User ${deleted.displayName} berhasil dihapus.` });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -124,7 +151,7 @@ app.post("/api/users/update-tier", (req, res) => {
     }
     const user = userDatabase.find(u => u.uid === uid);
     if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
-    user.tier = tier;
+    user.tier = tier; saveAll();
     user.billingCycle = tier === "Berbayar" ? (billingCycle || "Bulanan") : null;
     res.json({ success: true, user });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -142,7 +169,7 @@ app.post("/api/users/update-role", (req, res) => {
     const user = userDatabase.find(u => u.uid === uid);
     if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
     if (uid === adminUid) return res.status(400).json({ error: "Tidak dapat mengubah peran sendiri." });
-    user.role = role;
+    user.role = role; saveAll();
     res.json({ success: true, user });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -162,7 +189,7 @@ app.post("/api/payment/create", (req, res) => {
       confirmed: false,
       createdAt: new Date().toISOString()
     };
-    pendingPayments.push(payment);
+    pendingPayments.push(payment); saveAll();
     res.json({ ok: true, payment });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -254,9 +281,9 @@ OUTPUT HANYA JSON (tanpa backtick):
           createdAt: new Date().toISOString(),
           password: ""
         };
-        userDatabase.push(user);
+        userDatabase.push(user); saveAll();
       } else {
-        user.tier = "Berbayar";
+        user.tier = "Berbayar"; saveAll();
         user.billingCycle = payment.billingCycle;
       }
       payment.confirmed = true;
@@ -336,9 +363,9 @@ app.post("/api/telegram-webhook", async (req, res) => {
         let user = userDatabase.find(u => u.email.toLowerCase() === payment.email.toLowerCase());
         if (!user) {
           user = { uid: `user_${Date.now()}`, email: payment.email, displayName: payment.displayName, role: "User", tier: "Berbayar", billingCycle: payment.billingCycle, createdAt: new Date().toISOString(), password: "" };
-          userDatabase.push(user);
+          userDatabase.push(user); saveAll();
         } else { user.tier = "Berbayar"; user.billingCycle = payment.billingCycle; }
-        payment.confirmed = true;
+        payment.confirmed = true; saveAll();
         payment.confirmedAt = new Date().toISOString();
         await tgSend(chatId, `<b>✅ Dikonfirmasi!</b>\n👤 ${payment.displayName}\n📧 ${payment.email}\n⭐ Premium (${payment.billingCycle})\n💰 Rp ${payment.amount.toLocaleString("id-ID")}`);
       }
@@ -351,8 +378,8 @@ app.post("/api/telegram-webhook", async (req, res) => {
       let user = userDatabase.find(u => u.email.toLowerCase() === email);
       if (!user) {
         user = { uid: `user_${Date.now()}`, email, displayName: email.split("@")[0], role: "User", tier: "Berbayar", billingCycle: cyc, createdAt: new Date().toISOString(), password: "" };
-        userDatabase.push(user);
-      } else { user.tier = "Berbayar"; user.billingCycle = cyc; }
+        userDatabase.push(user); saveAll();
+      } else { user.tier = "Berbayar"; user.billingCycle = cyc; saveAll(); }
       await tgSend(chatId, `<b>✅ Upgrade Manual</b>\n📧 ${email}\n⭐ Premium (${cyc})`);
       return res.status(200).json({ ok: true });
     }
