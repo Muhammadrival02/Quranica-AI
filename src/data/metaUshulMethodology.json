@@ -1,0 +1,54 @@
+{
+  "title": "Ushul Fiqh Kontemporer — Meta-Uṣūl Methodology",
+  "author": "Rival Zamzam Elhasbi, Lc, S.Ag, S.Pd.I",
+  "institution": "Kuliyatul Syar'iyyah wal Arabiyyah, Safwa University",
+  "year": "2025 M / 1447 H",
+  "description": "Sistem epistemik yang menentukan bagaimana seluruh perangkat ushul, maqashid, hadis, tafsir, qiyas, linguistik, dan sains diposisikan, dihubungkan, diurutkan, diuji, dan diberi bobot dalam proses istinbath.",
+  "principles": {
+    "1_primasi_dalil": {
+      "name": "Primasi Dalil — Nash Qath'i sebagai Otoritas Mutlak",
+      "content": "Tidak ada metode apa pun — historis, filosofis, hermeneutis, maqashid, bahkan sains — yang berhak mengubah, menangguhkan, atau menghapus nash qath'i. Qath'i al-tsubut (otoritas wahyu & hadis mutawatir) + qath'i al-dalalah (makna tanpa ambiguitas linguistik). Sains menjelaskan fenomena alam: tatbiq, bukan tahrif. Hermeneutika membaca konteks: tafsir, bukan ta'wil penggugur nash. Maqashid memperluas pemahaman: ta'lil, bukan negasi."
+    },
+    "2_hierarki_epistemik": {
+      "name": "Hierarki Epistemik — Maratib al-Adillah",
+      "content": "Seluruh metode ditempatkan dalam urutan kekuatan epistemik: (1) Nash qath'i (Quran + mutawatir), (2) Hadis sahih mutawatir + qaul sahabah, (3) Ijma' mu'tabar, (4) Hadis ahad sahih, (5) Ushul deduktif klasik (qiyas, istishab, sadd al-dzara'i'), (6) Maqashid, (7) Modul linguistik/sejarah/sosiologi, (8) Sains & data empiris, (9) Hermeneutika & filosofi modern, (10) 'Urf & feasible policy. Menolak ekstrem historis-progressif dan literalis-ahistoris."
+    },
+    "3_modularitas_terkendali": {
+      "name": "Modularitas Terkendali — Integrasi Interdisipliner",
+      "content": "Modul interdisipliner (sosiologi, antropologi, semiotika, pragmatik, linguistik modern, ekonomi, sains data) hanya menjadi evidence type/analytical lens, BUKAN pengganti dalil. Modul diaktifkan sesuai relevansi kasus dan tunduk pada Hierarki Epistemik. 5 modul wajib: Linguistik Arab Klasik, Sejarah & Asbab al-Wurud/Nuzul, Sosiologi Hukum, Maqashid Syariah, Sains & Data Empiris."
+    },
+    "4_transparansi_metodologis": {
+      "name": "Transparansi Metodologis — Setiap Fatwa Menyebut Ushul, Modul, dan Langkah",
+      "content": "Hasil istinbath harus menyertakan: ushul yang dipakai, modul yang diaktifkan, tahapan penalaran, dalil utama & pendukung, pertimbangan kontemporer, dan indikator kekuatan. Harus dapat diaudit."
+    },
+    "5_nilai_kemaslahatan": {
+      "name": "Nilai Kemaslahatan Terukur — Maqashid sebagai Kerangka Evaluasi",
+      "content": "Setiap hasil istinbath diuji melalui 5 maqashid: hifzh al-din, hifzh al-nafs, hifzh al-'aql, hifzh al-nasl, hifzh al-mal. Kemaslahatan dinilai: daruriyyat (primer) > hajiyyat (sekunder) > tahsiniyyat (tersier)."
+    },
+    "6_minimal_intervensi": {
+      "name": "Prinsip Minimal Intervensi — Non-Ushul Tidak Boleh Mendominasi Ushul",
+      "content": "Modul interdisipliner hanya digunakan sejauh diperlukan untuk memahami konteks dan dampak. Modul tidak boleh mengubah makna nash, mendahului dalil qath'i, atau menjadi satu-satunya dasar fatwa."
+    },
+    "7_rekonsiliasi_terukur": {
+      "name": "Rekonsiliasi Terukur — Isytibak al-Adillah",
+      "content": "Konflik dalil diselesaikan secara kuantitatif dan eksplisit: al-jam'u (kompromi) > al-tarjih (pengunggulan) > al-naskh (penghapusan) > al-tawaqquf (penundaan). Setiap langkah dicatat dan dibobot."
+    }
+  },
+  "inference_architecture": {
+    "name": "Arsitektur Inferensi — Mesin Penalaran Ijtihad",
+    "steps": [
+      "Tahap 1: Identifikasi masalah & klasifikasi domain hukum",
+      "Tahap 2: Pengumpulan dalil (nash, hadis, ijma', qiyas)",
+      "Tahap 3: Aktivasi modul interdisipliner yang relevan",
+      "Tahap 4: Analisis hierarkis (dari level 1 ke 10)",
+      "Tahap 5: Resolusi konflik bila ada ta'arud",
+      "Tahap 6: Formulasi hukum dengan transparansi penuh",
+      "Tahap 7: Uji maqashid & kemaslahatan",
+      "Tahap 8: Output final + indikator kekuatan + rekomendasi"
+    ]
+  },
+  "self_correction": {
+    "name": "Mekanisme Koreksi-Diri (Self-Correction Protocol)",
+    "content": "Sistem dilengkapi: (1) Audit retrospektif berkala terhadap fatwa yang telah dikeluarkan, (2) Trigger review: ditemukan dalil baru, perubahan konteks sosial-signifikan, kritik akademik tervalidasi, (3) Protokol revisi transparan dengan versioning fatwa."
+  }
+}

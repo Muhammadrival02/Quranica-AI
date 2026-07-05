@@ -70,6 +70,14 @@ try {
   rujukanLibrary = [];
 }
 
+// Load Meta-Ushul methodology (Rival Zamzam Elhasbi, Safwa University 2025)
+let metaUshulMethodology = null;
+try {
+  metaUshulMethodology = require("../src/data/metaUshulMethodology.json");
+} catch(e4) {
+  metaUshulMethodology = null;
+}
+
 // ===== HEALTH =====
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
@@ -455,6 +463,20 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB MELIMPAH — setiap ayat, hadits, istilah kunci, & kutipan kitab WAJIB teks Arab berharakat + terjemahan. JANGAN hanya transliterasi. 2) QAUL ULAMA minimal 7 kutipan LANGSUNG — format: "[Ulama] dalam [Kitab] menyatakan: '...kutipan...'" [Kitab, Jilid X, Hal. Y]. WAJIB tanda kutip, bukan parafrase. 3) ORIENTALIS dalam BAHASA ASLI — kutipan orientalis WAJIB bahasa aslinya (Inggris/Jerman/Prancis) dulu, baru terjemahan Indonesia. 4) DENSITAS — tiap argumen 2+ ref, total 10+ kitab berbeda + 2 orientalis, tiap paragraf 1+ rujukan [Kurung Siku].`;
+
+    // Build methodology context for Master mode
+    let methodologyCtx = "";
+    if (chatMode === 'master' && metaUshulMethodology) {
+      const m = metaUshulMethodology;
+      methodologyCtx = "\n\n=== METODOLOGI PENGKAJIAN HUKUM: USHUL FIQH KONTEMPORER — META-USHUL ===" +
+        "\nSumber: " + m.author + ", " + m.institution + " (" + m.year + ")" +
+        "\n" + m.description +
+        "\n\n7 Prinsip Dasar Meta-Ushul: " +
+        Object.entries(m.principles).map(([k, v]) => "\n• " + v.name).join("") +
+        "\n\nArsitektur Inferensi (8 Tahap): " + m.inference_architecture.steps.join(" → ") +
+        "\n\nGUNAKAN metodologi di atas sebagai kerangka istinbath hukum dalam setiap jawaban. Setiap jawaban HARUS mengacu pada: hierarki epistemik 10 level (nash qath'i → hadis → ijma' → qiyas → maqashid → sains → 'urf), modularitas terkendali, transparansi metodologis, prinsip minimal intervensi, dan mekanisme koreksi-diri." +
+        "\n=== AKHIR METODOLOGI ===\n";
+    }
 
     const sysMsg = (chatMode === 'master'
       ? 'Anda adalah Asisten AI Pakar Islam level Magister (S2) — setara lulusan S2 Kajian Islam. ANDA MAMPU menjawab SEMUA pertanyaan keislaman: 📖 Ulumul Quran & Tafsir (asbabun nuzul, munasabah, bil ma\'tsur, bir ra\'yi), 🕌 Hadits & Ulumul Hadits (takhrij 3+ kitab, kritik sanad+matan, jarh wa ta\'dil, derajat hadits), ⚖️ Fiqh Muqaran (8 mazhab: Hanafi, Maliki, Syafi\'i, Hanbali, Zhahiri, Ja\'fari, Zaydi, Ibadi), 📐 Ushul Fiqh (dalil, qiyas, istihsan, maslahah, \'urf), 🧠 Aqidah & Kalam, 🕯️ Tasawuf & Akhlak, 📜 Sejarah Islam & Sirah, 🌍 Perbandingan Agama. GAYA: akademik-sistematis, rujukan eksplisit [Kitab, Jilid X, Hal. Y], aksara Arab berharakat untuk ayat/hadits. BAHASA: Indonesia ilmiah-populer — dalam tapi enak dibaca. STRUKTUR: 1) Jawaban inti, 2) Dalil (Quran + Hadits dgn takhrij singkat), 3) Analisis (multi-mazhab bila relevan), 4) Kesimpulan. Maksimal 8 paragraf. Sumber: kitab mu\'tabar, bukan Wikipedia.'
