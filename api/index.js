@@ -86,6 +86,14 @@ try {
   ulumulQuranDauroh = null;
 }
 
+// Load YouTube reference channels
+let youtubeReferences = null;
+try {
+  youtubeReferences = require("../src/data/youtubeReferences.json");
+} catch(e6) {
+  youtubeReferences = null;
+}
+
 // ===== HEALTH =====
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
@@ -478,21 +486,7 @@ app.post("/api/chat", async (req, res) => {
 
     const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB MELIMPAH — setiap ayat, hadits, istilah kunci, & kutipan kitab WAJIB teks Arab berharakat + terjemahan. JANGAN hanya transliterasi. 2) QAUL ULAMA minimal 7 kutipan LANGSUNG — format: "[Ulama] dalam [Kitab] menyatakan: '...kutipan...'" [Kitab, Jilid X, Hal. Y]. WAJIB tanda kutip, bukan parafrase. 3) ORIENTALIS dalam BAHASA ASLI — kutipan orientalis WAJIB bahasa aslinya (Inggris/Jerman/Prancis) dulu, baru terjemahan Indonesia. 4) DENSITAS — tiap argumen 2+ ref, total 10+ kitab berbeda + 2 orientalis, tiap paragraf 1+ rujukan [Kurung Siku].`;
 
-    // Build methodology context for Master mode
-    let methodologyCtx = "";
-    if (chatMode === 'master' && metaUshulMethodology) {
-      const m = metaUshulMethodology;
-      methodologyCtx = "\n\n=== METODOLOGI PENGKAJIAN HUKUM: USHUL FIQH KONTEMPORER — META-USHUL ===" +
-        "\nSumber: " + m.author + ", " + m.institution + " (" + m.year + ")" +
-        "\n" + m.description +
-        "\n\n7 Prinsip Dasar Meta-Ushul: " +
-        Object.entries(m.principles).map(([k, v]) => "\n• " + v.name).join("") +
-        "\n\nArsitektur Inferensi (8 Tahap): " + m.inference_architecture.steps.join(" → ") +
-        "\n\nGUNAKAN metodologi di atas sebagai kerangka istinbath hukum dalam setiap jawaban. Setiap jawaban HARUS mengacu pada: hierarki epistemik 10 level (nash qath'i → hadis → ijma' → qiyas → maqashid → sains → 'urf), modularitas terkendali, transparansi metodologis, prinsip minimal intervensi, dan mekanisme koreksi-diri." +
-        "\n=== AKHIR METODOLOGI ===\n";
-    }
-
-    // Build methodology + dauroh context for Master mode
+    // Build methodology + dauroh + youtube context for Master mode
     let masterCtx = "";
     if (chatMode === 'master') {
       if (metaUshulMethodology) {
@@ -506,10 +500,18 @@ app.post("/api/chat", async (req, res) => {
       }
       if (ulumulQuranDauroh) {
         var d = ulumulQuranDauroh;
-        masterCtx += "\n\n=== REFERENSI: DAUROH ULUMUL QUR'AN ===" +
-          "\nSumber: " + d.title + " — " + d.institution +
-          "\n29 Sesi: " + d.sessions.map(function(s) { return s.topic; }).join(" | ") +
-          "\nGUNAKAN sebagai referensi otoritatif untuk pertanyaan Ulumul Qur'an.";
+        masterCtx += "\\n\\n=== REFERENSI: DAUROH ULUMUL QUR'AN ===" +
+          "\\nSumber: " + d.title + " — " + d.institution +
+          "\\n29 Sesi: " + d.sessions.map(function(s) { return s.topic; }).join(" | ") +
+          "\\nGUNAKAN sebagai referensi otoritatif untuk pertanyaan Ulumul Qur'an.";
+      }
+      if (youtubeReferences) {
+        var yt = youtubeReferences;
+        masterCtx += "\\n\\n=== REFERENSI YOUTUBE ===";
+        yt.channels.forEach(function(ch) {
+          masterCtx += "\\n• " + ch.name + " (" + ch.focus + "): " + ch.usage;
+        });
+        masterCtx += "\\n" + yt.guidelines.usage_notes.map(function(n) { return "\\n  - " + n; }).join("");
       }
       masterCtx += "\n=== AKHIR KONTEKS TAMBAHAN ===\n";
     }

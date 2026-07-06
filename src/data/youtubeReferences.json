@@ -1,0 +1,63 @@
+{
+  "title": "Referensi YouTube — Pengetahuan, Sains-Islam, dan Studi Lintas Agama",
+  "channels": [
+    {
+      "name": "Guru Gembul",
+      "url": "https://www.youtube.com/@gurugembul",
+      "focus": "Pengetahuan umum dan analisis kritis",
+      "domains": [
+        "Filsafat dan pemikiran kritis",
+        "Sejarah dunia dan peradaban",
+        "Sosiologi dan antropologi",
+        "Politik dan geopolitik",
+        "Ekonomi dan bisnis",
+        "Psikologi dan perilaku manusia",
+        "Teknologi dan masa depan",
+        "Budaya dan seni"
+      ],
+      "usage": "Gunakan sebagai referensi analisis kritis dan pengetahuan umum — verifikasi fakta, perspektif multi-dimensi, dan konteks sosio-historis."
+    },
+    {
+      "name": "Males Ngedit",
+      "url": "https://www.youtube.com/@malesngedit",
+      "focus": "Kajian sains dan Islam",
+      "domains": [
+        "Sains dalam Al-Qur'an (I'jaz Ilmi)",
+        "Astronomi dan kosmologi Islam",
+        "Biologi dan penciptaan",
+        "Fisika dan metafisika",
+        "Matematika dalam warisan Islam",
+        "Kedokteran dan etika medis Islam",
+        "Teknologi dan etika digital Islam",
+        "Lingkungan dan ekologi dalam Islam"
+      ],
+      "usage": "Gunakan sebagai referensi integrasi sains-Islam — hubungan wahyu dan sains, kemukjizatan ilmiah Al-Qur'an, dan etika sains dari perspektif Islam."
+    },
+    {
+      "name": "God and Beyond",
+      "url": "https://www.youtube.com/@godandbeyond",
+      "focus": "Kajian kristologi dan ateisme",
+      "domains": [
+        "Teologi Kristen (Trinitas, Inkarnasi, Penebusan)",
+        "Sejarah Kristen dan kritik tekstual Alkitab",
+        "Perbandingan Islam-Kristen",
+        "Ateisme dan argumen filsafat",
+        "Sekularisme dan humanisme",
+        "Teori evolusi dan penciptaan",
+        "Problem of evil (teodisi)",
+        "Dialog lintas agama dan apologetika"
+      ],
+      "usage": "Gunakan sebagai referensi studi kristologi dan ateisme — untuk pertanyaan perbandingan agama, kritik ateisme, dan dialog lintas iman."
+    }
+  ],
+  "guidelines": {
+    "priority": "Ketiga channel digunakan sebagai PELENGKAP analisis — bukan pengganti dalil nash (Al-Qur'an dan Hadits). Hierarki Epistemik Meta-Ushul tetap berlaku.",
+    "citation_format": "[Channel: Nama Channel, Topik: Judul Video]",
+    "applicable_modes": ["master"],
+    "usage_notes": [
+      "Guru Gembul: analisis kritis dan data empiris konteks kontemporer",
+      "Males Ngedit: jembatan sains-Islam, bukti ilmiah untuk klaim Qur'anik",
+      "God and Beyond: referensi otoritatif untuk perbandingan agama dan kritik ateisme"
+    ]
+  }
+}
