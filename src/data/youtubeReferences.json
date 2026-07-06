@@ -232,6 +232,81 @@
       ],
       "style": "9.01K subscribers, 37 videos, kreator Forbidden Questions, kritis-progresif, Bahasa Indonesia",
       "usage": "Referensi pemikiran kritis dan teologi — mempertanyakan asumsi, mendorong dialog terbuka tentang isu sensitif."
+    },
+    {
+      "name": "Neuron",
+      "url": "https://youtube.com/@neuronmedia",
+      "handle": "@neuronmedia",
+      "focus": "Edukasi Kesehatan dan Gaya Hidup",
+      "domains": [
+        "Kesehatan reproduksi dan seksual",
+        "Psikologi dan kesehatan mental",
+        "Gaya hidup sehat",
+        "Penyakit dan pencegahan",
+        "Motion graphic edukasi kesehatan"
+      ],
+      "style": "Verified, 1.35M subscribers, 567 videos, motion graphic, Bahasa Indonesia",
+      "usage": "Referensi kesehatan dan psikologi — penjelasan ilmiah yang mudah dipahami, berguna untuk kajian bioetika Islam."
+    },
+    {
+      "name": "Kok Bisa?",
+      "url": "https://youtube.com/@kokbisa",
+      "handle": "@kokbisa",
+      "focus": "Sains Populer dan Pengetahuan Umum",
+      "domains": [
+        "Sains dan teknologi",
+        "Sejarah dan peradaban",
+        "Politik dan ekonomi",
+        "Golden Age of Islam",
+        "Lingkungan dan perubahan iklim"
+      ],
+      "style": "Verified, 6.27M subscribers, 1.4K videos, animasi edukatif, Bahasa Indonesia",
+      "usage": "Referensi sains populer terbesar Indonesia — menjelaskan konsep kompleks dengan animasi, termasuk sejarah keemasan Islam."
+    },
+    {
+      "name": "Hujan Tanda Tanya",
+      "url": "https://youtube.com/@hujantandatanya",
+      "handle": "@hujantandatanya",
+      "focus": "Sains, Teknologi, dan Masyarakat",
+      "domains": [
+        "Karir dan ketenagakerjaan",
+        "Learning how to learn",
+        "Sains dan masyarakat",
+        "Teknologi dan kehidupan",
+        "Pemikiran kritis"
+      ],
+      "style": "Verified, 594K subscribers, 290 videos, ringan dan reflektif, Bahasa Indonesia",
+      "usage": "Referensi pembelajaran dan pengembangan diri — merangsang pemikiran kritis tentang sains dan masyarakat."
+    },
+    {
+      "name": "Jeda Nulis",
+      "url": "https://youtube.com/@jedanulis",
+      "handle": "@jedanulis",
+      "focus": "Islam Kontemporer dan Podcast Tematik",
+      "domains": [
+        "Keislaman kontemporer dan adem",
+        "Podcast dan wawancara tokoh",
+        "Refleksi spiritual dan sosial",
+        "Generasi milenial dan Islam",
+        "Seni dan budaya Islam"
+      ],
+      "style": "Verified, 1.73M subscribers, 504 videos, penulis muda tema keislaman, santai dan reflektif, Bahasa Indonesia",
+      "usage": "Referensi Islam kontemporer — pendekatan adem dan relevan untuk generasi milenial, format podcast."
+    },
+    {
+      "name": "Nabawi TV",
+      "url": "https://youtube.com/@nabawitv",
+      "handle": "@nabawitv",
+      "focus": "Dakwah Ahlusunnah dan Tadabbur Qur'an",
+      "domains": [
+        "Tadabbur Al-Qur'an (Beyond the Tales)",
+        "Wawancara eksklusif habaib",
+        "Majelis rutin Ahlusunnah",
+        "Sirah dan sejarah Islam",
+        "Dakwah digital"
+      ],
+      "style": "Verified, 801K subscribers, 4.7K videos, media syiar Ahlusunnah Waljamaah, Bahasa Indonesia",
+      "usage": "Referensi dakwah Ahlusunnah — tadabbur Qur'an, wawancara habaib, dan majelis rutin."
     }
   ],
   "guidelines": {
@@ -243,9 +318,9 @@
       "Hadits & Ulumul Hadits": ["Adi Hidayat Official", "Yufid.TV"],
       "Fiqih & Ushul Fiqh": ["Adi Hidayat Official", "Ustadz Faris Baswedan", "Ajir Ubaidillah", "Aa Guru Tigarut", "Yufid.TV"],
       "Akidah & Kalam": ["Adi Hidayat Official", "Ahmad Ubaidillah Nasiden", "Yufid.TV", "Kumaila Hakimah"],
-      "Sains & Islam": ["Rumah Editor", "Males Ngedit"],
+      "Sains & Islam": ["Rumah Editor", "Males Ngedit", "Kok Bisa?", "Neuron"],
       "Kristologi & Ateisme": ["God and Beyond"],
-      "Sejarah & Peradaban": ["Guru Gembul"],
+      "Sejarah & Peradaban": ["Guru Gembul", "Ardhianzy", "Kok Bisa?"],
       "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official"],
       "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official", "GEMBULIKUM"],
       "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"],

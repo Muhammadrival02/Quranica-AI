@@ -507,7 +507,7 @@ app.post("/api/chat", async (req, res) => {
       }
       if (youtubeReferences) {
         var yt = youtubeReferences;
-        masterCtx += "\\n\\n=== 15 CHANNEL YOUTUBE REFERENSI ===";
+        masterCtx += "\\n\\n=== 20 CHANNEL YOUTUBE REFERENSI ===";
         yt.channels.forEach(function(ch) {
           masterCtx += "\\n• " + ch.name + " [" + ch.focus + "] — " + ch.domains.slice(0, 3).join(", ");
         });
