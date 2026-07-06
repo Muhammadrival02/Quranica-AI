@@ -126,6 +126,37 @@
       ],
       "style": "Analitis, kritis, humor satir, Bahasa Indonesia kasual",
       "usage": "Referensi analisis kritis dan pengetahuan umum — verifikasi fakta, perspektif multi-dimensi, dan konteks sosio-historis."
+    },
+    {
+      "name": "Ardhianzy",
+      "url": "https://youtube.com/@ardhianzy",
+      "handle": "@ardhianzy",
+      "focus": "Filsafat, Sejarah, dan Psikologi Eksistensial",
+      "domains": [
+        "Filsafat klasik dan modern (Plato, Aristoteles, Nietzsche)",
+        "Sejarah peradaban dan kekaisaran",
+        "Psikologi dan bias kognitif",
+        "Sastra dan budaya pop",
+        "Eksistensialisme dan refleksi kehidupan"
+      ],
+      "style": "Verified, 972K subscribers, 231 videos, 'Der Wille Zur Macht', naratif-analitis mendalam, Bahasa Indonesia",
+      "usage": "Referensi filsafat dan sejarah peradaban — analisis eksistensial, pemikiran kritis, dan refleksi manusia melawan kehampaan."
+    },
+    {
+      "name": "Muhammad Nuruddin Official",
+      "url": "https://youtube.com/@muhammadnuruddinofficial",
+      "handle": "@muhammadnuruddinofficial",
+      "focus": "Filsafat Islam, Akidah, dan Isu Kontemporer",
+      "domains": [
+        "Filsafat Islam dan teologi rasional",
+        "Akidah Ahlussunnah dan kritik ekstremisme",
+        "Perbandingan mazhab dan aliran (Sunni-Syiah)",
+        "Bahasa Arab dan keunikannya",
+        "Isu kontemporer (HAM, LGBT, ketuhanan)",
+        "Seminar akademik (Ponpes Sarang, UIN Bandung)"
+      ],
+      "style": "Ustadz Muhammad Nuruddin, Lc. MA, 107K subscribers, 633 videos, akademik-populer, Bahasa Indonesia (bilingual English)",
+      "usage": "Referensi filsafat Islam dan akidah — menjawab masalah kekinian dengan pendekatan rasional, seminar akademik."
     }
   ],
   "guidelines": {
@@ -140,9 +171,11 @@
       "Sains & Islam": ["Rumah Editor", "Males Ngedit"],
       "Kristologi & Ateisme": ["God and Beyond"],
       "Sejarah & Peradaban": ["Guru Gembul"],
-      "Filsafat & Pemikiran": ["Guru Gembul"],
-      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah"],
-      "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"]
+      "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official"],
+      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official"],
+      "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"],
+      "Filsafat Islam & Teologi": ["Muhammad Nuruddin Official"],
+      "Sejarah Peradaban": ["Guru Gembul", "Ardhianzy"]
     }
   }
 }
