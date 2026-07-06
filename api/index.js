@@ -507,11 +507,12 @@ app.post("/api/chat", async (req, res) => {
       }
       if (youtubeReferences) {
         var yt = youtubeReferences;
-        masterCtx += "\\n\\n=== REFERENSI YOUTUBE ===";
+        masterCtx += "\\n\\n=== 8 CHANNEL YOUTUBE REFERENSI ===";
         yt.channels.forEach(function(ch) {
-          masterCtx += "\\n• " + ch.name + " (" + ch.focus + "): " + ch.usage;
+          masterCtx += "\\n• " + ch.name + " [" + ch.focus + "] — " + ch.domains.slice(0, 3).join(", ");
         });
-        masterCtx += "\\n" + yt.guidelines.usage_notes.map(function(n) { return "\\n  - " + n; }).join("");
+        masterCtx += "\\n\\nPANDUAN: " + yt.guidelines.priority;
+        masterCtx += "\\nFormat sitasi: " + yt.guidelines.citation_format;
       }
       masterCtx += "\n=== AKHIR KONTEKS TAMBAHAN ===\n";
     }

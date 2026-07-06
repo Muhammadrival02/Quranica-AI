@@ -1,42 +1,71 @@
 {
-  "title": "Referensi YouTube — Pengetahuan, Sains-Islam, dan Studi Lintas Agama",
+  "title": "Referensi YouTube — Kerangka Berpikir Quranica AI",
   "channels": [
     {
-      "name": "Guru Gembul",
-      "url": "https://www.youtube.com/@gurugembul",
-      "focus": "Pengetahuan umum dan analisis kritis",
+      "name": "Adi Hidayat Official",
+      "url": "https://youtube.com/@adihidayatofficiai",
+      "handle": "@adihidayatofficiai",
+      "focus": "Tafsir, Hadits, Fiqih, dan Akidah",
       "domains": [
-        "Filsafat dan pemikiran kritis",
-        "Sejarah dunia dan peradaban",
-        "Sosiologi dan antropologi",
-        "Politik dan geopolitik",
-        "Ekonomi dan bisnis",
-        "Psikologi dan perilaku manusia",
-        "Teknologi dan masa depan",
-        "Budaya dan seni"
+        "Tafsir Al-Qur'an tematik",
+        "Hadits dan syarah",
+        "Fiqih ibadah dan muamalah",
+        "Akidah Ahlussunnah wal Jama'ah",
+        "Sejarah Islam dan sirah Nabawiyah",
+        "Tasawuf dan akhlak"
       ],
-      "usage": "Gunakan sebagai referensi analisis kritis dan pengetahuan umum — verifikasi fakta, perspektif multi-dimensi, dan konteks sosio-historis."
+      "style": "Akademik-populer, rujukan kitab klasik, sistematis, Bahasa Indonesia formal",
+      "usage": "Referensi otoritatif untuk tafsir, hadits, fiqih, dan akidah — rujukan utama kajian Islam mainstream."
     },
     {
-      "name": "Males Ngedit",
-      "url": "https://www.youtube.com/@malesngedit",
-      "focus": "Kajian sains dan Islam",
+      "name": "Ahmad Ubaidillah Nasiden (Aunas Iden)",
+      "url": "https://youtube.com/@aunasiden",
+      "handle": "@aunasiden",
+      "focus": "Kajian Islam dari Kitab-Kitab Ulama",
       "domains": [
-        "Sains dalam Al-Qur'an (I'jaz Ilmi)",
-        "Astronomi dan kosmologi Islam",
-        "Biologi dan penciptaan",
-        "Fisika dan metafisika",
-        "Matematika dalam warisan Islam",
-        "Kedokteran dan etika medis Islam",
-        "Teknologi dan etika digital Islam",
-        "Lingkungan dan ekologi dalam Islam"
+        "Keislaman tematik (wanita, keluarga, anak)",
+        "Akhir zaman dan eskatologi Islam",
+        "Akhlak dan adab",
+        "Pemikiran Islam kontemporer"
       ],
-      "usage": "Gunakan sebagai referensi integrasi sains-Islam — hubungan wahyu dan sains, kemukjizatan ilmiah Al-Qur'an, dan etika sains dari perspektif Islam."
+      "style": "Learning from Islamic Scholars' Books, 12.4K subscribers, 291 videos, Bahasa Indonesia",
+      "usage": "Referensi kajian tematik dari kitab-kitab ulama klasik — perspektif tradisional yang mendalam."
+    },
+    {
+      "name": "Ustadz Faris Baswedan",
+      "url": "https://youtube.com/@ustadzfarisbaswedan",
+      "handle": "@ustadzfarisbaswedan",
+      "focus": "Fiqih Dasar dan Kajian Tematik Kontemporer",
+      "domains": [
+        "Fiqih ibadah (wudhu, shalat, puasa, zakat, haji)",
+        "Bidayatul Hidayah (Imam Al-Ghazali)",
+        "Muamalah kontemporer",
+        "Isu-isu kekinian dalam perspektif fiqih",
+        "Adab dan akhlak Islam"
+      ],
+      "style": "Helping You Learn Islam with Joy, 17.8K subscribers, 201 videos, santai tapi ilmiah",
+      "usage": "Referensi fiqih dasar dan aplikatif — membantu pemula memahami Islam dengan gembira."
+    },
+    {
+      "name": "Ajir Ubaidillah (Gus Ajir)",
+      "url": "https://youtube.com/@ajirubaidillah",
+      "handle": "@ajirubaidillah",
+      "focus": "Tafsir, Fiqih Kontemporer, dan Isu Aktual",
+      "domains": [
+        "Tafsir Jalalain",
+        "Fiqih kontemporer (qurban, puasa, muamalah)",
+        "Isu-isu viral dalam perspektif Islam",
+        "Pemikiran kritis Islam",
+        "Dakwah digital dan respons terhadap tren"
+      ],
+      "style": "KH Muhammad Ajir Ubaidillah, putra Ponpes Nurul Huda Banyumas, 69.4K subscribers, 1.1K videos, lugas dan responsif",
+      "usage": "Referensi fiqih kontemporer dan respons Islam terhadap isu viral/aktual — analisis cepat dan aplikatif."
     },
     {
       "name": "God and Beyond",
-      "url": "https://www.youtube.com/@godandbeyond",
-      "focus": "Kajian kristologi dan ateisme",
+      "url": "https://youtube.com/@god_and_beyond",
+      "handle": "@god_and_beyond",
+      "focus": "Kristologi, Ateisme, dan Perbandingan Agama",
       "domains": [
         "Teologi Kristen (Trinitas, Inkarnasi, Penebusan)",
         "Sejarah Kristen dan kritik tekstual Alkitab",
@@ -47,17 +76,73 @@
         "Problem of evil (teodisi)",
         "Dialog lintas agama dan apologetika"
       ],
-      "usage": "Gunakan sebagai referensi studi kristologi dan ateisme — untuk pertanyaan perbandingan agama, kritik ateisme, dan dialog lintas iman."
+      "style": "Akademik, kritis, berbasis teks dan sejarah, Bahasa Indonesia",
+      "usage": "Referensi otoritatif untuk kristologi dan ateisme — untuk perbandingan agama, kritik ateisme, dan dialog lintas iman."
+    },
+    {
+      "name": "Rumah Editor",
+      "url": "https://youtube.com/@rumaheditor",
+      "handle": "@rumaheditor",
+      "focus": "Sains Populer dan Teknologi",
+      "domains": [
+        "Fisika kuantum dan relativitas",
+        "Astronomi dan kosmologi",
+        "Neurosains dan psikologi",
+        "Teknologi dan inovasi",
+        "Sains dalam film (science communication)",
+        "Sejarah sains dan tokoh ilmuwan"
+      ],
+      "style": "Verified, 1.21M subscribers, 87 videos, naratif-visual, Bahasa Indonesia kasual",
+      "usage": "Referensi sains populer — menjelaskan konsep sains kompleks dengan cara yang mudah dipahami, berguna untuk dialog sains-Islam."
+    },
+    {
+      "name": "Aa Guru Tigarut",
+      "url": "https://youtube.com/@aagurutigarut",
+      "handle": "@aagurutigarut",
+      "focus": "Fiqih Syafi'iyah dan Ushul Fiqh",
+      "domains": [
+        "Fiqih Nabi ala Imam Syafi'i (al-Yaaquut an-Nafiis)",
+        "Ushul Fiqh (al-Luma' Imam as-Syairaziy)",
+        "Mazhab Syafi'i dan perbandingan mazhab",
+        "Pemikiran Islam dan isu kontemporer"
+      ],
+      "style": "135K subscribers, 1.9K videos, Bahasa Indonesia, fokus kitab kuning",
+      "usage": "Referensi fiqih Syafi'iyah dan ushul fiqh klasik — pendalaman mazhab Syafi'i dari sumber primer."
+    },
+    {
+      "name": "Guru Gembul",
+      "url": "https://youtube.com/@gurugembul",
+      "handle": "@gurugembul",
+      "focus": "Pengetahuan Umum dan Analisis Kritis",
+      "domains": [
+        "Filsafat dan pemikiran kritis",
+        "Sejarah dunia dan peradaban",
+        "Sosiologi dan antropologi",
+        "Politik dan geopolitik",
+        "Ekonomi dan bisnis",
+        "Psikologi dan perilaku manusia",
+        "Teknologi dan masa depan",
+        "Budaya dan seni"
+      ],
+      "style": "Analitis, kritis, humor satir, Bahasa Indonesia kasual",
+      "usage": "Referensi analisis kritis dan pengetahuan umum — verifikasi fakta, perspektif multi-dimensi, dan konteks sosio-historis."
     }
   ],
   "guidelines": {
-    "priority": "Ketiga channel digunakan sebagai PELENGKAP analisis — bukan pengganti dalil nash (Al-Qur'an dan Hadits). Hierarki Epistemik Meta-Ushul tetap berlaku.",
+    "priority": "Semua channel digunakan sebagai PELENGKAP analisis — bukan pengganti dalil nash (Al-Qur'an dan Hadits). Hierarki Epistemik Meta-Ushul tetap berlaku.",
     "citation_format": "[Channel: Nama Channel, Topik: Judul Video]",
     "applicable_modes": ["master"],
-    "usage_notes": [
-      "Guru Gembul: analisis kritis dan data empiris konteks kontemporer",
-      "Males Ngedit: jembatan sains-Islam, bukti ilmiah untuk klaim Qur'anik",
-      "God and Beyond: referensi otoritatif untuk perbandingan agama dan kritik ateisme"
-    ]
+    "category_mapping": {
+      "Tafsir & Ulumul Qur'an": ["Adi Hidayat Official", "Ajir Ubaidillah"],
+      "Hadits & Ulumul Hadits": ["Adi Hidayat Official"],
+      "Fiqih & Ushul Fiqh": ["Adi Hidayat Official", "Ustadz Faris Baswedan", "Ajir Ubaidillah", "Aa Guru Tigarut"],
+      "Akidah & Kalam": ["Adi Hidayat Official", "Ahmad Ubaidillah Nasiden"],
+      "Sains & Islam": ["Rumah Editor", "Males Ngedit"],
+      "Kristologi & Ateisme": ["God and Beyond"],
+      "Sejarah & Peradaban": ["Guru Gembul"],
+      "Filsafat & Pemikiran": ["Guru Gembul"],
+      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah"],
+      "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"]
+    }
   }
 }
