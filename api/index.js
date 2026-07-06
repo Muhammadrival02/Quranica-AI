@@ -78,6 +78,14 @@ try {
   metaUshulMethodology = null;
 }
 
+// Load Ulumul Qur'an Dauroh reference (Markaz Ad-Dirasat, Ma'had Imam Syathibi)
+let ulumulQuranDauroh = null;
+try {
+  ulumulQuranDauroh = require("../src/data/ulumulQuranDauroh.json");
+} catch(e5) {
+  ulumulQuranDauroh = null;
+}
+
 // ===== HEALTH =====
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 
@@ -444,7 +452,13 @@ app.post("/api/library/ai-search", async (req, res) => {
   }
 });
 
-// ===== CHAT (4 mode: Tafsir | Hadits | Maqashid | Gen Z) =====
+// ===== DAUROH ULUMUL QUR'AN =====
+app.get("/api/dauroh", (req, res) => {
+  if (!ulumulQuranDauroh) return res.status(404).json({ error: "Data dauroh belum dimuat" });
+  res.json(ulumulQuranDauroh);
+});
+
+// ===== CHAT (4 mode: Tafsir | Master | Maqashid | Gen Z) =====
 app.post("/api/chat", async (req, res) => {
   try {
     const { messages, mode } = req.body;
@@ -476,6 +490,28 @@ app.post("/api/chat", async (req, res) => {
         "\n\nArsitektur Inferensi (8 Tahap): " + m.inference_architecture.steps.join(" → ") +
         "\n\nGUNAKAN metodologi di atas sebagai kerangka istinbath hukum dalam setiap jawaban. Setiap jawaban HARUS mengacu pada: hierarki epistemik 10 level (nash qath'i → hadis → ijma' → qiyas → maqashid → sains → 'urf), modularitas terkendali, transparansi metodologis, prinsip minimal intervensi, dan mekanisme koreksi-diri." +
         "\n=== AKHIR METODOLOGI ===\n";
+    }
+
+    // Build methodology + dauroh context for Master mode
+    let masterCtx = "";
+    if (chatMode === 'master') {
+      if (metaUshulMethodology) {
+        var m = metaUshulMethodology;
+        masterCtx += "\n\n=== METODOLOGI: USHUL FIQH KONTEMPORER (META-USHUL) ===" +
+          "\nSumber: " + m.author + ", " + m.institution + " (" + m.year + ")" +
+          "\n" + m.description +
+          "\n\n7 Prinsip: " + Object.keys(m.principles).map(function(k) { return m.principles[k].name; }).join(" | ") +
+          "\n\n8 Tahap Inferensi: " + m.inference_architecture.steps.join(" → ") +
+          "\nGUNAKAN sebagai kerangka istinbath hukum.";
+      }
+      if (ulumulQuranDauroh) {
+        var d = ulumulQuranDauroh;
+        masterCtx += "\n\n=== REFERENSI: DAUROH ULUMUL QUR'AN ===" +
+          "\nSumber: " + d.title + " — " + d.institution +
+          "\n29 Sesi: " + d.sessions.map(function(s) { return s.topic; }).join(" | ") +
+          "\nGUNAKAN sebagai referensi otoritatif untuk pertanyaan Ulumul Qur'an.";
+      }
+      masterCtx += "\n=== AKHIR KONTEKS TAMBAHAN ===\n";
     }
 
     const sysMsg = (chatMode === 'master'
