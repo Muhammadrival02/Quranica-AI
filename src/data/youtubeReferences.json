@@ -157,6 +157,21 @@
       ],
       "style": "Ustadz Muhammad Nuruddin, Lc. MA, 107K subscribers, 633 videos, akademik-populer, Bahasa Indonesia (bilingual English)",
       "usage": "Referensi filsafat Islam dan akidah — menjawab masalah kekinian dengan pendekatan rasional, seminar akademik."
+    },
+    {
+      "name": "GEMBULIKUM",
+      "url": "https://youtube.com/@gembulikum",
+      "handle": "@gembulikum",
+      "focus": "Pengetahuan Umum dan Isu Sosial",
+      "domains": [
+        "Isu sosial Gen Z dan pernikahan muda",
+        "Sains dan mukjizat",
+        "Sejarah Indonesia dan Islam",
+        "Teknologi dan dunia programming",
+        "Politik dan kebijakan publik"
+      ],
+      "style": "117K subscribers, 1K videos, channel kedua Guru Gembul, dikelola admin, Bahasa Indonesia kasual",
+      "usage": "Referensi isu sosial kontemporer dan pengetahuan umum — perspektif kritis dengan sentuhan ringan."
     }
   ],
   "guidelines": {
@@ -172,7 +187,7 @@
       "Kristologi & Ateisme": ["God and Beyond"],
       "Sejarah & Peradaban": ["Guru Gembul"],
       "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official"],
-      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official"],
+      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official", "GEMBULIKUM"],
       "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"],
       "Filsafat Islam & Teologi": ["Muhammad Nuruddin Official"],
       "Sejarah Peradaban": ["Guru Gembul", "Ardhianzy"]
