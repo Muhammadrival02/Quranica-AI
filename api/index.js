@@ -486,17 +486,17 @@ app.post("/api/chat", async (req, res) => {
 
     const mandatoryRules = `PERSYARATAN MUTLAK: 1) AKSARA ARAB MELIMPAH — setiap ayat, hadits, istilah kunci, & kutipan kitab WAJIB teks Arab berharakat + terjemahan. JANGAN hanya transliterasi. 2) QAUL ULAMA minimal 7 kutipan LANGSUNG — format: "[Ulama] dalam [Kitab] menyatakan: '...kutipan...'" [Kitab, Jilid X, Hal. Y]. WAJIB tanda kutip, bukan parafrase. 3) ORIENTALIS dalam BAHASA ASLI — kutipan orientalis WAJIB bahasa aslinya (Inggris/Jerman/Prancis) dulu, baru terjemahan Indonesia. 4) DENSITAS — tiap argumen 2+ ref, total 10+ kitab berbeda + 2 orientalis, tiap paragraf 1+ rujukan [Kurung Siku].`;
 
-    // Build methodology + dauroh + youtube context for Master mode
+    // Build methodology + dauroh context for Master mode
     let masterCtx = "";
     if (chatMode === 'master') {
       if (metaUshulMethodology) {
         var m = metaUshulMethodology;
-        masterCtx += "\n\n=== METODOLOGI: USHUL FIQH KONTEMPORER (META-USHUL) ===" +
-          "\nSumber: " + m.author + ", " + m.institution + " (" + m.year + ")" +
-          "\n" + m.description +
-          "\n\n7 Prinsip: " + Object.keys(m.principles).map(function(k) { return m.principles[k].name; }).join(" | ") +
-          "\n\n8 Tahap Inferensi: " + m.inference_architecture.steps.join(" → ") +
-          "\nGUNAKAN sebagai kerangka istinbath hukum.";
+        masterCtx += "\\n\\n=== METODOLOGI: USHUL FIQH KONTEMPORER (META-USHUL) ===" +
+          "\\nSumber: " + m.author + ", " + m.institution + " (" + m.year + ")" +
+          "\\n" + m.description +
+          "\\n\\n7 Prinsip: " + Object.keys(m.principles).map(function(k) { return m.principles[k].name; }).join(" | ") +
+          "\\n\\n8 Tahap Inferensi: " + m.inference_architecture.steps.join(" → ") +
+          "\\nGUNAKAN sebagai kerangka istinbath hukum.";
       }
       if (ulumulQuranDauroh) {
         var d = ulumulQuranDauroh;
@@ -505,16 +505,20 @@ app.post("/api/chat", async (req, res) => {
           "\\n29 Sesi: " + d.sessions.map(function(s) { return s.topic; }).join(" | ") +
           "\\nGUNAKAN sebagai referensi otoritatif untuk pertanyaan Ulumul Qur'an.";
       }
-      if (youtubeReferences) {
-        var yt = youtubeReferences;
-        masterCtx += "\\n\\n=== 23 CHANNEL YOUTUBE REFERENSI ===";
-        yt.channels.forEach(function(ch) {
-          masterCtx += "\\n• " + ch.name + " [" + ch.focus + "] — " + ch.domains.slice(0, 3).join(", ");
-        });
-        masterCtx += "\\n\\nPANDUAN: " + yt.guidelines.priority;
-        masterCtx += "\\nFormat sitasi: " + yt.guidelines.citation_format;
-      }
-      masterCtx += "\n=== AKHIR KONTEKS TAMBAHAN ===\n";
+      masterCtx += "\\n=== AKHIR KONTEKS TAMBAHAN ===\\n";
+    }
+
+    // Build YouTube reference context for ALL modes
+    let youtubeCtx = "";
+    if (youtubeReferences) {
+      var yt = youtubeReferences;
+      youtubeCtx += "\\n\\n=== 23 CHANNEL YOUTUBE REFERENSI (berlaku untuk SEMUA mode) ===";
+      yt.channels.forEach(function(ch) {
+        youtubeCtx += "\\n• " + ch.name + " [" + ch.focus + "] — " + ch.domains.slice(0, 3).join(", ");
+      });
+      youtubeCtx += "\\n\\nPANDUAN: " + yt.guidelines.priority;
+      youtubeCtx += "\\nFormat sitasi: " + yt.guidelines.citation_format;
+      youtubeCtx += "\\n=== AKHIR REFERENSI YOUTUBE ===\\n";
     }
 
     const sysMsg = (chatMode === 'master'
@@ -523,7 +527,7 @@ app.post("/api/chat", async (req, res) => {
       ? mandatoryRules + ' Anda adalah Asisten AI Pakar Maqashid Syariah & Studi Kontekstual. FOKUS: maqashid, konteks kontemporer, orientalis+oksidentalis. Hadits & tafsir sebagai landasan. OUTPUT: minimal 4 paragraf, maksimal 10 paragraf. Padat, langsung ke inti, jangan bertele-tele.'
       : chatMode === 'genz'
       ? 'Anda adalah Asisten AI Gen Z — SEPENUHNYA pakai bahasa gaul Indonesia 2024 (Jaksel + TikTok): "bestie", "literally", "which is", "jujurly", "gas", "nggak", "banget", "btw", "fomo", "slay", "spill", "valid", "no cap", "vibes", "worth it", "receh", "gercep", "santuy", "mantul", "gemoy". Gaya: santai, lucu, relate, kadang roasting ringan. TAPI: tetap akurat secara Islam. Tetap cantumkan dalil & sumber. Output singkat, to the point. JANGAN formal. JANGAN kaku. Gunakan emoji mumer. Contoh: "Bestie, jadi gini literally... spill ya" | "Jujurly sih ini tuh..." | "Nabi tuh udah spill dari dulu bestie..."'
-      : 'Anda adalah Asisten AI Tafsir Al-Quran untuk pemula. GAYA: sederhana, mudah dipahami, seperti menjelaskan ke teman. STRUKTUR: 1) Penjelasan singkat (1-2 paragraf), 2) 1-2 ayat terkait (teks Arab + terjemahan), 3) Hikmah/pelajaran (2-3 poin), 4) Kesimpulan 1 kalimat. JANGAN pakai istilah teknis berat. JANGAN sebut banyak kitab. Cukup 1-2 rujukan saja. Output maksimal 5 paragraf. Gunakan Bahasa Indonesia yang hangat dan bersahabat.') + ` FORMAT: Akhiri dengan "Wallahu A'lam". JANGAN berhalusinasi.` + refCtx;
+      : 'Anda adalah Asisten AI Tafsir Al-Quran untuk pemula. GAYA: sederhana, mudah dipahami, seperti menjelaskan ke teman. STRUKTUR: 1) Penjelasan singkat (1-2 paragraf), 2) 1-2 ayat terkait (teks Arab + terjemahan), 3) Hikmah/pelajaran (2-3 poin), 4) Kesimpulan 1 kalimat. JANGAN pakai istilah teknis berat. JANGAN sebut banyak kitab. Cukup 1-2 rujukan saja. Output maksimal 5 paragraf. Gunakan Bahasa Indonesia yang hangat dan bersahabat.') + ` FORMAT: Akhiri dengan "Wallahu A'lam". JANGAN berhalusinasi.` + youtubeCtx + refCtx;
 
     const response = await fetch("https://ai.sumopod.com/v1/chat/completions", {
       method: "POST",
