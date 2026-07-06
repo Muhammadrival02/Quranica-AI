@@ -307,6 +307,51 @@
       ],
       "style": "Verified, 801K subscribers, 4.7K videos, media syiar Ahlusunnah Waljamaah, Bahasa Indonesia",
       "usage": "Referensi dakwah Ahlusunnah — tadabbur Qur'an, wawancara habaib, dan majelis rutin."
+    },
+    {
+      "name": "Fajrul Fx",
+      "url": "https://youtube.com/@fajrulfx",
+      "handle": "@fajrulfx",
+      "focus": "Fisika, Sains, dan Critical Thinking",
+      "domains": [
+        "Fisika melalui game dan anime",
+        "Critical thinking dan logika",
+        "Metode belajar efektif (Genius Course)",
+        "Cara kerja otak dan neurosains",
+        "Fisika teoretis dan terapan"
+      ],
+      "style": "Verified, 1.39M subscribers, 411 videos, lulusan Cardiff University, fisikawan profesional, Bahasa Indonesia",
+      "usage": "Referensi fisika dan critical thinking — sains populer via pop culture, kursus berpikir kritis."
+    },
+    {
+      "name": "Bawah Pohon Science",
+      "url": "https://youtube.com/@muinbanyaldanbawahpohon",
+      "handle": "@muinbanyaldanbawahpohon",
+      "focus": "Fisika dan Koreksi Saintifik",
+      "domains": [
+        "Fisika teoretis dan terapan",
+        "Koreksi miskonsepsi sains populer",
+        "Sains dan Islam",
+        "Sejarah sains",
+        "Pendidikan fisika"
+      ],
+      "style": "43.3K subscribers, 597 videos, Abdul Muin Banyal (S.Si Unhas, M.S.Ed Physics Univ of Minnesota), kritis-analitis, Bahasa Indonesia",
+      "usage": "Referensi koreksi saintifik — meluruskan klaim sains yang keliru dalam dakwah populer."
+    },
+    {
+      "name": "Pamitnya Ngantor",
+      "url": "https://youtube.com/@pamitnyangantor",
+      "handle": "@pamitnyangantor",
+      "focus": "Islam Kritis dan Isu Kontemporer",
+      "domains": [
+        "Kritik nasab dan genealogi Islam",
+        "Perbandingan mazhab dan aliran",
+        "Teologi dan sejarah Islam",
+        "Isu sosial-politik Islam Indonesia",
+        "Pertanyaan anak seputar agama"
+      ],
+      "style": "33.1K subscribers, 321 videos, santai tapi kritis, Bahasa Indonesia",
+      "usage": "Referensi Islam kritis — mempertanyakan narasi mainstream, pendekatan segar dan tidak menggurui."
     }
   ],
   "guidelines": {
@@ -318,11 +363,11 @@
       "Hadits & Ulumul Hadits": ["Adi Hidayat Official", "Yufid.TV"],
       "Fiqih & Ushul Fiqh": ["Adi Hidayat Official", "Ustadz Faris Baswedan", "Ajir Ubaidillah", "Aa Guru Tigarut", "Yufid.TV"],
       "Akidah & Kalam": ["Adi Hidayat Official", "Ahmad Ubaidillah Nasiden", "Yufid.TV", "Kumaila Hakimah"],
-      "Sains & Islam": ["Rumah Editor", "Males Ngedit", "Kok Bisa?", "Neuron"],
+      "Sains & Islam": ["Rumah Editor", "Males Ngedit", "Kok Bisa?", "Neuron", "Fajrul Fx", "Bawah Pohon Science"],
       "Kristologi & Ateisme": ["God and Beyond"],
       "Sejarah & Peradaban": ["Guru Gembul", "Ardhianzy", "Kok Bisa?"],
-      "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official"],
-      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official", "GEMBULIKUM"],
+      "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official", "Fajrul Fx"],
+      "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official", "GEMBULIKUM", "Pamitnya Ngantor"],
       "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"],
       "Filsafat Islam & Teologi": ["Muhammad Nuruddin Official", "Kumaila Hakimah"],
       "Sejarah Peradaban": ["Guru Gembul", "Ardhianzy"],
