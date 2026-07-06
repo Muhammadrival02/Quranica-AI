@@ -172,6 +172,66 @@
       ],
       "style": "117K subscribers, 1K videos, channel kedua Guru Gembul, dikelola admin, Bahasa Indonesia kasual",
       "usage": "Referensi isu sosial kontemporer dan pengetahuan umum — perspektif kritis dengan sentuhan ringan."
+    },
+    {
+      "name": "Yufid.TV",
+      "url": "https://youtube.com/@yufid",
+      "handle": "@yufid",
+      "focus": "Pengajian dan Ceramah Islam Komprehensif",
+      "domains": [
+        "Tafsir Al-Qur'an",
+        "Fiqih dan akidah Ahlussunnah",
+        "Sejarah Islam (motion graphic)",
+        "Kajian Ustadz Firanda Andirja",
+        "Dakwah digital dan pendidikan Islam"
+      ],
+      "style": "Verified, 4.22M subscribers, 24K videos, Bahasa Indonesia, rapi dan profesional",
+      "usage": "Referensi utama kajian Islam mainstream — sumber video dakwah terbesar, tafsir, fiqih, dan sejarah Islam."
+    },
+    {
+      "name": "KH Buya Syakur Yasin MA",
+      "url": "https://youtube.com/@khbuyasyakuryasinma",
+      "handle": "@khbuyasyakuryasinma",
+      "focus": "Tasawuf, Akhlak, dan Kajian Kitab",
+      "domains": [
+        "Kajian kitab Fi Dzhilalil Quran",
+        "Tasawuf dan spiritualitas Islam",
+        "Akhlak dan adab",
+        "Fiqih kondisional dan kontekstual",
+        "Refleksi kehidupan dan kebahagiaan"
+      ],
+      "style": "Verified, 1.23M subscribers, 6.3K videos, 'Berbagi kebahagiaan, tidak menggurui', Bahasa Indonesia santai",
+      "usage": "Referensi tasawuf dan akhlak — pendekatan spiritual yang menyejukkan, fiqih yang manusiawi."
+    },
+    {
+      "name": "Quraish Shihab",
+      "url": "https://youtube.com/@quraishshihabmuhammad",
+      "handle": "@quraishshihabmuhammad",
+      "focus": "Tafsir Al-Mishbah dan Studi Al-Qur'an",
+      "domains": [
+        "Tafsir Al-Mishbah: Living with the Quran",
+        "Tafsir tematik dan kontekstual",
+        "Ulumul Qur'an",
+        "Dialog keluarga dan masyarakat",
+        "Pemikiran Islam moderat"
+      ],
+      "style": "201K subscribers, 388 videos, bersama Najelaa Shihab & Fathi Assegaf, akademik-elegan, Bahasa Indonesia",
+      "usage": "Referensi otoritatif tafsir Al-Qur'an — perspektif moderat, kontekstual, dan mendalam dari Mufassir terkemuka Indonesia."
+    },
+    {
+      "name": "Kumaila Hakimah",
+      "url": "https://youtube.com/@kumaila.hakimah",
+      "handle": "@kumaila.hakimah",
+      "focus": "Filsafat Kritis dan Teologi",
+      "domains": [
+        "Forbidden Questions — pertanyaan tabu agama",
+        "Filsafat dan teologi kritis",
+        "Isu sosial dan politik Indonesia",
+        "Gen Z dan emosi generasi",
+        "Logika dan argumentasi"
+      ],
+      "style": "9.01K subscribers, 37 videos, kreator Forbidden Questions, kritis-progresif, Bahasa Indonesia",
+      "usage": "Referensi pemikiran kritis dan teologi — mempertanyakan asumsi, mendorong dialog terbuka tentang isu sensitif."
     }
   ],
   "guidelines": {
@@ -179,18 +239,19 @@
     "citation_format": "[Channel: Nama Channel, Topik: Judul Video]",
     "applicable_modes": ["master"],
     "category_mapping": {
-      "Tafsir & Ulumul Qur'an": ["Adi Hidayat Official", "Ajir Ubaidillah"],
-      "Hadits & Ulumul Hadits": ["Adi Hidayat Official"],
-      "Fiqih & Ushul Fiqh": ["Adi Hidayat Official", "Ustadz Faris Baswedan", "Ajir Ubaidillah", "Aa Guru Tigarut"],
-      "Akidah & Kalam": ["Adi Hidayat Official", "Ahmad Ubaidillah Nasiden"],
+      "Tafsir & Ulumul Qur'an": ["Adi Hidayat Official", "Ajir Ubaidillah", "Yufid.TV", "Quraish Shihab"],
+      "Hadits & Ulumul Hadits": ["Adi Hidayat Official", "Yufid.TV"],
+      "Fiqih & Ushul Fiqh": ["Adi Hidayat Official", "Ustadz Faris Baswedan", "Ajir Ubaidillah", "Aa Guru Tigarut", "Yufid.TV"],
+      "Akidah & Kalam": ["Adi Hidayat Official", "Ahmad Ubaidillah Nasiden", "Yufid.TV", "Kumaila Hakimah"],
       "Sains & Islam": ["Rumah Editor", "Males Ngedit"],
       "Kristologi & Ateisme": ["God and Beyond"],
       "Sejarah & Peradaban": ["Guru Gembul"],
       "Filsafat & Pemikiran": ["Guru Gembul", "Ardhianzy", "Muhammad Nuruddin Official"],
       "Isu Kontemporer": ["Guru Gembul", "Ajir Ubaidillah", "Muhammad Nuruddin Official", "GEMBULIKUM"],
       "Adab & Akhlak": ["Ustadz Faris Baswedan", "Ahmad Ubaidillah Nasiden"],
-      "Filsafat Islam & Teologi": ["Muhammad Nuruddin Official"],
-      "Sejarah Peradaban": ["Guru Gembul", "Ardhianzy"]
+      "Filsafat Islam & Teologi": ["Muhammad Nuruddin Official", "Kumaila Hakimah"],
+      "Sejarah Peradaban": ["Guru Gembul", "Ardhianzy"],
+      "Tasawuf & Spiritualitas": ["KH Buya Syakur Yasin MA"]
     }
   }
 }
