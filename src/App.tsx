@@ -10,6 +10,8 @@ import MakharijulHuruf from './components/MakharijulHuruf';
 import { QURAN_RECITERS, getAudioUrl, type Reciter } from './data/quranReciters';
 import { QIRAAT_READERS, SHADHDH_SOURCES, VERSE_VARIANTS, type VerseVariant } from './data/qiraatVariants';
 import { MANUSCRIPTS, MANUSCRIPT_ARCHIVES, MANUSCRIPT_STATS, getManuscriptUrl, type Manuscript } from './data/manuscriptCoranica';
+import { getVerseVariants, getCommonRules, ALL_VARIANTS, VARIANTS_STATS, type SurahVariant } from './data/allQiraatVariants';
+import { QIRAAT_READERS, SHADHDH_SOURCES } from './data/qiraatVariants';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -2161,6 +2163,67 @@ function App() {
               </div>
             )}
           </div>
+
+          {/* Qira'at Variants Panel — for confirmed verse */}
+          {(() => {
+            const surahNum = parseInt(confirmedSurah);
+            const verseNum = parseInt(confirmedAyah);
+            const variants = getVerseVariants(surahNum, verseNum);
+            const surahName = surahs.find(s => s.number.toString() === confirmedSurah)?.englishName || '';
+            return (
+              <details className="bg-slate-900 rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
+                <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-800/50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Users2 size={14} className="text-purple-400" />
+                    <span className="text-xs font-bold text-purple-400">
+                      🟣 Varian Qira'at — QS {surahName} Ayat {verseNum}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">{variants.length > 0 ? `${variants.length} varian` : 'aturan umum'}</span>
+                </summary>
+                <div className="px-4 pb-4 space-y-3">
+                  {variants.length > 0 ? (
+                    variants.map((v, vi) => (
+                      <div key={vi} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
+                        <p className="text-[10px] text-slate-400 mb-2">Kata ke-{v.wordIndex}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
+                            <p className="text-[9px] text-emerald-400 font-bold">Standar (Hafs)</p>
+                            <p className="text-right text-lg font-arabic text-emerald-300" dir="rtl">{v.canonicalText}</p>
+                          </div>
+                          {v.variants.slice(0, 4).map((vr, vri) => {
+                            const reader = QIRAAT_READERS.find(r => r.id === vr.readerId) || SHADHDH_SOURCES.find(s => s.id === vr.readerId);
+                            const rn = (reader as any)?.name || (reader as any)?.nameEn || vr.readerId;
+                            return (
+                              <div key={vri} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
+                                <p className="text-[9px] text-amber-400 font-bold">{rn}</p>
+                                <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{vr.text}</p>
+                                {vr.note && <p className="text-[9px] text-slate-500 mt-0.5">{vr.note}</p>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-slate-500">⚠️ Belum ada varian spesifik untuk ayat ini di database. Berikut aturan qira'at umum yang mungkin berlaku:</p>
+                      {getCommonRules().slice(0, 5).map((rule, ri) => (
+                        <div key={ri} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
+                          <p className="text-[10px] font-bold text-amber-400">{rule.ruleAr} — {rule.rule}</p>
+                          <p className="text-[9px] text-slate-400 mt-1"><span className="text-purple-400">Pembaca:</span> {rule.readers}</p>
+                          <p className="text-[9px] text-slate-500">{rule.description}</p>
+                        </div>
+                      ))}
+                      <p className="text-[9px] text-slate-600 text-center">
+                        Data lengkap: <a href={`https://corpuscoranicum.de/en/verse-navigator/sura/${surahNum}/verse/${verseNum}/variants`} target="_blank" className="text-purple-400 underline">corpuscoranicum.de</a> • {VARIANTS_STATS.totalSurahs} surah tersedia
+                      </p>
+                    </>
+                  )}
+                </div>
+              </details>
+            );
+          })()}
 
           {/* Terminal Logs */}
           <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 h-80 flex flex-col shadow-inner">
