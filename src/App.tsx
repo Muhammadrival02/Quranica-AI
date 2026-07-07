@@ -2206,57 +2206,86 @@ function App() {
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
                   {!tahsinVerseArabic ? (
-                    <p className="text-[10px] text-slate-500">⏳ Klik RAG untuk memuat teks ayat...</p>
-                  ) : verseQiraat && hasAnyVariant ? (
+                    <p className="text-[10px] text-slate-500">⏳ Klik RAG untuk memuat teks ayat dan menganalisis qira'at...</p>
+                  ) : (
                     <>
-                      {/* Per-word variants */}
-                      {verseQiraat.words.filter(w => w.variants.length > 0).map((w, wi) => (
-                        <div key={wi} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
-                          <p className="text-[10px] text-slate-400 mb-2">Kata ke-{w.index}: <span className="text-slate-200 font-arabic text-lg" dir="rtl">{w.text}</span></p>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
-                              <p className="text-[9px] text-emerald-400 font-bold">ʿĀṣim (Ḥafṣ) — Standar</p>
-                              <p className="text-right text-lg font-arabic text-emerald-300" dir="rtl">{w.text}</p>
-                            </div>
-                            {w.variants.slice(0, 4).map((v, vi) => (
-                              <div key={vi} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
-                                <p className="text-[9px] text-amber-400 font-bold">{v.readerName}</p>
-                                <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{v.text}</p>
-                                <p className="text-[9px] text-slate-500 mt-0.5">{v.note}</p>
+                      {/* Qiraat 10 Grid — semua 10 qari dengan status untuk ayat ini */}
+                      <div className="bg-slate-950/60 rounded-lg p-3 border border-emerald-500/20">
+                        <p className="text-[10px] font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                          <ShieldCheck size={12} /> 🔟 Status Qiraat 10 — QS {surahName} Ayat {verseNum}
+                        </p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {QIRAAT_10.map(q => {
+                            // Check if this qiraat has known differences for this verse
+                            const hasKnownDiff = verseQiraat?.words.some(w =>
+                              w.variants.some(v => v.readerId === q.id ||
+                                q.transmitters.some(t => v.readerId === t.id))
+                            );
+                            return (
+                              <div key={q.id} className={`flex items-center justify-between p-2 rounded border ${hasKnownDiff ? 'bg-amber-500/5 border-amber-500/30' : 'bg-slate-900/30 border-slate-800/30'}`}>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-[10px] font-bold text-slate-300 truncate">
+                                    <span className="font-arabic text-xs">{q.name}</span>
+                                    <span className="text-slate-500 ml-1">({q.nameEn})</span>
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {hasKnownDiff ? (
+                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">⚠️ BEDA</span>
+                                  ) : (
+                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded-full">✅ SAMA</span>
+                                  )}
+                                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${q.rank === 'sabah' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                                    {q.rank === 'sabah' ? '7' : '+3'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Detail perbedaan jika ada */}
+                        {hasAnyVariant && (
+                          <div className="mt-3 pt-3 border-t border-slate-800/50 space-y-2">
+                            <p className="text-[9px] font-bold text-amber-400">⚠️ Perbedaan terdeteksi:</p>
+                            {verseQiraat!.words.filter(w => w.variants.length > 0).map((w, wi) => (
+                              <div key={wi} className="bg-slate-900/50 rounded p-2">
+                                <p className="text-[10px] text-slate-400 mb-1">Kata ke-{w.index}: <span className="text-slate-200 font-arabic" dir="rtl">{w.text}</span></p>
+                                <div className="flex flex-wrap gap-1">
+                                  {w.variants.map((v, vi) => (
+                                    <span key={vi} className="text-[8px] bg-amber-500/10 text-amber-300 px-1.5 py-0.5 rounded">
+                                      {v.readerName}: {v.text} — {v.note}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             ))}
                           </div>
-                        </div>
-                      ))}
-                      {/* General rules */}
-                      {verseQiraat.generalRules.length > 0 && (
+                        )}
+                      </div>
+
+                      {/* General rules that apply */}
+                      {verseQiraat && verseQiraat.generalRules.length > 0 && (
                         <div className="bg-slate-950/60 rounded-lg p-3 border border-indigo-500/20">
-                          <p className="text-[10px] font-bold text-indigo-400 mb-2">📋 Aturan Qira'at Umum:</p>
+                          <p className="text-[10px] font-bold text-indigo-400 mb-2">📋 Aturan Qira'at Berlaku:</p>
                           {verseQiraat.generalRules.map((r, ri) => (
                             <p key={ri} className="text-[9px] text-slate-400">• {r}</p>
                           ))}
                         </div>
                       )}
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[10px] text-slate-300 mb-2">✅ Semua qari membaca kata-kata ayat ini sama. Berikut aturan yang berlaku:</p>
-                      {verseQiraat?.generalRules?.map((rule, ri) => (
-                        <div key={ri} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
-                          <p className="text-[9px] text-slate-400">• {rule}</p>
+
+                      {/* Quick ref: common rules */}
+                      {(!verseQiraat?.generalRules?.length) && (
+                        <div className="bg-slate-950/60 rounded-lg p-3 border border-slate-700/50">
+                          <p className="text-[10px] font-bold text-slate-400 mb-2">📐 Aturan Tajwid & Qira'at Berlaku:</p>
+                          {getCommonRules().slice(0, 5).map((rule, ri) => (
+                            <p key={ri} className="text-[9px] text-slate-500">• {rule.ruleAr} ({rule.rule}): {rule.readers}</p>
+                          ))}
                         </div>
-                      ))}
-                      {(!verseQiraat?.generalRules?.length) && getCommonRules().slice(0, 5).map((rule, ri) => (
-                        <div key={ri} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
-                          <p className="text-[10px] font-bold text-amber-400">{rule.ruleAr} — {rule.rule}</p>
-                          <p className="text-[9px] text-slate-400 mt-1"><span className="text-purple-400">Pembaca:</span> {rule.readers}</p>
-                          <p className="text-[9px] text-slate-500">{rule.description}</p>
-                        </div>
-                      ))}
+                      )}
                     </>
                   )}
                   <p className="text-[9px] text-slate-600 text-center">
-                    📜 Data: corpuscoranicum.de • ad-Dānī: at-Taysīr • Ibn al-Jazarī: an-Nashr
+                    📜 Sumber: corpuscoranicum.de • Mushaf Qiraat 10 • ad-Dānī • Ibn al-Jazarī
                   </p>
                   {/* Qiraat 10 Verification Footer */}
                   <details className="bg-slate-950/60 rounded-lg border border-emerald-500/10">
