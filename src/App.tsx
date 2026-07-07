@@ -9,6 +9,7 @@ import HijaiyahPanel from './components/HijaiyahPanel';
 import MakharijulHuruf from './components/MakharijulHuruf';
 import { QURAN_RECITERS, getAudioUrl, type Reciter } from './data/quranReciters';
 import { QIRAAT_READERS, SHADHDH_SOURCES, VERSE_VARIANTS, type VerseVariant } from './data/qiraatVariants';
+import { MANUSCRIPTS, MANUSCRIPT_ARCHIVES, MANUSCRIPT_STATS, getManuscriptUrl, type Manuscript } from './data/manuscriptCoranica';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -4810,7 +4811,8 @@ function App() {
               {quranLoading && !quranSurahs.length ? (
                 <p className="text-slate-500 text-sm">Memuat...</p>
               ) : (
-                <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+                <>
+                <div className="space-y-1 max-h-[55vh] overflow-y-auto">
                   {quranSurahs.filter((s: any) => 
                     quranSearch ? s.name?.transliteration?.id?.toLowerCase().includes(quranSearch.toLowerCase()) || s.name?.translation?.en?.toLowerCase().includes(quranSearch.toLowerCase()) || s.number === parseInt(quranSearch) : true
                   ).map((surah: any) => (
@@ -4826,6 +4828,28 @@ function App() {
                     </button>
                   ))}
                 </div>
+                {/* Manuscript Catalog Panel */}
+                <details className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3">
+                  <summary className="text-[10px] font-bold text-slate-400 cursor-pointer flex items-center gap-2">
+                    <FileText size={11} /> 📜 {MANUSCRIPT_STATS.totalManuscripts} Manuskrip Al-Quran Kuno — corpuscoranicum.de
+                  </summary>
+                  <div className="mt-3 space-y-2 max-h-[30vh] overflow-y-auto">
+                    <p className="text-[9px] text-slate-500">
+                      {MANUSCRIPT_STATS.totalArchives} koleksi di {MANUSCRIPT_STATS.countries} negara • {MANUSCRIPT_STATS.carbonDated} carbon-dated • Era: {MANUSCRIPT_STATS.earliestDate}
+                    </p>
+                    {MANUSCRIPT_ARCHIVES.slice(0, 10).map(a => (
+                      <div key={a.id} className="bg-slate-900/50 rounded p-2 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-slate-300 font-bold">{a.institution}</p>
+                          <p className="text-[9px] text-slate-500">{a.city}, {a.country} • {a.totalFragments} fragmen</p>
+                        </div>
+                        <span className="text-[10px] text-purple-400 font-mono">{a.totalFragments}</span>
+                      </div>
+                    ))}
+                    <p className="text-[9px] text-slate-600 text-center">+ {MANUSCRIPT_ARCHIVES.length - 10} koleksi lainnya • <a href="https://corpuscoranicum.de/en/manuscripts" target="_blank" className="text-purple-400 underline">Lihat lengkap</a></p>
+                  </div>
+                </details>
+              </>
               )}
             </>
           ) : (
@@ -4888,6 +4912,14 @@ function App() {
                 >
                   <Users2 size={11} /> {quranShowQiraat ? 'Qiraat ON' : 'Qiraat'}
                 </button>
+                <a
+                  href={getManuscriptUrl(quranSelectedSurah!, 1)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1 bg-slate-700 text-slate-500 hover:text-slate-300"
+                >
+                  <FileText size={11} /> {MANUSCRIPT_STATS.totalManuscripts} Manuskrip
+                </a>
                 {quranShowQiraat && (
                   <span className="text-[9px] text-slate-500">7 Pembaca Kanonik • corpuscoranicum.de</span>
                 )}
@@ -4910,9 +4942,10 @@ function App() {
                           </div>
                           {v.variants.slice(0, 3).map((vr, vri) => {
                             const reader = QIRAAT_READERS.find(r => r.id === vr.readerId) || SHADHDH_SOURCES.find(s => s.id === vr.readerId);
+                            const readerName = (reader as any)?.nameEn || reader?.name || vr.readerId;
                             return (
                               <div key={vri} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
-                                <p className="text-[9px] text-amber-400 font-bold">{reader?.nameEn || reader?.name || vr.readerId}</p>
+                                <p className="text-[9px] text-amber-400 font-bold">{readerName}</p>
                                 <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{vr.text}</p>
                                 {vr.note && <p className="text-[9px] text-slate-500 mt-0.5">{vr.note}</p>}
                               </div>
