@@ -49,7 +49,7 @@ function App() {
   }, [isDark]);
 
   // Q&A, Research, & MCP Client State
-  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah' | 'profile'>('tahsin');
+  const [activeTab, setActiveTab] = useState<'tahsin' | 'qa' | 'research' | 'mcp' | 'admin' | 'register' | 'hijaiyah' | 'profile' | 'quran'>('tahsin');
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -63,6 +63,7 @@ function App() {
     { id: 'hijaiyah', icon: BookOpen, label: 'Huruf' },
     { id: 'research', icon: BookText, label: 'Riset' },
     { id: 'mcp', icon: Database, label: 'Pustaka' },
+    { id: 'quran', icon: BookOpen, label: 'Quran' },
     { id: 'register', icon: Crown, label: 'Pro' },
     { id: 'profile', icon: User, label: 'Profil' },
   ] as const;
@@ -170,6 +171,38 @@ function App() {
   const [mcpError, setMcpError] = useState<string | null>(null);
   const [mcpActiveHandshake, setMcpActiveHandshake] = useState<any>(null);
   const [apiSnippetLang, setApiSnippetLang] = useState<'ts' | 'python' | 'curl'>('ts');
+
+  // Quran Reader State (LPMQ Kemenag verified)
+  const [quranSurahs, setQuranSurahs] = useState<any[]>([]);
+  const [quranSelectedSurah, setQuranSelectedSurah] = useState<number | null>(null);
+  const [quranAyahs, setQuranAyahs] = useState<any[]>([]);
+  const [quranLoading, setQuranLoading] = useState(false);
+  const [quranError, setQuranError] = useState<string | null>(null);
+  const [quranSearch, setQuranSearch] = useState("");
+
+  const fetchQuranSurahs = async () => {
+    setQuranLoading(true); setQuranError(null);
+    try {
+      const res = await fetch("https://quran-api-id.vercel.app/surah");
+      if (!res.ok) throw new Error("Gagal memuat daftar surah");
+      const data = await res.json();
+      setQuranSurahs(data || []);
+    } catch(e: any) { setQuranError(e.message); }
+    finally { setQuranLoading(false); }
+  };
+
+  const fetchQuranAyahs = async (surahNo: number) => {
+    setQuranLoading(true); setQuranError(null); setQuranSelectedSurah(surahNo);
+    try {
+      const res = await fetch(`https://quran-api-id.vercel.app/surah/${surahNo}`);
+      if (!res.ok) throw new Error("Gagal memuat ayat");
+      const data = await res.json();
+      setQuranAyahs(data.verses || data.ayahs || []);
+    } catch(e: any) { setQuranError(e.message); }
+    finally { setQuranLoading(false); }
+  };
+
+  useEffect(() => { if (activeTab === 'quran') fetchQuranSurahs(); }, [activeTab]);
 
   // Chat Integration Cross-check state
   const [mcpCrossCheckResult, setMcpCrossCheckResult] = useState<any>(null);
@@ -5404,6 +5437,62 @@ function App() {
             })}
           </div>
           <div className="h-5" />
+        </div>
+      )}
+      {activeTab === 'quran' && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-emerald-400">📖 Baca Al-Qur'an <span className="text-[9px] text-slate-500 font-normal">— Mushaf LPMQ Kemenag (Verified)</span></h2>
+          
+          {!quranSelectedSurah ? (
+            <>
+              <input
+                type="text" value={quranSearch} onChange={e => setQuranSearch(e.target.value)}
+                placeholder="Cari surah..." className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200"
+              />
+              {quranError && <p className="text-red-400 text-sm">❌ {quranError}</p>}
+              {quranLoading && !quranSurahs.length ? (
+                <p className="text-slate-500 text-sm">Memuat...</p>
+              ) : (
+                <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+                  {quranSurahs.filter((s: any) => 
+                    quranSearch ? s.name?.toLowerCase().includes(quranSearch.toLowerCase()) || s.englishName?.toLowerCase().includes(quranSearch.toLowerCase()) || s.number === parseInt(quranSearch) : true
+                  ).map((surah: any) => (
+                    <button key={surah.number} onClick={() => fetchQuranAyahs(surah.number)}
+                      className="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="text-emerald-400 font-mono text-sm">#{surah.number}</span>
+                        <span className="ml-2 text-slate-200 font-bold">{surah.name}</span>
+                        <span className="ml-2 text-[10px] text-slate-500">({surah.englishName} — {surah.numberOfAyahs} ayat)</span>
+                      </div>
+                      <span className="text-slate-600 text-lg font-arabic">{surah.arabic || surah.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setQuranSelectedSurah(null); setQuranAyahs([]); }} className="text-sm text-emerald-400 hover:underline">&larr; Kembali ke daftar surah</button>
+              {quranLoading ? <p className="text-slate-500 text-sm">Memuat ayat...</p> : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                  {quranAyahs.map((ayah: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                      <div className="flex gap-3">
+                        <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number || idx+1}</span>
+                        <div>
+                          <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-2" dir="rtl">
+                            {ayah.arabic || ayah.text?.arab || ""}
+                          </p>
+                          <p className="text-sm text-slate-300 italic">{ayah.translation || ayah.text?.transliteration?.en || ""}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
