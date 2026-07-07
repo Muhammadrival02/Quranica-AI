@@ -11,10 +11,10 @@ import { QURAN_RECITERS, getAudioUrl, type Reciter } from './data/quranReciters'
 import { QIRAAT_READERS, SHADHDH_SOURCES, VERSE_VARIANTS, type VerseVariant } from './data/qiraatVariants';
 import { MANUSCRIPTS, MANUSCRIPT_ARCHIVES, MANUSCRIPT_STATS, getManuscriptUrl, type Manuscript } from './data/manuscriptCoranica';
 import { getVerseVariants, getCommonRules, ALL_VARIANTS, VARIANTS_STATS, type SurahVariant } from './data/allQiraatVariants';
-import { QIRAAT_READERS, SHADHDH_SOURCES } from './data/qiraatVariants';
 import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatWord } from './data/qiraatEngine';
 import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10Database';
 import { getVerseComparison, type VerseQiraatFull } from './data/qiraatComparison';
+import { getAllReadings, type PerReaderReading } from './data/qiraatPerReader';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -2226,48 +2226,54 @@ function App() {
                           </span>
                         </div>
                         <div className="divide-y divide-slate-800/50">
-                          {QIRAAT_10.map(q => {
-                            const qiraatId = q.id;
-                            // Check known alternates
-                            const verseData = VERSE_DATABASE_COMPACT[`${surahNum}:${verseNum}`];
-                            const alt = verseData?.[qiraatId];
-                            const differs = !!alt;
-                            const displayText = alt && typeof alt === 'object' && 'text' in alt ? (alt as any).text : tahsinVerseArabic;
-
-                            return (
-                              <div key={q.id} className={`p-2.5 ${differs ? 'bg-amber-500/5' : 'bg-slate-900/20'}`}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-slate-300">{q.nameEn}</span>
-                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${q.rank === 'sabah' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
-                                      {q.rank === 'sabah' ? 'Sab\'ah' : 'Thalāthah'}
-                                    </span>
+                          {(() => {
+                            const allReadings = tahsinVerseArabic ? getAllReadings(surahNum, verseNum, tahsinVerseArabic) : [];
+                            return allReadings.map((r: PerReaderReading) => {
+                              const isHafs = r.qiraatId === 'asim';
+                              return (
+                                <div key={r.qiraatId} className={`p-2.5 ${r.differs ? 'bg-amber-500/5' : isHafs ? 'bg-emerald-500/5' : 'bg-amber-500/3'}`}>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-[10px] font-bold ${isHafs ? 'text-emerald-400' : r.differs ? 'text-amber-300' : 'text-slate-300'}`}>
+                                        {r.qiraatName} {isHafs ? '⭐' : ''}
+                                      </span>
+                                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${r.rank === 'sabah' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                                        {r.rank === 'sabah' ? "Sab'ah" : 'Thalāthah'}
+                                      </span>
+                                    </div>
+                                    {isHafs ? (
+                                      <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">⭐ RUJUKAN</span>
+                                    ) : r.differs ? (
+                                      <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">⚠️ TEKS BEDA</span>
+                                    ) : (
+                                      <span className="text-[8px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded-full">🔄 PELAFALAN BEDA</span>
+                                    )}
                                   </div>
-                                  {differs ? (
-                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                                      ⚠️ BEDA
+                                  <p className="text-right text-lg font-arabic leading-loose" dir="rtl">
+                                    <span className={isHafs ? 'text-emerald-200' : r.differs ? 'text-amber-300' : 'text-slate-300'}>
+                                      {r.fullText}
                                     </span>
-                                  ) : (
-                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded-full">✅ SAMA</span>
+                                  </p>
+                                  {r.differs && r.textDifferences.length > 0 && (
+                                    <div className="mt-1.5 space-y-0.5">
+                                      {r.textDifferences.map((d: any, i: number) => (
+                                        <p key={i} className="text-[8px] text-amber-400/80 leading-relaxed">
+                                          ⚡ Kata ke-{d.wordIndex}: <span className="text-amber-200">{d.hafsText}</span> → <span className="text-amber-200">{d.variantText}</span> — {d.note}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {!isHafs && r.pronunciationNotes.length > 0 && (
+                                    <div className="mt-1.5 space-y-0.5">
+                                      {r.pronunciationNotes.filter(n => !n.includes('⚠️')).slice(0, 3).map((note: string, i: number) => (
+                                        <p key={i} className="text-[8px] text-blue-400/70 leading-relaxed">{note}</p>
+                                      ))}
+                                    </div>
                                   )}
                                 </div>
-                                <p className="text-right text-lg font-arabic leading-loose" dir="rtl">
-                                  {differs ? (
-                                    <span className="text-amber-300">{displayText}</span>
-                                  ) : (
-                                    <span className="text-slate-400">{tahsinVerseArabic}</span>
-                                  )}
-                                </p>
-                                {differs && (
-                                  <p className="text-[8px] text-amber-400/70 mt-0.5">
-                                    ⚡ {alt && typeof alt === 'object' && 'differences' in alt
-                                      ? (alt as any).differences?.map((d: any) => d.note).join(' | ')
-                                      : 'Teks berbeda dari Hafs'}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
 
