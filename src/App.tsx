@@ -14,6 +14,7 @@ import { getVerseVariants, getCommonRules, ALL_VARIANTS, VARIANTS_STATS, type Su
 import { QIRAAT_READERS, SHADHDH_SOURCES } from './data/qiraatVariants';
 import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatWord } from './data/qiraatEngine';
 import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10Database';
+import { getVerseComparison, type VerseQiraatFull } from './data/qiraatComparison';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -2206,82 +2207,78 @@ function App() {
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
                   {!tahsinVerseArabic ? (
-                    <p className="text-[10px] text-slate-500">⏳ Klik RAG untuk memuat teks ayat dan menganalisis qira'at...</p>
+                    <p className="text-[10px] text-slate-500">⏳ Klik RAG untuk memuat teks ayat dan perbandingan qira'at...</p>
                   ) : (
                     <>
-                      {/* Qiraat 10 Grid — semua 10 qari dengan status untuk ayat ini */}
-                      <div className="bg-slate-950/60 rounded-lg p-3 border border-emerald-500/20">
-                        <p className="text-[10px] font-bold text-emerald-400 mb-3 flex items-center gap-2">
-                          <ShieldCheck size={12} /> 🔟 Status Qiraat 10 — QS {surahName} Ayat {verseNum}
-                        </p>
-                        <div className="grid grid-cols-1 gap-2">
+                      {/* Hafs Reference — Header */}
+                      <div className="bg-emerald-500/5 border border-emerald-500/30 rounded-lg p-3">
+                        <p className="text-[10px] font-bold text-emerald-400 mb-1">⭐ RUJUKAN — ʿĀṣim riwāyat Ḥafṣ (Standar Global):</p>
+                        <p className="text-right text-xl font-arabic text-emerald-200 leading-loose" dir="rtl">{tahsinVerseArabic}</p>
+                        <p className="text-[10px] text-emerald-400/70 italic mt-1">{mcpData?.transliteration || ""}</p>
+                      </div>
+
+                      {/* Qira'at 10 Comparison Table */}
+                      <div className="bg-slate-950/60 rounded-lg border border-purple-500/20 overflow-hidden">
+                        <div className="p-3 bg-purple-500/5 border-b border-purple-500/10 flex items-center gap-2">
+                          <ShieldCheck size={12} className="text-purple-400" />
+                          <span className="text-[10px] font-bold text-purple-400">
+                            🔟 Perbandingan 10 Qira'at — QS {surahName} Ayat {verseNum}
+                          </span>
+                        </div>
+                        <div className="divide-y divide-slate-800/50">
                           {QIRAAT_10.map(q => {
-                            // Check if this qiraat has known differences for this verse
-                            const hasKnownDiff = verseQiraat?.words.some(w =>
-                              w.variants.some(v => v.readerId === q.id ||
-                                q.transmitters.some(t => v.readerId === t.id))
-                            );
+                            const qiraatId = q.id;
+                            // Check known alternates
+                            const verseData = VERSE_DATABASE_COMPACT[`${surahNum}:${verseNum}`];
+                            const alt = verseData?.[qiraatId];
+                            const differs = !!alt;
+                            const displayText = alt && typeof alt === 'object' && 'text' in alt ? (alt as any).text : tahsinVerseArabic;
+
                             return (
-                              <div key={q.id} className={`flex items-center justify-between p-2 rounded border ${hasKnownDiff ? 'bg-amber-500/5 border-amber-500/30' : 'bg-slate-900/30 border-slate-800/30'}`}>
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-[10px] font-bold text-slate-300 truncate">
-                                    <span className="font-arabic text-xs">{q.name}</span>
-                                    <span className="text-slate-500 ml-1">({q.nameEn})</span>
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  {hasKnownDiff ? (
-                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">⚠️ BEDA</span>
+                              <div key={q.id} className={`p-2.5 ${differs ? 'bg-amber-500/5' : 'bg-slate-900/20'}`}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-300">{q.nameEn}</span>
+                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${q.rank === 'sabah' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
+                                      {q.rank === 'sabah' ? 'Sab\'ah' : 'Thalāthah'}
+                                    </span>
+                                  </div>
+                                  {differs ? (
+                                    <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                      ⚠️ BEDA
+                                    </span>
                                   ) : (
                                     <span className="text-[8px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded-full">✅ SAMA</span>
                                   )}
-                                  <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${q.rank === 'sabah' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-700 text-slate-400'}`}>
-                                    {q.rank === 'sabah' ? '7' : '+3'}
-                                  </span>
                                 </div>
+                                <p className="text-right text-lg font-arabic leading-loose" dir="rtl">
+                                  {differs ? (
+                                    <span className="text-amber-300">{displayText}</span>
+                                  ) : (
+                                    <span className="text-slate-400">{tahsinVerseArabic}</span>
+                                  )}
+                                </p>
+                                {differs && (
+                                  <p className="text-[8px] text-amber-400/70 mt-0.5">
+                                    ⚡ {alt && typeof alt === 'object' && 'differences' in alt
+                                      ? (alt as any).differences?.map((d: any) => d.note).join(' | ')
+                                      : 'Teks berbeda dari Hafs'}
+                                  </p>
+                                )}
                               </div>
                             );
                           })}
                         </div>
-                        {/* Detail perbedaan jika ada */}
-                        {hasAnyVariant && (
-                          <div className="mt-3 pt-3 border-t border-slate-800/50 space-y-2">
-                            <p className="text-[9px] font-bold text-amber-400">⚠️ Perbedaan terdeteksi:</p>
-                            {verseQiraat!.words.filter(w => w.variants.length > 0).map((w, wi) => (
-                              <div key={wi} className="bg-slate-900/50 rounded p-2">
-                                <p className="text-[10px] text-slate-400 mb-1">Kata ke-{w.index}: <span className="text-slate-200 font-arabic" dir="rtl">{w.text}</span></p>
-                                <div className="flex flex-wrap gap-1">
-                                  {w.variants.map((v, vi) => (
-                                    <span key={vi} className="text-[8px] bg-amber-500/10 text-amber-300 px-1.5 py-0.5 rounded">
-                                      {v.readerName}: {v.text} — {v.note}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
 
-                      {/* General rules that apply */}
-                      {verseQiraat && verseQiraat.generalRules.length > 0 && (
-                        <div className="bg-slate-950/60 rounded-lg p-3 border border-indigo-500/20">
-                          <p className="text-[10px] font-bold text-indigo-400 mb-2">📋 Aturan Qira'at Berlaku:</p>
-                          {verseQiraat.generalRules.map((r, ri) => (
-                            <p key={ri} className="text-[9px] text-slate-400">• {r}</p>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Quick ref: common rules */}
-                      {(!verseQiraat?.generalRules?.length) && (
-                        <div className="bg-slate-950/60 rounded-lg p-3 border border-slate-700/50">
-                          <p className="text-[10px] font-bold text-slate-400 mb-2">📐 Aturan Tajwid & Qira'at Berlaku:</p>
-                          {getCommonRules().slice(0, 5).map((rule, ri) => (
-                            <p key={ri} className="text-[9px] text-slate-500">• {rule.ruleAr} ({rule.rule}): {rule.readers}</p>
-                          ))}
-                        </div>
-                      )}
+                      {/* Pronunciation Notes */}
+                      <div className="bg-slate-950/60 rounded-lg p-3 border border-slate-700/50">
+                        <p className="text-[10px] font-bold text-slate-400 mb-1">🔊 Catatan Pelafalan (berlaku untuk semua ayat):</p>
+                        <p className="text-[9px] text-slate-500">• Madd: Ḥafṣ 4-5 | Warsh 6 | Ibn Kathīr & Abū ʿAmr 2 | Ḥamza 4-5 ḥarakat</p>
+                        <p className="text-[9px] text-slate-500">• Imālah: Ḥamza & Kisāʾī — vokal /ā/ dimiringkan ke /ē/</p>
+                        <p className="text-[9px] text-slate-500">• Hamzah: Warsh & Abū ʿAmr — tashīl (pelunakan), naql, ibdāl</p>
+                        <p className="text-[9px] text-slate-500">• Idghām Kabīr: Abū ʿAmr (as-Sūsī) — penggabungan huruf berdekatan</p>
+                      </div>
                     </>
                   )}
                   <p className="text-[9px] text-slate-600 text-center">
