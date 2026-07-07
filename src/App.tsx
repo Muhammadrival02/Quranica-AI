@@ -16,6 +16,7 @@ import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10D
 import { getVerseComparison, type VerseQiraatFull } from './data/qiraatComparison';
 import { getAllReadings, type PerReaderReading } from './data/qiraatPerReader';
 import { REGIONAL_LANGUAGES, getRegionalTranslation, type RegionalLanguage } from './data/regionalTranslations';
+import { UIN_SGD_PROFILE, CAPAIAN_AKADEMIK } from './data/uinSgdProfile';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -5086,6 +5087,35 @@ function App() {
                   ))}
                 </select>
               </div>
+              {/* UIN SGD Partner Badge */}
+              <details className="bg-gradient-to-r from-teal-500/5 to-emerald-500/5 border border-teal-500/20 rounded-xl overflow-hidden">
+                <summary className="p-2 cursor-pointer flex items-center gap-2">
+                  <span className="text-[18px]">🏛️</span>
+                  <div>
+                    <span className="text-[10px] font-bold text-teal-400">{UIN_SGD_PROFILE.name}</span>
+                    <span className="text-[8px] text-teal-500/70 ml-2">Mitra Akademik</span>
+                  </div>
+                  <span className="text-[8px] bg-teal-500/10 text-teal-400 px-1.5 py-0.5 rounded-full ml-auto">{UIN_SGD_PROFILE.akreditasiInstitusi}</span>
+                </summary>
+                <div className="px-3 pb-3 space-y-2">
+                  <p className="text-[9px] text-slate-400 leading-relaxed">{UIN_SGD_PROFILE.visi}</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    <div className="text-[9px] text-slate-500">🎓 Mahasiswa: <span className="text-teal-400">{UIN_SGD_PROFILE.statistik.totalMahasiswa}</span></div>
+                    <div className="text-[9px] text-slate-500">👨‍🏫 Dosen: <span className="text-teal-400">{UIN_SGD_PROFILE.statistik.totalDosen}</span></div>
+                    <div className="text-[9px] text-slate-500">📚 Prodi: <span className="text-teal-400">{UIN_SGD_PROFILE.statistik.totalProdi}</span></div>
+                    <div className="text-[9px] text-slate-500">🏅 Guru Besar: <span className="text-teal-400">{UIN_SGD_PROFILE.statistik.guruBesar}</span></div>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold text-teal-400 mb-1">📋 Capaian Akademik:</p>
+                    {CAPAIAN_AKADEMIK.slice(0, 3).map((c, i) => (
+                      <p key={i} className="text-[8px] text-slate-500 leading-relaxed">• <span className="text-teal-400/70">{c.year}</span> — {c.title}</p>
+                    ))}
+                    {CAPAIAN_AKADEMIK.length > 3 && (
+                      <p className="text-[8px] text-teal-500/50 mt-1">+ {CAPAIAN_AKADEMIK.length - 3} capaian lainnya</p>
+                    )}
+                  </div>
+                </div>
+              </details>
               {/* Qira'at Panel Toggle */}
               <div className="flex items-center gap-2">
                 <button
