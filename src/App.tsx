@@ -188,7 +188,7 @@ function App() {
       const res = await fetch("https://quran-api-id.vercel.app/surah");
       if (!res.ok) throw new Error("Gagal memuat daftar surah");
       const data = await res.json();
-      setQuranSurahs(data || []);
+      setQuranSurahs(data?.data || []);
     } catch(e: any) { setQuranError(e.message); }
     finally { setQuranLoading(false); }
   };
@@ -199,7 +199,8 @@ function App() {
       const res = await fetch(`https://quran-api-id.vercel.app/surah/${surahNo}`);
       if (!res.ok) throw new Error("Gagal memuat ayat");
       const data = await res.json();
-      setQuranAyahs(data.verses || data.ayahs || []);
+      const d = data?.data || data;
+      setQuranAyahs(d.verses || d.ayahs || []);
       setQuranRevealedAyahs(new Set()); // reset murajaah reveal
     } catch(e: any) { setQuranError(e.message); }
     finally { setQuranLoading(false); }
@@ -5508,14 +5509,14 @@ function App() {
                         className={`p-3 rounded-lg border transition-all ${quranMurajaahMode && !isRevealed ? 'bg-slate-800/50 border-slate-700/50 cursor-pointer hover:border-amber-600/50' : 'bg-slate-800 border-slate-700'}`}
                       >
                         <div className="flex gap-3">
-                          <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number || idx+1}</span>
+                          <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number?.inSurah || idx+1}</span>
                           <div className="w-full">
                             <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-1" dir="rtl">
                               {showFull ? arabicText : (
                                 <span className="text-amber-400">{firstWord} <span className="text-slate-600 text-lg">•••</span></span>
                               )}
                             </p>
-                            {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation || ayah.text?.transliteration?.en || ""}</p>}
+                            {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation?.id || ayah.text?.transliteration?.en || ""}</p>}
                             {quranMurajaahMode && !isRevealed && (
                               <p className="text-[10px] text-slate-600 mt-1">Tap untuk buka</p>
                             )}
