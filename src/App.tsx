@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer, Pencil, Check } from 'lucide-react';
+import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer, Pencil, Check, Volume2, Pause, Users2, FileText } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
 import { apiClient } from './services/apiClient';
@@ -7,6 +7,8 @@ import { initAuth, googleSignIn, logout, getAccessToken } from './services/fireb
 import Markdown from 'react-markdown';
 import HijaiyahPanel from './components/HijaiyahPanel';
 import MakharijulHuruf from './components/MakharijulHuruf';
+import { QURAN_RECITERS, getAudioUrl, type Reciter } from './data/quranReciters';
+import { QIRAAT_READERS, SHADHDH_SOURCES, VERSE_VARIANTS, type VerseVariant } from './data/qiraatVariants';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -181,6 +183,13 @@ function App() {
   const [quranSearch, setQuranSearch] = useState("");
   const [quranMurajaahMode, setQuranMurajaahMode] = useState(false);
   const [quranRevealedAyahs, setQuranRevealedAyahs] = useState<Set<number>>(new Set());
+  // Audio Player State
+  const [quranAudioReciter, setQuranAudioReciter] = useState<Reciter>(QURAN_RECITERS[0]);
+  const [quranAudioPlaying, setQuranAudioPlaying] = useState<number | null>(null); // surah number
+  const quranAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Qira'at Panel State
+  const [quranShowQiraat, setQuranShowQiraat] = useState(false);
+  const [quranSelectedVariantAyah, setQuranSelectedVariantAyah] = useState<number | null>(null);
 
   const fetchQuranSurahs = async () => {
     setQuranLoading(true); setQuranError(null);
@@ -4821,8 +4830,8 @@ function App() {
             </>
           ) : (
             <>
-              <div className="flex items-center gap-3">
-                <button onClick={() => { setQuranSelectedSurah(null); setQuranAyahs([]); setQuranMurajaahMode(false); }} className="text-sm text-emerald-400 hover:underline">&larr; Kembali</button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button onClick={() => { setQuranSelectedSurah(null); setQuranAyahs([]); setQuranMurajaahMode(false); setQuranAudioPlaying(null); }} className="text-sm text-emerald-400 hover:underline">&larr; Kembali</button>
                 <button
                   onClick={() => { setQuranMurajaahMode(!quranMurajaahMode); setQuranRevealedAyahs(new Set()); }}
                   className={`text-[11px] font-bold px-3 py-1 rounded-full transition-all ${
@@ -4835,9 +4844,92 @@ function App() {
                   <button onClick={() => setQuranRevealedAyahs(new Set(quranAyahs.map((_:any,i:number) => i)))}
                     className="text-[10px] text-slate-500 hover:text-slate-300 underline">Buka Semua</button>
                 )}
+                {/* Audio Player */}
+                <div className="flex items-center gap-2 ml-auto">
+                  <select
+                    value={quranAudioReciter.id}
+                    onChange={e => { const r = QURAN_RECITERS.find(x => x.id === parseInt(e.target.value)); if (r) setQuranAudioReciter(r); }}
+                    className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-300 max-w-[140px]"
+                  >
+                    {QURAN_RECITERS.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      if (quranAudioPlaying === quranSelectedSurah) {
+                        quranAudioRef.current?.pause();
+                        setQuranAudioPlaying(null);
+                      } else {
+                        const url = getAudioUrl(quranAudioReciter, quranSelectedSurah!);
+                        if (quranAudioRef.current) { quranAudioRef.current.pause(); }
+                        const audio = new Audio(url);
+                        quranAudioRef.current = audio;
+                        audio.play().catch(() => {});
+                        setQuranAudioPlaying(quranSelectedSurah!);
+                        audio.onended = () => setQuranAudioPlaying(null);
+                      }
+                    }}
+                    className={`text-[11px] font-bold px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+                      quranAudioPlaying === quranSelectedSurah ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {quranAudioPlaying === quranSelectedSurah ? <><Pause size={12} /> Stop</> : <><Volume2 size={12} /> Putar</>}
+                  </button>
+                </div>
               </div>
+              {/* Qira'at Panel Toggle */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setQuranShowQiraat(!quranShowQiraat)}
+                  className={`text-[10px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1 ${
+                    quranShowQiraat ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Users2 size={11} /> {quranShowQiraat ? 'Qiraat ON' : 'Qiraat'}
+                </button>
+                {quranShowQiraat && (
+                  <span className="text-[9px] text-slate-500">7 Pembaca Kanonik • corpuscoranicum.de</span>
+                )}
+              </div>
+              {/* Qira'at Variants Panel */}
+              {quranShowQiraat && (() => {
+                const surahVariants = VERSE_VARIANTS.filter(v => v.surah === quranSelectedSurah);
+                return surahVariants.length > 0 ? (
+                  <div className="bg-slate-800/50 border border-purple-500/20 rounded-xl p-4 space-y-3 max-h-[40vh] overflow-y-auto">
+                    <h3 className="text-[11px] font-bold text-purple-400 flex items-center gap-2">
+                      <Users2 size={12} /> Varian Qira'at — QS. {quranSurahs.find((s:any) => s.number === quranSelectedSurah)?.name?.transliteration?.id}
+                    </h3>
+                    {surahVariants.map((v, vi) => (
+                      <div key={vi} className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+                        <p className="text-[10px] text-slate-400 mb-2">Ayat {v.verse} — Kata ke-{v.wordIndex}</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
+                            <p className="text-[9px] text-emerald-400 font-bold">Standar (Hafs)</p>
+                            <p className="text-right text-lg font-arabic text-emerald-300" dir="rtl">{v.canonicalText}</p>
+                          </div>
+                          {v.variants.slice(0, 3).map((vr, vri) => {
+                            const reader = QIRAAT_READERS.find(r => r.id === vr.readerId) || SHADHDH_SOURCES.find(s => s.id === vr.readerId);
+                            return (
+                              <div key={vri} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
+                                <p className="text-[9px] text-amber-400 font-bold">{reader?.nameEn || reader?.name || vr.readerId}</p>
+                                <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{vr.text}</p>
+                                {vr.note && <p className="text-[9px] text-slate-500 mt-0.5">{vr.note}</p>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-slate-800/50 border border-purple-500/20 rounded-xl p-4">
+                    <p className="text-[10px] text-slate-500">⚠️ Data varian qira'at untuk surah ini belum tersedia. Sumber: <a href="https://corpuscoranicum.de/en/verse-navigator/sura/{quranSelectedSurah}/verse/1/variants" target="_blank" className="text-purple-400 underline">corpuscoranicum.de</a></p>
+                  </div>
+                );
+              })()}
               {quranLoading ? <p className="text-slate-500 text-sm">Memuat ayat...</p> : (
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-3 ">
                   {quranAyahs.map((ayah: any, idx: number) => {
                     const arabicText = ayah.arabic || ayah.text?.arab || "";
                     const firstWord = arabicText.trim().split(/\s+/)[0] || "";
@@ -4852,11 +4944,31 @@ function App() {
                         <div className="flex gap-3">
                           <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number?.inSurah || idx+1}</span>
                           <div className="w-full">
-                            <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-1" dir="rtl">
-                              {showFull ? arabicText : (
-                                <span className="text-amber-400">{firstWord} <span className="text-slate-600 text-lg">•••</span></span>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-1 flex-1" dir="rtl">
+                                {showFull ? arabicText : (
+                                  <span className="text-amber-400">{firstWord} <span className="text-slate-600 text-lg">•••</span></span>
+                                )}
+                              </p>
+                              {showFull && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const audio = new Audio(`https://download.quranicaudio.com/quran/${quranAudioReciter.slug}/ayat/${String(quranSelectedSurah).padStart(3,'0')}${String(ayah.number?.inSurah || idx+1).padStart(3,'0')}.mp3`);
+                                    audio.play().catch(() => {
+                                      // fallback: play full surah
+                                      const url = getAudioUrl(quranAudioReciter, quranSelectedSurah!);
+                                      const a = new Audio(url);
+                                      a.play().catch(() => {});
+                                    });
+                                  }}
+                                  className="text-slate-600 hover:text-emerald-400 transition-colors flex-shrink-0 mt-1"
+                                  title="Play ayat"
+                                >
+                                  <Volume2 size={14} />
+                                </button>
                               )}
-                            </p>
+                            </div>
                             {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation?.id || ayah.text?.transliteration?.en || ""}</p>}
                             {quranMurajaahMode && !isRevealed && (
                               <p className="text-[10px] text-slate-600 mt-1">Tap untuk buka</p>
