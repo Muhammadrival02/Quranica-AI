@@ -2171,13 +2171,14 @@ function App() {
             const variants = getVerseVariants(surahNum, verseNum);
             const surahName = surahs.find(s => s.number.toString() === confirmedSurah)?.englishName || '';
             return (
-              <details className="bg-slate-900 rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
-                <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-800/50 transition-colors">
+              <details open className="bg-slate-900 rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
+                <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-800/50 transition-colors bg-purple-500/5">
                   <div className="flex items-center gap-2">
                     <Users2 size={14} className="text-purple-400" />
                     <span className="text-xs font-bold text-purple-400">
                       🟣 Varian Qira'at — QS {surahName} Ayat {verseNum}
                     </span>
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">LIVE</span>
                   </div>
                   <span className="text-[10px] text-slate-500">{variants.length > 0 ? `${variants.length} varian` : 'aturan umum'}</span>
                 </summary>
