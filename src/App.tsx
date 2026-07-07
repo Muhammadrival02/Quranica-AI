@@ -13,6 +13,7 @@ import { MANUSCRIPTS, MANUSCRIPT_ARCHIVES, MANUSCRIPT_STATS, getManuscriptUrl, t
 import { getVerseVariants, getCommonRules, ALL_VARIANTS, VARIANTS_STATS, type SurahVariant } from './data/allQiraatVariants';
 import { QIRAAT_READERS, SHADHDH_SOURCES } from './data/qiraatVariants';
 import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatWord } from './data/qiraatEngine';
+import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10Database';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -2257,6 +2258,41 @@ function App() {
                   <p className="text-[9px] text-slate-600 text-center">
                     📜 Data: corpuscoranicum.de • ad-Dānī: at-Taysīr • Ibn al-Jazarī: an-Nashr
                   </p>
+                  {/* Qiraat 10 Verification Footer */}
+                  <details className="bg-slate-950/60 rounded-lg border border-emerald-500/10">
+                    <summary className="p-2 cursor-pointer text-[10px] font-bold text-emerald-400 flex items-center gap-2">
+                      <ShieldCheck size={12} /> 🔟 Verifikasi: Qiraat 10 — {QIRAAT_10_STATS.totalTransmitters} Riwayat Resmi
+                    </summary>
+                    <div className="p-3 space-y-2 max-h-[30vh] overflow-y-auto">
+                      <p className="text-[9px] text-slate-500">
+                        {QIRAAT_10_STATS.canonicalSabah} Qira'at Kanonik (Sab'ah) + {QIRAAT_10_STATS.supplementaryThalathah} Tambahan (Thalāthah) = 10 Qira'at Mutawātirah
+                      </p>
+                      {QIRAAT_10.map(q => (
+                        <div key={q.id} className="bg-slate-900/50 rounded p-2 border border-slate-800/30">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-bold text-slate-300">
+                              <span className="font-arabic">{q.name}</span> ({q.nameEn})
+                            </span>
+                            <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${q.rank === 'sabah' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                              {q.rank === 'sabah' ? 'Sab\'ah' : 'Thalāthah'}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-slate-500">{q.region} • w. {q.deathYear}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {q.transmitters.map(t => (
+                              <span key={t.id} className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
+                                {t.nameEn}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-[8px] text-slate-600 mt-1 italic">{q.keyDifferences}</p>
+                        </div>
+                      ))}
+                      <p className="text-[8px] text-slate-600 text-center pt-1 border-t border-slate-800/50">
+                        📚 Sumber: {QIRAAT_10_STATS.source} • {QIRAAT_10_STATS.references[0]}
+                      </p>
+                    </div>
+                  </details>
                 </div>
               </details>
             );
