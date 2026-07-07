@@ -4784,6 +4784,94 @@ function App() {
 
           </div>
         )}
+      {activeTab === 'quran' && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-emerald-400">
+            {quranMurajaahMode ? '🔄 Murajaah' : '📖 Baca'} Al-Qur'an 
+            <span className="text-[9px] text-slate-500 font-normal">— Mushaf LPMQ Kemenag (Verified)</span>
+          </h2>
+          
+          {!quranSelectedSurah ? (
+            <>
+              <input
+                type="text" value={quranSearch} onChange={e => setQuranSearch(e.target.value)}
+                placeholder="Cari surah..." className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200"
+              />
+              {quranError && <p className="text-red-400 text-sm">❌ {quranError}</p>}
+              {quranLoading && !quranSurahs.length ? (
+                <p className="text-slate-500 text-sm">Memuat...</p>
+              ) : (
+                <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+                  {quranSurahs.filter((s: any) => 
+                    quranSearch ? s.name?.transliteration?.id?.toLowerCase().includes(quranSearch.toLowerCase()) || s.name?.translation?.en?.toLowerCase().includes(quranSearch.toLowerCase()) || s.number === parseInt(quranSearch) : true
+                  ).map((surah: any) => (
+                    <button key={surah.number} onClick={() => { fetchQuranAyahs(surah.number); setQuranMurajaahMode(false); }}
+                      className="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="text-emerald-400 font-mono text-sm">#{surah.number}</span>
+                        <span className="ml-2 text-slate-200 font-bold">{surah.name?.transliteration?.id}</span>
+                        <span className="ml-2 text-[10px] text-slate-500">({surah.name?.translation?.en} — {surah.numberOfVerses} ayat)</span>
+                      </div>
+                      <span className="text-slate-600 text-lg font-arabic">{surah.name?.short}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                <button onClick={() => { setQuranSelectedSurah(null); setQuranAyahs([]); setQuranMurajaahMode(false); }} className="text-sm text-emerald-400 hover:underline">&larr; Kembali</button>
+                <button
+                  onClick={() => { setQuranMurajaahMode(!quranMurajaahMode); setQuranRevealedAyahs(new Set()); }}
+                  className={`text-[11px] font-bold px-3 py-1 rounded-full transition-all ${
+                    quranMurajaahMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {quranMurajaahMode ? '🔄 Mode Murajaah ON' : '🔄 Murajaah'}
+                </button>
+                {quranMurajaahMode && (
+                  <button onClick={() => setQuranRevealedAyahs(new Set(quranAyahs.map((_:any,i:number) => i)))}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 underline">Buka Semua</button>
+                )}
+              </div>
+              {quranLoading ? <p className="text-slate-500 text-sm">Memuat ayat...</p> : (
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                  {quranAyahs.map((ayah: any, idx: number) => {
+                    const arabicText = ayah.arabic || ayah.text?.arab || "";
+                    const firstWord = arabicText.trim().split(/\s+/)[0] || "";
+                    const isRevealed = quranRevealedAyahs.has(idx);
+                    const showFull = !quranMurajaahMode || isRevealed;
+                    
+                    return (
+                      <div key={idx} 
+                        onClick={() => { if (quranMurajaahMode && !isRevealed) { const s = new Set(quranRevealedAyahs); s.add(idx); setQuranRevealedAyahs(s); } }}
+                        className={`p-3 rounded-lg border transition-all ${quranMurajaahMode && !isRevealed ? 'bg-slate-800/50 border-slate-700/50 cursor-pointer hover:border-amber-600/50' : 'bg-slate-800 border-slate-700'}`}
+                      >
+                        <div className="flex gap-3">
+                          <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number?.inSurah || idx+1}</span>
+                          <div className="w-full">
+                            <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-1" dir="rtl">
+                              {showFull ? arabicText : (
+                                <span className="text-amber-400">{firstWord} <span className="text-slate-600 text-lg">•••</span></span>
+                              )}
+                            </p>
+                            {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation?.id || ayah.text?.transliteration?.en || ""}</p>}
+                            {quranMurajaahMode && !isRevealed && (
+                              <p className="text-[10px] text-slate-600 mt-1">Tap untuk buka</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
       </main>
 
       {/* Modal Login & Registrasi Berlangganan */}
@@ -5441,94 +5529,6 @@ function App() {
             })}
           </div>
           <div className="h-5" />
-        </div>
-      )}
-      {activeTab === 'quran' && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-emerald-400">
-            {quranMurajaahMode ? '🔄 Murajaah' : '📖 Baca'} Al-Qur'an 
-            <span className="text-[9px] text-slate-500 font-normal">— Mushaf LPMQ Kemenag (Verified)</span>
-          </h2>
-          
-          {!quranSelectedSurah ? (
-            <>
-              <input
-                type="text" value={quranSearch} onChange={e => setQuranSearch(e.target.value)}
-                placeholder="Cari surah..." className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200"
-              />
-              {quranError && <p className="text-red-400 text-sm">❌ {quranError}</p>}
-              {quranLoading && !quranSurahs.length ? (
-                <p className="text-slate-500 text-sm">Memuat...</p>
-              ) : (
-                <div className="space-y-1 max-h-[60vh] overflow-y-auto">
-                  {quranSurahs.filter((s: any) => 
-                    quranSearch ? s.name?.toLowerCase().includes(quranSearch.toLowerCase()) || s.englishName?.toLowerCase().includes(quranSearch.toLowerCase()) || s.number === parseInt(quranSearch) : true
-                  ).map((surah: any) => (
-                    <button key={surah.number} onClick={() => { fetchQuranAyahs(surah.number); setQuranMurajaahMode(false); }}
-                      className="w-full text-left p-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all flex items-center justify-between"
-                    >
-                      <div>
-                        <span className="text-emerald-400 font-mono text-sm">#{surah.number}</span>
-                        <span className="ml-2 text-slate-200 font-bold">{surah.name}</span>
-                        <span className="ml-2 text-[10px] text-slate-500">({surah.englishName} — {surah.numberOfAyahs} ayat)</span>
-                      </div>
-                      <span className="text-slate-600 text-lg font-arabic">{surah.arabic || surah.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <button onClick={() => { setQuranSelectedSurah(null); setQuranAyahs([]); setQuranMurajaahMode(false); }} className="text-sm text-emerald-400 hover:underline">&larr; Kembali</button>
-                <button
-                  onClick={() => { setQuranMurajaahMode(!quranMurajaahMode); setQuranRevealedAyahs(new Set()); }}
-                  className={`text-[11px] font-bold px-3 py-1 rounded-full transition-all ${
-                    quranMurajaahMode ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {quranMurajaahMode ? '🔄 Mode Murajaah ON' : '🔄 Murajaah'}
-                </button>
-                {quranMurajaahMode && (
-                  <button onClick={() => setQuranRevealedAyahs(new Set(quranAyahs.map((_:any,i:number) => i)))}
-                    className="text-[10px] text-slate-500 hover:text-slate-300 underline">Buka Semua</button>
-                )}
-              </div>
-              {quranLoading ? <p className="text-slate-500 text-sm">Memuat ayat...</p> : (
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                  {quranAyahs.map((ayah: any, idx: number) => {
-                    const arabicText = ayah.arabic || ayah.text?.arab || "";
-                    const firstWord = arabicText.trim().split(/\s+/)[0] || "";
-                    const isRevealed = quranRevealedAyahs.has(idx);
-                    const showFull = !quranMurajaahMode || isRevealed;
-                    
-                    return (
-                      <div key={idx} 
-                        onClick={() => { if (quranMurajaahMode && !isRevealed) { const s = new Set(quranRevealedAyahs); s.add(idx); setQuranRevealedAyahs(s); } }}
-                        className={`p-3 rounded-lg border transition-all ${quranMurajaahMode && !isRevealed ? 'bg-slate-800/50 border-slate-700/50 cursor-pointer hover:border-amber-600/50' : 'bg-slate-800 border-slate-700'}`}
-                      >
-                        <div className="flex gap-3">
-                          <span className="text-emerald-500 font-mono text-xs mt-1 w-6 flex-shrink-0">{ayah.number?.inSurah || idx+1}</span>
-                          <div className="w-full">
-                            <p className="text-right text-2xl leading-loose font-arabic text-slate-100 mb-1" dir="rtl">
-                              {showFull ? arabicText : (
-                                <span className="text-amber-400">{firstWord} <span className="text-slate-600 text-lg">•••</span></span>
-                              )}
-                            </p>
-                            {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation?.id || ayah.text?.transliteration?.en || ""}</p>}
-                            {quranMurajaahMode && !isRevealed && (
-                              <p className="text-[10px] text-slate-600 mt-1">Tap untuk buka</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          )}
         </div>
       )}
 
