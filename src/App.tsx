@@ -15,6 +15,7 @@ import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatW
 import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10Database';
 import { getVerseComparison, type VerseQiraatFull } from './data/qiraatComparison';
 import { getAllReadings, type PerReaderReading } from './data/qiraatPerReader';
+import { REGIONAL_LANGUAGES, getRegionalTranslation, type RegionalLanguage } from './data/regionalTranslations';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -194,6 +195,7 @@ function App() {
   const [quranAudioPlaying, setQuranAudioPlaying] = useState<number | null>(null); // surah number
   const quranAudioRef = useRef<HTMLAudioElement | null>(null);
   // Qira'at Panel State
+  const [quranRegionalLang, setQuranRegionalLang] = useState<string>(''); // '' = Indonesia (default)
   const [quranShowQiraat, setQuranShowQiraat] = useState(false);
   const [quranSelectedVariantAyah, setQuranSelectedVariantAyah] = useState<number | null>(null);
 
@@ -5070,6 +5072,20 @@ function App() {
                   </button>
                 </div>
               </div>
+              {/* Regional Language Selector */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] text-slate-500">🌐</span>
+                <select
+                  value={quranRegionalLang}
+                  onChange={e => setQuranRegionalLang(e.target.value)}
+                  className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-300"
+                >
+                  <option value="">🇮🇩 Indonesia (default)</option>
+                  {REGIONAL_LANGUAGES.map(l => (
+                    <option key={l.code} value={l.code}>{l.flag} {l.name} — {l.region}</option>
+                  ))}
+                </select>
+              </div>
               {/* Qira'at Panel Toggle */}
               <div className="flex items-center gap-2">
                 <button
@@ -5170,7 +5186,25 @@ function App() {
                                 </button>
                               )}
                             </div>
-                            {showFull && <p className="text-sm text-slate-300 italic">{ayah.translation?.id || ayah.text?.transliteration?.en || ""}</p>}
+                            {showFull && (
+                              <>
+                                {(() => {
+                                  const indoText = ayah.translation?.id || "";
+                                  const regionalText = quranRegionalLang ? getRegionalTranslation(quranSelectedSurah!, ayah.number?.inSurah || idx+1, quranRegionalLang) : "";
+                                  const langInfo = quranRegionalLang ? REGIONAL_LANGUAGES.find(l => l.code === quranRegionalLang) : null;
+                                  return (
+                                    <>
+                                      <p className="text-sm text-slate-300 italic">{indoText}</p>
+                                      {regionalText && (
+                                        <p className={`text-sm mt-1 ${quranRegionalLang === 'su' ? 'text-teal-300' : quranRegionalLang === 'jv' ? 'text-amber-300' : 'text-blue-300'} italic`}>
+                                          {langInfo?.flag} <span className="text-[10px] opacity-70">{langInfo?.nativeName}:</span> {regionalText}
+                                        </p>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            )}
                             {quranMurajaahMode && !isRevealed && (
                               <p className="text-[10px] text-slate-600 mt-1">Tap untuk buka</p>
                             )}
