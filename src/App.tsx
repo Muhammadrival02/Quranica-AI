@@ -15,8 +15,11 @@ import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatW
 import { QIRAAT_10, QIRAAT_10_STATS, getAllTransmitters } from './data/qiraat10Database';
 import { getVerseComparison, type VerseQiraatFull } from './data/qiraatComparison';
 import { getAllReadings, type PerReaderReading } from './data/qiraatPerReader';
-import { REGIONAL_LANGUAGES, getRegionalTranslation, type RegionalLanguage } from './data/regionalTranslations';
+import { REGIONAL_LANGUAGES, type RegionalLanguage } from './data/regionalTranslations';
 import { UIN_SGD_PROFILE, CAPAIAN_AKADEMIK } from './data/uinSgdProfile';
+
+// Sunda translations — loaded directly from JSON (bypasses tree-shaking)
+import sundaJson from '../public/sunda_30juz.json';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -5220,12 +5223,14 @@ function App() {
                               <>
                                 {(() => {
                                   const indoText = ayah.translation?.id || "";
-                                  const regionalText = quranRegionalLang ? getRegionalTranslation(quranSelectedSurah!, ayah.number?.inSurah || idx+1, quranRegionalLang) : "";
+                                  const key = quranSelectedSurah + ':' + (ayah.number?.inSurah || idx+1) + ':su';
+                                  const regionalText = (sundaJson as any)[key] || '';
+                                  const showRegional = !!quranRegionalLang && !!regionalText;
                                   const langInfo = quranRegionalLang ? REGIONAL_LANGUAGES.find(l => l.code === quranRegionalLang) : null;
                                   return (
                                     <>
                                       <p className="text-sm text-slate-300 italic">{indoText}</p>
-                                      {regionalText && (
+                                      {showRegional && (
                                         <p className={`text-sm mt-1 ${quranRegionalLang === 'su' ? 'text-teal-300' : quranRegionalLang === 'jv' ? 'text-amber-300' : 'text-blue-300'} italic`}>
                                           {langInfo?.flag} <span className="text-[10px] opacity-70">{langInfo?.nativeName}:</span> {regionalText}
                                         </p>
