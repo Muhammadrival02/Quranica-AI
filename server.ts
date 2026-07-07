@@ -796,13 +796,18 @@ Aturan penting dalam menjawab (CRITICAL RULES - BACA DENGAN TELITI AGAR TIDAK SA
   // API Route: Deepseek Q&A Chat via Sumopod
   app.post("/api/chat", async (req, res) => {
     try {
-      const { messages, mode } = req.body;
+      const { messages, mode, userTier } = req.body;
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: "Format request tidak valid (membutuhkan messages)." });
       }
 
-      const chatMode: 'tafsir' | 'hadits' | 'maqashid' = 
+      const chatMode: 'tafsir' | 'hadits' | 'maqashid' =
         mode === 'hadits' ? 'hadits' : mode === 'maqashid' ? 'maqashid' : 'tafsir';
+
+      // PREMIUM ONLY — Sumopod AI hanya untuk pengguna Berbayar
+      if (chatMode === 'hadits' || chatMode === 'maqashid') {
+        if (userTier !== 'Berbayar') return res.status(403).json({ error: "Mode Master & Maqashid hanya untuk pengguna Premium/Platinum. Upgrade di Profil." });
+      }
 
       // Cari referensi relevan dari quranicaLibrary berdasarkan pesan pengguna terakhir
       const lastUserMessage = messages.slice().reverse().find((m: any) => m.role === "user")?.content || "";

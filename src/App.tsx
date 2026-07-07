@@ -1645,7 +1645,7 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const data = await apiClient.sendChatMessage(updatedMessages, qaMode);
+      const data = await apiClient.sendChatMessage(updatedMessages, qaMode, userProfile?.tier);
       setChatMessages(prev => [...prev, { role: 'model', content: data.reply }]);
     } catch (error: any) {
       setChatMessages(prev => [...prev, { role: 'model', content: `[Error]: ${error.message}` }]);

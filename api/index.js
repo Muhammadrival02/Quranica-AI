@@ -469,9 +469,15 @@ app.get("/api/dauroh", (req, res) => {
 // ===== CHAT (4 mode: Tafsir | Master | Maqashid | Gen Z) =====
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages, mode } = req.body;
+    const { messages, mode, userTier } = req.body;
     if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: "Messages wajib" });
     const chatMode = mode === 'master' ? 'master' : mode === 'maqashid' ? 'maqashid' : mode === 'genz' ? 'genz' : 'tafsir';
+
+    // PREMIUM ONLY — Sumopod AI hanya untuk pengguna Berbayar
+    if (chatMode === 'master' || chatMode === 'maqashid') {
+      if (userTier !== 'Berbayar') return res.status(403).json({ error: "Mode Master & Maqashid hanya untuk pengguna Premium/Platinum. Upgrade di Profil." });
+    }
+
     const apiKey = process.env.SUMOPOD_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "Sumopod API key tidak dikonfigurasi" });
 
