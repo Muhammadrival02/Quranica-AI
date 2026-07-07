@@ -12,6 +12,7 @@ import { QIRAAT_READERS, SHADHDH_SOURCES, VERSE_VARIANTS, type VerseVariant } fr
 import { MANUSCRIPTS, MANUSCRIPT_ARCHIVES, MANUSCRIPT_STATS, getManuscriptUrl, type Manuscript } from './data/manuscriptCoranica';
 import { getVerseVariants, getCommonRules, ALL_VARIANTS, VARIANTS_STATS, type SurahVariant } from './data/allQiraatVariants';
 import { QIRAAT_READERS, SHADHDH_SOURCES } from './data/qiraatVariants';
+import { analyzeVerse, getQiraatSummary, READERS, type VerseQiraat, type QiraatWord } from './data/qiraatEngine';
 
 // --- KONFIGURASI ENVIRONMENT VARIABLES ---
 const HF_TOKEN = import.meta.env.VITE_HF_TOKEN || "hf_token_placeholder";
@@ -193,6 +194,21 @@ function App() {
   // Qira'at Panel State
   const [quranShowQiraat, setQuranShowQiraat] = useState(false);
   const [quranSelectedVariantAyah, setQuranSelectedVariantAyah] = useState<number | null>(null);
+
+  // Tahsin Qira'at Engine State
+  const [tahsinVerseArabic, setTahsinVerseArabic] = useState<string>("");
+  const fetchTahsinVerseText = async (surah: string, ayah: string) => {
+    try {
+      const res = await fetch(`https://quran-api-id.vercel.app/surah/${surah}`);
+      const data = await res.json();
+      const verses = data?.data?.verses || [];
+      const ayahNum = parseInt(ayah);
+      const verse = verses.find((v: any) => v.number?.inSurah === ayahNum);
+      if (verse) {
+        setTahsinVerseArabic(verse.text?.arab || "");
+      }
+    } catch { setTahsinVerseArabic(""); }
+  };
 
   const fetchQuranSurahs = async () => {
     setQuranLoading(true); setQuranError(null);
@@ -1439,6 +1455,7 @@ function App() {
   const handleConfirmSelection = async () => {
     setConfirmedSurah(selectedSurah);
     setConfirmedAyah(selectedAyah);
+    fetchTahsinVerseText(selectedSurah, selectedAyah); // fetch for qira'at engine
     const surahName = surahs.find(s => s.number.toString() === selectedSurah)?.englishName || "";
     addLog(`[System] Target diatur ke Surah ${surahName} (${selectedSurah}), Ayat ${selectedAyah}.`);
     
@@ -2168,59 +2185,78 @@ function App() {
           {(() => {
             const surahNum = parseInt(confirmedSurah);
             const verseNum = parseInt(confirmedAyah);
-            const variants = getVerseVariants(surahNum, verseNum);
             const surahName = surahs.find(s => s.number.toString() === confirmedSurah)?.englishName || '';
+            const verseQiraat = tahsinVerseArabic ? analyzeVerse(tahsinVerseArabic, surahNum, verseNum) : null;
+            const summary = verseQiraat ? getQiraatSummary(verseQiraat) : null;
+            const hasAnyVariant = verseQiraat?.words.some(w => w.variants.length > 0);
             return (
               <details open className="bg-slate-900 rounded-2xl border border-purple-500/20 shadow-2xl overflow-hidden">
                 <summary className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-800/50 transition-colors bg-purple-500/5">
                   <div className="flex items-center gap-2">
                     <Users2 size={14} className="text-purple-400" />
                     <span className="text-xs font-bold text-purple-400">
-                      🟣 Varian Qira'at — QS {surahName} Ayat {verseNum}
+                      🟣 Qira'at Engine — QS {surahName} Ayat {verseNum}
                     </span>
-                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">LIVE</span>
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full">
+                      {summary ? `${summary.variantCount} varian • ${summary.readersInvolved.length} qari` : 'memuat...'}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{variants.length > 0 ? `${variants.length} varian` : 'aturan umum'}</span>
+                  <span className="text-[10px] text-slate-500">{summary?.rulesApplied?.length || 0} aturan</span>
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
-                  {variants.length > 0 ? (
-                    variants.map((v, vi) => (
-                      <div key={vi} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
-                        <p className="text-[10px] text-slate-400 mb-2">Kata ke-{v.wordIndex}</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
-                            <p className="text-[9px] text-emerald-400 font-bold">Standar (Hafs)</p>
-                            <p className="text-right text-lg font-arabic text-emerald-300" dir="rtl">{v.canonicalText}</p>
-                          </div>
-                          {v.variants.slice(0, 4).map((vr, vri) => {
-                            const reader = QIRAAT_READERS.find(r => r.id === vr.readerId) || SHADHDH_SOURCES.find(s => s.id === vr.readerId);
-                            const rn = (reader as any)?.name || (reader as any)?.nameEn || vr.readerId;
-                            return (
-                              <div key={vri} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
-                                <p className="text-[9px] text-amber-400 font-bold">{rn}</p>
-                                <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{vr.text}</p>
-                                {vr.note && <p className="text-[9px] text-slate-500 mt-0.5">{vr.note}</p>}
+                  {!tahsinVerseArabic ? (
+                    <p className="text-[10px] text-slate-500">⏳ Klik RAG untuk memuat teks ayat...</p>
+                  ) : verseQiraat && hasAnyVariant ? (
+                    <>
+                      {/* Per-word variants */}
+                      {verseQiraat.words.filter(w => w.variants.length > 0).map((w, wi) => (
+                        <div key={wi} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
+                          <p className="text-[10px] text-slate-400 mb-2">Kata ke-{w.index}: <span className="text-slate-200 font-arabic text-lg" dir="rtl">{w.text}</span></p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
+                              <p className="text-[9px] text-emerald-400 font-bold">ʿĀṣim (Ḥafṣ) — Standar</p>
+                              <p className="text-right text-lg font-arabic text-emerald-300" dir="rtl">{w.text}</p>
+                            </div>
+                            {w.variants.slice(0, 4).map((v, vi) => (
+                              <div key={vi} className="bg-amber-500/5 border border-amber-500/20 rounded p-2">
+                                <p className="text-[9px] text-amber-400 font-bold">{v.readerName}</p>
+                                <p className="text-right text-lg font-arabic text-amber-300" dir="rtl">{v.text}</p>
+                                <p className="text-[9px] text-slate-500 mt-0.5">{v.note}</p>
                               </div>
-                            );
-                          })}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      {/* General rules */}
+                      {verseQiraat.generalRules.length > 0 && (
+                        <div className="bg-slate-950/60 rounded-lg p-3 border border-indigo-500/20">
+                          <p className="text-[10px] font-bold text-indigo-400 mb-2">📋 Aturan Qira'at Umum:</p>
+                          {verseQiraat.generalRules.map((r, ri) => (
+                            <p key={ri} className="text-[9px] text-slate-400">• {r}</p>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <>
-                      <p className="text-[10px] text-slate-500">⚠️ Belum ada varian spesifik untuk ayat ini di database. Berikut aturan qira'at umum yang mungkin berlaku:</p>
-                      {getCommonRules().slice(0, 5).map((rule, ri) => (
+                      <p className="text-[10px] text-slate-300 mb-2">✅ Semua qari membaca kata-kata ayat ini sama. Berikut aturan yang berlaku:</p>
+                      {verseQiraat?.generalRules?.map((rule, ri) => (
+                        <div key={ri} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
+                          <p className="text-[9px] text-slate-400">• {rule}</p>
+                        </div>
+                      ))}
+                      {(!verseQiraat?.generalRules?.length) && getCommonRules().slice(0, 5).map((rule, ri) => (
                         <div key={ri} className="bg-slate-950/60 rounded-lg p-3 border border-slate-800/50">
                           <p className="text-[10px] font-bold text-amber-400">{rule.ruleAr} — {rule.rule}</p>
                           <p className="text-[9px] text-slate-400 mt-1"><span className="text-purple-400">Pembaca:</span> {rule.readers}</p>
                           <p className="text-[9px] text-slate-500">{rule.description}</p>
                         </div>
                       ))}
-                      <p className="text-[9px] text-slate-600 text-center">
-                        Data lengkap: <a href={`https://corpuscoranicum.de/en/verse-navigator/sura/${surahNum}/verse/${verseNum}/variants`} target="_blank" className="text-purple-400 underline">corpuscoranicum.de</a> • {VARIANTS_STATS.totalSurahs} surah tersedia
-                      </p>
                     </>
                   )}
+                  <p className="text-[9px] text-slate-600 text-center">
+                    📜 Data: corpuscoranicum.de • ad-Dānī: at-Taysīr • Ibn al-Jazarī: an-Nashr
+                  </p>
                 </div>
               </details>
             );
