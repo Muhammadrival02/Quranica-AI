@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm install && npm run build",
-  "installCommand": "npm install",
-  "framework": "vite"
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": "dist",
+  "installCommand": "echo 'No install needed'",
+  "framework": null
 }

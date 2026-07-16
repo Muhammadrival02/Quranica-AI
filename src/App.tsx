@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, Play, Activity, BookOpen, Settings, Terminal as TerminalIcon, ShieldCheck, BookText, MessageSquare, Send, Search, FileDown, Database, Share2, Globe, RefreshCw, CheckCircle, AlertCircle, Trash2, Plus, HardDrive, Sparkles, ChevronRight, Cloud, UploadCloud, LogOut, FolderOpen, Link, Wand2, Users, UserPlus, Crown, Lock, Tag, QrCode, CreditCard, Clock, Smartphone, Monitor, User, Award, Printer, Pencil, Check, Volume2, Pause, Users2, FileText } from 'lucide-react';
 import { QURAN_SURAHS } from './surahs';
 import { fetchQuranMcpData } from './services/quranMcpService';
@@ -243,6 +244,11 @@ function App() {
   };
 
   useEffect(() => { if (activeTab === 'quran') fetchQuranSurahs(); }, [activeTab]);
+
+  // Smooth scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
 
   // Chat Integration Cross-check state
   const [mcpCrossCheckResult, setMcpCrossCheckResult] = useState<any>(null);
@@ -1759,9 +1765,12 @@ function App() {
       {/* Header — Tarteel Style */}
       <header className={`flex items-center justify-between mb-6 ${isPhonePreview ? 'px-1' : 'max-w-6xl mx-auto border-b border-emerald-900/50 pb-4'}`}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <motion.div 
+            whileHover={{ scale: 1.08, rotate: -5 }}
+            className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 cursor-pointer"
+          >
             <BookOpen size={16} className="text-white" />
-          </div>
+          </motion.div>
           <div>
             <h1 className="text-base font-bold text-white tracking-tight">Quranica</h1>
             {!isPhonePreview && (
@@ -1823,7 +1832,14 @@ function App() {
         </div>
       </header>
 
-      <main className={`mx-auto relative ${isPhonePreview ? '' : 'max-w-6xl'}`} style={{ isolation: 'isolate' }}>
+      <AnimatePresence mode="wait">
+      <motion.main 
+        key={activeTab}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+        className={`mx-auto relative ${isPhonePreview ? '' : 'max-w-6xl'}`} style={{ isolation: 'isolate' }}>
         
         {/* Navigation Tabs — hidden in phone mode (use bottom bar) */}
         {!isPhonePreview && (
@@ -5262,12 +5278,23 @@ function App() {
           )}
         </div>
       )}
-      </main>
+      </motion.main>
+      </AnimatePresence>
 
       {/* Modal Login & Registrasi Berlangganan */}
       {showLoginModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-slate-900 border border-emerald-500/20 max-w-md w-full rounded-2xl shadow-2xl p-6 md:p-8 space-y-5 relative my-8 animate-in zoom-in-95 duration-200">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="bg-slate-900 border border-emerald-500/20 max-w-md w-full rounded-2xl shadow-2xl p-6 md:p-8 space-y-5 relative my-8"
+          >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
             
             <div className="flex items-center justify-between">
@@ -5693,8 +5720,8 @@ function App() {
             <p className="text-[10px] text-slate-500 text-center leading-normal">
               Quranica AI memproses seluruh kredensial dengan protokol keamanan end-to-end terenkripsi tanpa menggunakan integrasi pendaftaran pihak ketiga Google.
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
       {activeTab === 'hijaiyah' && <HijaiyahPanel />}
       {activeTab === 'profile' && (
@@ -5945,25 +5972,39 @@ function App() {
       {/* Bottom Navigation Bar — klik saja, tanpa geser (Phone Only) */}
       {isPhonePreview && (
         <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 z-[90] safe-area-inset-bottom">
+          {/* Animated Sliding Indicator */}
+          <motion.div
+            className="absolute top-0 h-0.5 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full"
+            animate={{
+              left: `${(phoneTabs.findIndex(t => t.id === activeTab) / phoneTabs.length) * 100}%`,
+              width: `${100 / phoneTabs.length}%`,
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          />
           <div className="flex items-center justify-around py-2 px-1">
             {phoneTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = tab.id === activeTab;
               return (
-                <button
+                <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex flex-col items-center gap-0.5 min-w-[48px] py-0.5 transition-all duration-200 active:scale-90 ${
+                  whileTap={{ scale: 0.85 }}
+                  className={`flex flex-col items-center gap-0.5 min-w-[48px] py-0.5 transition-colors duration-200 relative ${
                     isActive 
                       ? 'text-emerald-400' 
                       : 'text-slate-500 hover:text-slate-400'
                   }`}
                 >
-                  <div className={`p-1 rounded-lg transition-all ${isActive ? 'bg-emerald-500/10' : ''}`}>
+                  <motion.div 
+                    animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className={`p-1 rounded-lg transition-all ${isActive ? 'bg-emerald-500/10' : ''}`}
+                  >
                     <Icon size={20} />
-                  </div>
+                  </motion.div>
                   <span className="text-[10px] font-medium leading-none">{tab.label}</span>
-                </button>
+                </motion.button>
               );
             })}
           </div>
